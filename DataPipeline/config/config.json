@@ -1,7 +1,7 @@
 {
 	"download_filings": {
-		"start_year": 2021,
-		"end_year": 2024,
+		"start_year": "current",
+		"end_year": "current",
 		"quarters": [1, 2, 3, 4],
 		"filing_types": ["10-K"],
 		"cik_tickers": "./config/companies.csv",
@@ -9,7 +9,7 @@
 		"raw_filings_folder": "RAW_FILINGS",
 		"indices_folder": "INDICES",
 		"filings_metadata_file": "FILINGS_METADATA.csv",
-		"skip_present_indices": true
+		"skip_present_indices": false
 	},
 	"extract_items": {
 		"raw_filings_folder": "RAW_FILINGS",
