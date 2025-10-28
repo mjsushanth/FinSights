@@ -48,6 +48,7 @@
 ```
 ## DVC : 
 Data version Control has been implemented in this Repo, and the data is stored on an s3 Bucket managed by our team. The metadata is stored in the .dvc folder.
+The DVC is to control the versions of the data used in the ingestion pipeline ,so if any data is lost / manipulated with , we can retreive the version needed.
 
 ## High level Conceptual Flow:
 ```
