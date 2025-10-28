@@ -68,6 +68,9 @@ The DVC is to control the versions of the data used in the ingestion pipeline ,s
 ```
 
 
+Data Pipeline Setup: https://github.com/Finsights-MLOps/FinSights/blob/main/DataPipeline/SETUP_README.md
+Data Pipeline Documentation: https://github.com/Finsights-MLOps/FinSights/blob/main/DataPipeline/README.md
+
 ### Source Dataset Links:
 1. Primary: https://huggingface.co/datasets/khaihernlow/financial-reports-sec
 2. SEC EDGAR API (company_tickers.json), State Street SPDR ETF holdings for S&P 500 constituents
