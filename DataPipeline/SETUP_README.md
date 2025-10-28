@@ -11,7 +11,7 @@ conda activate finsight-venv
 ### 2️⃣ Configure Credentials
 ```bash
 cp .env.template .env
-# Edit .env with AWS credentials
+# Edit .env with AWS credentials. Please reach out to any team member of Group 4 for the access keys
 ```
 
 ### 3️⃣ Start Airflow
@@ -42,5 +42,5 @@ docker compose down
 docker compose restart
 
 # Run tests
-pytest tests/
+pytest tests/ -v
 ```

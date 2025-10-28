@@ -1,0 +1,45 @@
+# AWS S3 Bucket Configuration
+s3:
+  bucket_name: sentence-data-ingestion
+  region: us-east-1  
+
+  # Base path for all data assets
+  base_path: DATA_MERGE_ASSETS
+
+input:
+  # Historical fact table (base dataset)
+  historical:
+    path: DATA_MERGE_ASSETS/HISTORICAL_DATA
+    filename: finrag_sec_fact_historical.parquet
+    description: "Base historical dataset from DuckDB export"
+
+  # Incremental staging data (new/updated rows)
+  incremental:
+    path: DATA_MERGE_ASSETS/INCREMENTAL_DATA
+    filename: finrag_sec_incremental_stg_data.parquet
+    description: "New data from API ingestion pipeline"
+
+output:
+  # Final merged fact table (always latest)
+  final:
+    path: DATA_MERGE_ASSETS/FINRAG_FACT_SENTENCES
+    filename: finrag_fact_sentences.parquet
+    description: "Production-ready merged fact table"
+    compression: zstd  # Polars default, good balance
+
+  # Archive backups (versioned copies)
+  archive:
+    path: DATA_MERGE_ASSETS/ARCHIVE_DATA
+    filename_pattern: "finrag_fact_sentences_{timestamp}.parquet"
+    description: "Timestamped backups of previous versions"
+    retention:
+      max_backups: 1  # Keep only the most recent backup
+      auto_cleanup: true
+
+
+  # Logging
+  logging:
+    level: INFO  # DEBUG, INFO, WARNING, ERROR
+    log_to_s3: true
+    log_path: DATA_MERGE_ASSETS/LOGS
+    log_filename_pattern: "etl_merge_{timestamp}.log"
