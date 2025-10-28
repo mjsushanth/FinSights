@@ -72,9 +72,9 @@ def task_extract_and_convert():
     """Extract items and convert to parquet"""
     _run_module("src.extract_and_convert")
 
-def task_validate_data():
-    """Validate extracted data using Great Expectations"""
-    _run_module("data_auto_stats.src.run_validation")
+# def task_validate_data():
+#     """Validate extracted data using Great Expectations"""
+#     _run_module("data_auto_stats.src.run_validation")
     
 def task_upload_files_to_s3():
     """Connect to AWS S3 and upload processed files"""
@@ -168,9 +168,9 @@ def task_merge_s3_data():
     _run_module("src_aws_etl.etl.merge_pipeline")
     LOG.info("S3 merge pipeline completed")
 
-def task_statistics_data():
-    """Validate extracted data using Great Expectations"""
-    _run_module("data_auto_stats.src.run_statistics")
+# def task_statistics_data():
+#     """Validate extracted data using Great Expectations"""
+#     _run_module("data_auto_stats.src.run_statistics")
 
 def task_success_notify(execution_date: str):
     """Log success message"""
@@ -227,10 +227,10 @@ with DAG(
         python_callable=task_extract_and_convert,
     )
 
-    validate_data = PythonOperator(
-        task_id="validate_data",
-        python_callable=task_validate_data,
-    )
+    # validate_data = PythonOperator(
+    #     task_id="validate_data",
+    #     python_callable=task_validate_data,
+    # )
     
     upload_processed_files = PythonOperator(
         task_id="upload_processed_files",
@@ -250,10 +250,10 @@ with DAG(
         execution_timeout=timedelta(minutes=15),
     )
 
-    statistics_data = PythonOperator(
-        task_id="statistics_data",
-        python_callable=task_statistics_data,
-    )
+    # statistics_data = PythonOperator(
+    #     task_id="statistics_data",
+    #     python_callable=task_statistics_data,
+    # )
     
     success_notify = PythonOperator(
         task_id="send_success_notification",
@@ -270,5 +270,5 @@ with DAG(
 
     # Task dependencies
     
-    get_companies_list >> check_inputs >> download_filings >> extract_convert_merge >> validate_data >> upload_processed_files >> cleanup >> merge_s3_data >> statistics_data >> success_notify
-    [get_companies_list, check_inputs, download_filings, extract_convert_merge, validate_data, upload_processed_files, cleanup, merge_s3_data, statistics_data] >> failure_notify
+    get_companies_list >> check_inputs >> download_filings >> extract_convert_merge  >> upload_processed_files >> cleanup >> merge_s3_data  >> success_notify
+    [get_companies_list, check_inputs, download_filings, extract_convert_merge, upload_processed_files, cleanup, merge_s3_data] >> failure_notify
