@@ -28,13 +28,13 @@ Open: http://localhost:8080
 ### 5. Trigger Pipeline
 Click ▶️ next to `sec_filings_etl_pipeline`
 
-For Validation & Statistics:
+For Validation & Statistics: [To be integrated into Docker-Airflow.]
 ```bash
 cd data_auto_stats/src
 python run_validation.py
 python run_statistics.py
 ```
-[To be integrated into Docker-Airflow.]
+
 ---
 
 ## Common Commands
