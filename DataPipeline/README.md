@@ -81,7 +81,7 @@ We implemented a two-phase automated data validation system using Great Expectat
 - Email alerts on quality threshold breaches
 - Quality metrics tracked: schema completeness, null distribution, temporal consistency, duplicate counts
 
-**Integration:** The GE code (validation and statistics) can be tested manually with 1 command. Cant be automated into docker run or DAG run. RCA being: dockercompose and GE library have some conflicts, issues about context discovery and writable root access.
+**Integration:** The GE code (validation and statistics) can be tested manually with 1 command. Cant be automated into docker run or DAG run. RCA being: dockercompose and GE library have some conflicts, issues about context discovery and writable root access. [To be integrated into Docker-Airflow.]
 
 ### Anomaly Detection & Alerts
 The pipeline flags anomalies during preprocessing and ingestion:
@@ -107,5 +107,6 @@ Future extension: Slack/email alerts for failed or incomplete extractions.
    
 3. Documented Impact Analysis:
    - We will be able to update this section, informing of our impact as soon as our RAG pipeline is built fully.
+
 
 
