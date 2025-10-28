@@ -73,7 +73,8 @@ The DVC is to control the versions of the data used in the ingestion pipeline ,s
 
 ### Source Dataset Links:
 1. Primary: https://huggingface.co/datasets/khaihernlow/financial-reports-sec
-2. SEC EDGAR API (company_tickers.json), State Street SPDR ETF holdings for S&P 500 constituents
+2. Live Ingestion metrics: https://www.sec.gov/search-filings/edgar-application-programming-interfaces
+3. SEC EDGAR API (company_tickers.json), State Street SPDR ETF holdings for S&P 500 constituents
 2. Potentially used: EdgarTools https://github.com/dgunning/edgartools
 4. Primary datasets' source citation: https://zenodo.org/records/5589195
 
