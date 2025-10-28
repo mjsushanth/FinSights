@@ -17,7 +17,7 @@
 4. `src_aws_etl/` has the code, tests, configs, and requirements for the AWS S3 based ETL pipeline (Merge, Archive, Logs). Main code files are in `src_aws_etl/etl/`. 
     - Here is where bulk historical data and live data merge meaningfully and cleanly. Archival of older data and log management is also handled here.
 
-5. Following that, `DataSchemaValidation/` has a really good collection of modules for schema validation, data quality checks, automated testing and stat-generation using `great_expectations` and `anamoly detection and alerts`.
+5. Following that, `data_auto_stats/` has a really good collection of modules for schema validation, data quality checks, automated testing and stat-generation using `great_expectations` and `anamoly detection and alerts`.
 
 
 ## Project Structure:

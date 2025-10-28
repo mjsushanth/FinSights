@@ -65,7 +65,7 @@
 
 ------------------------------------------------------------------------------------------------------------------------
 
-**Weighted Multi-Objective Sampling Score Explanation**:
+### Weighted Multi-Objective Sampling Score Explanation:
 - The explanation for the formula, it depends on these chosen elements or stable flags:
     - 80% coverage of sections, Diversity in talk, Substantive content, 'Not minimum compliance',
     - Substance Filter - Raw content volume across all filings, 

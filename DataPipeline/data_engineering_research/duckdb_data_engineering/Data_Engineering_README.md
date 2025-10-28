@@ -79,7 +79,7 @@ The data engineering content of this project involves using DuckDB, a high-perfo
 - Created reproducible, strong data preparation workflow using DuckDB SQL scripts.
 - Completely parameterized execution, Session Variable Architecture, Environment-agnostic design present for `run_stratisfied.sql.`
 - Clean separation: configuration (variables) → intermediate state (params table) → execution logic (sampling/join/export).
-- Organized 15+ SQL scripts using numbered taxonomy (00_setup, 20_eda, 21_curation, 31_sampling, 90_qc) documenting iterative problem-solving. 
+- Organized 30+ SQL scripts using numbered taxonomy (00_setup, 20_eda, 21_curation, 31_sampling, 90_qc) documenting iterative problem-solving. 
 - Live system support: ETL-pattern audit columns for incremental load. (`last_modified_date, sample_version, source_file_path, load_method, etc.`)
 - **Execution logging framework** tracks pipeline steps with row counts, messages, and sub-second timing precision for troubleshooting and performance analysis.
 - Export to compressed Parquet (ZSTD) produces ~75MB artifact.
