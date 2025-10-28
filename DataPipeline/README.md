@@ -14,7 +14,6 @@
 
 3. We also have a working code that uses the EDGAR SDK and EDGAR API to fetch live numeric/metric data.
 
-
 ### Data Preprocessing:
 - For huggingface dataset - the earlier documentation [Data Engineering Feats](data_engineering_research/duckdb_data_engineering/Data_Engineering_README.md#L71) has detailed information about preprocessing.
 - For live data - Raw SEC filings are cleaned, parsed, and converted into structured formats using extract_and_convert.py. This module extracts key SEC Items (e.g., Item 1A – Risk Factors, Item 7 – MD&A).
@@ -22,12 +21,19 @@
 - Generates consistent metadata: CIK, company name, report year, section ID, timestamps, and version tags
 - Exports to Parquet files for downstream analytics
 
+### Data Persistence on AWS S3:
+- We use an S3 bucket (sentence-data-ingestion) to store raw filings, processed Parquet files, and metadata.
+- Our clear directories are attached below, and we employ the classic ETL process of *Incremental Merge Jobs* with audit columns and a dedicated log file.
+- The source code this is exactly traced at `src_aws_etl/etl` folder. There are modular functions, a config loader service, and pre-flight checks.
+- Here is where, some discrepancies in external data schema from different sources are handled and schema harmonization is done before a final merge.
+  
+![S3 Directory](S3_DataMerge_Dir.png)
+
 ### Test Modules
 - For huggingface dataset - Files such as `31_run_stratified_post_analysis.sql` and several other validation scripts, ad-hoc analysis scripts act as our data quality checks.
 - We wrote comprehensive unit tests to validate the core functionality of the download_filings and extract_and_convert module as well as AWS connection modules(download_from_s3 and upload_to_s3).
 - All tests are written with pytest, use temporary directories for isolation, and run independently without needing any external data or network access.
   
-
 ### Pipeline Orchestration (Airflow DAGs)
 We designed an Airflow DAG that automates the full ETL workflow for SEC filings - from fetching company data to generating structured outputs in a parquet file. 
 
@@ -41,6 +47,7 @@ We designed an Airflow DAG that automates the full ETL workflow for SEC filings 
 - Post-processing includes generating metadata and statistics for the ingested data (Great Expectations), and anomaly alerts. (Ref: `data_auto_stats` folder.) [To be integrated into Docker-Airflow.]
 - The DAG ensures all stages — download → extract → transform → upload → clean — run sequentially in the right order.
 
+![Current DAG Example](demo_assets/DagExampleScreenshot.png)
 
 #### SETUP:
 Refer to **SETUP_README.md** file for details about setting up the environment for running the AirFlow pipeline locally.
@@ -58,7 +65,7 @@ Integrated logging has been implemented across all modules using Python’s logg
 
 We implemented a two-phase automated data validation system using Great Expectations.
 
-### How it works:
+#### How it works:
 
 **Phase 1: Early Validation (20-Column Schema)**
 - Runs immediately after the initial data extraction and merge step, before feature engineering
@@ -69,14 +76,14 @@ We implemented a two-phase automated data validation system using Great Expectat
 - Runs after feature engineering on final dataset with derived columns (`cik_int`, `tickers`, `likely_kpi`, `has_numbers`, `has_comparison`, `row_hash`)
 - Generates detailed statistical profiles, validates uniqueness constraints, monitors KPI extraction rates
 
-### Technical Stack:
+#### Technical Stack:
 - Great Expectations for schema generation and validation rules
 - Boto3 for S3 data access (bucket: `sentence-data-ingestion`)
 - PyArrow for Parquet handling
 - Configurable validation rules per phase in `config.py`
 - Ephemeral GE context for Docker/Airflow compatibility
 
-### Output & Monitoring:
+#### Output & Monitoring:
 - Validation results logged to `logs/` and saved as JSON artifacts in `output/`
 - Email alerts on quality threshold breaches
 - Quality metrics tracked: schema completeness, null distribution, temporal consistency, duplicate counts
@@ -89,7 +96,6 @@ The pipeline flags anomalies during preprocessing and ingestion:
 - Year mismatch or out-of-range reports
 - Conversion errors logged and surfaced as Airflow task alerts
 Future extension: Slack/email alerts for failed or incomplete extractions.
-
 
 
 ## Bias Mitigation Documentation:
@@ -107,6 +113,5 @@ Future extension: Slack/email alerts for failed or incomplete extractions.
    
 3. Documented Impact Analysis:
    - We will be able to update this section, informing of our impact as soon as our RAG pipeline is built fully.
-
 
 
