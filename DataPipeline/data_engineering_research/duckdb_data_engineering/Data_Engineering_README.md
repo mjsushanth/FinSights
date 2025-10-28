@@ -6,18 +6,19 @@ The data engineering content of this project involves using DuckDB, a high-perfo
 
 
 ### Repository Structure:
-📦duckdb-finsight-data
- ┣ 📂manual_exports
- ┃ ┣ 📜(manual, EDA, analysis xlsx files.)
- ┣ 📂sql
- ┃ ┣ 📜00_pragmas.sql .. and 25+ files.
- ┣ 📂sql-python wrapper
- ┃ ┗ 📜sample.py
- ┣ 📜DuckDB_EDA_LargeData.md    
- ┣ 📜DuckDB_README.md
- ┣ 📜DuckDB_Sampling_Strat.md
- ┗ 📜sampler.duckdb
-
+```
+    📦duckdb-finsight-data
+    ┣ 📂manual_exports
+    ┃ ┣ 📜(manual, EDA, analysis xlsx files.)
+    ┣ 📂sql
+    ┃ ┣ 📜00_pragmas.sql .. and 25+ files.
+    ┣ 📂sql-python wrapper
+    ┃ ┗ 📜sample.py
+    ┣ 📜DuckDB_EDA_LargeData.md    
+    ┣ 📜DuckDB_README.md
+    ┣ 📜DuckDB_Sampling_Strat.md
+    ┗ 📜sampler.duckdb
+```
 
 ### Project layout - Preliminary
 ```
