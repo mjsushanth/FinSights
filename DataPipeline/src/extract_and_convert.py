@@ -1032,15 +1032,16 @@ def main() -> None:
                 output_folder = merged_folder
                 os.makedirs(output_folder, exist_ok=True)
                 
-                merged_filename = f"{filing_type}_merged_.parquet"
+                #merged_filename = f"{filing_type}_merged_.parquet"
+                merged_filename = "finrag_sec_incremental_stg_data.parquet"
                 merged_filepath = os.path.join(output_folder, merged_filename)
                 
                 # Write using Polars (more efficient than pandas)
                 merged_df.write_parquet(merged_filepath, compression="snappy")
                 
-                # Also save as CSV for convenience
-                csv_filepath = os.path.join(output_folder, f"{filing_type}_merged.csv")
-                merged_df.write_csv(csv_filepath)
+                # # Also save as CSV for convenience
+                # csv_filepath = os.path.join(output_folder, f"{filing_type}_merged.csv")
+                # merged_df.write_csv(csv_filepath)
                 
                 LOGGER.info(f"✓ Merged {filing_type}: {len(merged_df)} total sentences")
                 LOGGER.info(f"  Parquet: {merged_filepath}")

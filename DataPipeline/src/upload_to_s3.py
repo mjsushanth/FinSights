@@ -168,6 +168,21 @@ def upload_files_by_category(
                 stats[category]["uploaded"] += 1
             else:
                 stats[category]["failed"] += 1
+        
+        # Upload to Merged bucket if category is MERGED-SETS
+        if category == "MERGED-SETS":
+            merged_bucket = os.getenv("S3_MERGED_BUCKET_NAME")
+            if merged_bucket:
+                logger.info(f"\nUploading merged files to separate bucket: {merged_bucket}")
+                s3_key_prefix = f"{merged_bucket}/{file_path.name}"
+                for file_path in files:
+                    success = s3_client.upload_file(
+                        local_path=str(file_path),
+                        bucket_name=bucket_name,
+                        s3_key=s3_key_prefix
+                    )
+                    if success:
+                        logger.info(f"✅ Also uploaded to merged bucket: {file_path.name}")
     
     return stats
 
