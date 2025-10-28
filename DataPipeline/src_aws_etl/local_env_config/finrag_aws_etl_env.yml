@@ -1,0 +1,127 @@
+# ============================================================================
+# AWS ETL Environment - FinRAG Project (Conda/Mamba)
+# Purpose: S3 data pipeline, incremental merges, data quality checks
+# ============================================================================
+#
+# INSTALLATION INSTRUCTIONS:
+# --------------------------
+#
+# STEP 0: Clean existing environments (if necessary)
+#   conda deactivate
+#   conda env remove -n finrag_aws_etl
+#   conda clean --all --yes
+#
+# STEP 1: Create environment using mamba (MUCH faster than conda)
+#   mamba env create -f environment.yml
+#   # OR using conda (slower):
+#   conda env create -f environment.yml
+#
+# STEP 2: Activate environment
+#   conda activate finrag_aws_etl
+#
+# STEP 3: Verify installation
+#   python -c "import boto3, polars, pandas, pyarrow; print('Setup complete!')"
+#   python -c "import sys; print(f'Python: {sys.version}')"
+#
+# STEP 4: (Optional) Install mamba in base for future speed
+#   conda install -n base -c conda-forge mamba
+#
+# EXPORT LOCK FILE (for reproducibility):
+#   conda env export --no-builds > environment.lock.yml
+#   # OR with builds (most reproducible, but platform-specific):
+#   conda env export > environment.exact.yml
+#
+# UPDATE ENVIRONMENT (after changing this file):
+#   mamba env update -f environment.yml --prune
+#
+# DEACTIVATE:
+#   conda deactivate
+#
+# SIZE CHECK:
+#   du -sh ~/miniconda3/envs/finrag_aws_etl_env  # Linux/Mac
+#   # Windows PowerShell:
+#   # (Get-ChildItem -Recurse $env:CONDA_PREFIX).Length / 1GB
+#
+# ============================================================================
+
+name: finrag_aws_etl_env
+
+channels:
+  - conda-forge
+  - defaults
+
+dependencies:
+  # ----- Python Version -----
+  - python=3.11.14
+
+  # ----- Build Tools -----
+  - setuptools>=69.0.0
+  - pip>=24.0              # Keep pip available for pip-only packages
+
+  # ----- CRITICAL COMPATIBILITY (Binary compatibility matters) -----
+  # Using conda ensures consistent ABI across these compiled libraries
+  - pyarrow>=14.0.0,<15.0
+  - numpy>=1.24.0,<2.0
+
+  # ----- AWS Core -----
+  - boto3>=1.35.0,<1.36
+  - botocore>=1.35.0,<1.36
+  - s3fs>=2024.6.0
+
+  # ----- Configuration & Utilities -----
+  - python-dotenv>=1.0.0
+  - pyyaml>=6.0
+  - requests>=2.32.0
+  - click>=8.1.0
+  - tabulate>=0.9.0
+
+  # ----- Data Processing Core -----
+  # These have C/C++ extensions - conda manages their dependencies better
+  - polars>=1.9.0,<2.0
+  - pandas>=2.0.0,<2.3
+  - scipy>=1.11.0,<1.12
+
+  # ----- Progress & Display -----
+  - tqdm>=4.66.0
+  - rich>=13.0.0
+
+  # ----- Testing Framework -----
+  - pytest>=8.3.0,<9.0
+  - pytest-mock>=3.14.0,<4.0
+
+  # ----- Logging -----
+  # loguru not in conda-forge, will install via pip below
+
+  # ----- Optional (Uncomment if needed) -----
+  # - psutil>=5.9.0              # System monitoring
+  # - matplotlib>=3.7.0          # Visualization
+  # - seaborn>=0.13.0            # Statistical viz
+  # - plotly>=5.18.0             # Interactive plots
+
+  # ----- Pip-only Dependencies -----
+  # CRITICAL: Use --no-deps to prevent pip from overriding conda packages
+  # Only include packages NOT available in conda-forge
+  - pip:
+    - loguru>=0.7.0
+
+# ============================================================================
+#
+# ============================================================================
+#
+# TROUBLESHOOTING:
+# ----------------
+#
+# "Solving environment: failed" - Try:
+#   mamba env create -f environment.yml --no-default-packages
+#
+# "Package conflicts" - Check:
+#   mamba search package_name  # See available versions
+#
+# Slow installation with conda:
+#   Install mamba: conda install -n base mamba
+#   Use mamba instead: mamba env create -f environment.yml
+#
+# Check what pip would override:
+#   conda list | grep "<pip>"
+#
+# ============================================================================

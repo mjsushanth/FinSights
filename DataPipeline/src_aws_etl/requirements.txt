@@ -1,0 +1,123 @@
+# ============================================================================
+# AWS ETL Requirements - FinRAG Project
+# Purpose: S3 data pipeline, incremental merges, data quality checks
+# Joel Markapudi
+# Last Updated: 2025-10-26 // 3.11.14
+# ============================================================================
+
+# # try to pin among these: 
+# - Pin CRITICAL dependencies where compatibility matters (mlflow, pyarrow)
+# - Use compatible ranges (~=) for stable libraries (flexibility within minor versions)
+# - Use minimum versions (>=) for utilities with stable APIs
+# ============================================================================
+
+# ----- CRITICAL COMPATIBILITY (Strict Pins) -----
+# These MUST match team requirements for mlflow/pyarrow compatibility
+
+setuptools>=69.0.0           # Provides distutils compatibility
+
+# ----- CRITICAL COMPATIBILITY (Use newer versions with wheels) -----
+pyarrow>=14.0.0,<15.0        # 14+ has Windows wheels for Python 3.11
+numpy>=1.24.0,<2.0           # Modern numpy with wheels
+
+# ----- AWS Core (Flexible within minor versions) -----
+boto3~=1.35.0                # AWS SDK - stable API, safe to use latest 1.35.x
+botocore~=1.35.0             # AWS low-level client
+s3fs>=2024.6.0               # S3 filesystem - stable interface
+
+# ----- Configuration (Flexible) -----
+python-dotenv>=1.0.0         # Stable API since 1.0
+pyyaml>=6.0                  # Stable API, security fixes OK
+
+# ----- Data Processing Core (Balance strict/flexible) -----
+polars>=1.9.0,<2.0           # Fast-moving library, allow patches but not majors
+pandas>=2.0.0,<2.3           # Compatible range with team's 2.0.3
+scipy~=1.11.0                # Pin to 1.11.x for team compatibility
+
+# ----- Utilities (Flexible - stable APIs) -----
+tqdm>=4.66.0                 # Progress bars - stable API
+requests>=2.32.0             # HTTP - very stable
+click>=8.1.0                 # CLI utility (if needed later)
+tabulate>=0.9.0              # Table formatting
+
+# ----- Testing (Flexible within minor) -----
+pytest~=8.3.0                # version (8.3.x), compatible with 7.4.x patterns
+pytest-mock~=3.14.0          # version
+
+# ----- Logging (Flexible) -----
+loguru>=0.7.0                # Better logging - stable API
+
+# ----- /Future (Commented - uncomment if needed) -----
+rich>=13.0.0               # Pretty terminal output
+# psutil>=5.9.0              # System monitoring
+# matplotlib>=3.7.0          # Visualization (only if needed)
+# seaborn>=0.13.0            # Statistical viz
+# plotly>=5.18.0             # Interactive plots
+
+
+
+
+# ============================================================================
+#
+# INSTALLATION INSTRUCTIONS:
+# --------------------------
+# 
+# STEP 0: IF NECESSARY - Deactivate current environments first
+    # deactivate                    # Exit pip venv
+    # conda deactivate             # Exit conda base
+#
+# Remove the virtual environment:
+# Windows PowerShell (system):
+    # Remove-Item -Recurse -Force .venv_aws_etl
+    # Test-Path .venv_aws_etl
+    # pip cache purge
+
+# Step 1: Navigate to project root
+#
+# Step 2: Create virtual environment
+#   python -m venv .venv_aws_etl
+#
+# Step 3: Activate virtual environment
+#   # macOS/Linux:
+#   source .venv_aws_etl/bin/activate
+#   
+#   # Windows (Command Prompt):
+#   .venv_aws_etl\Scripts\activate.bat
+#   
+#   # Windows (PowerShell):
+#   .venv_aws_etl\Scripts\Activate.ps1
+#
+# Step 4: Upgrade pip (recommended)
+#   python -m pip install --upgrade pip
+#
+# Step 5: Install dependencies
+#   pip install -r src_aws_etl/requirements.txt
+#
+# Step 6: Verify installation
+#   python -c "import boto3, polars, pandas; print('Setup complete!')"
+#
+# DEACTIVATE:
+#   deactivate
+#
+
+#  SIZE CHECKS:
+#  # Windows PowerShell:
+#   (Get-ChildItem -Path .venv_aws_etl -Recurse | Measure-Object -Property Length -Sum).Sum / 1MB
+
+#   (Get-ChildItem -Path .venv_aws_etl -Recurse | Measure-Object -Property Length -Sum).Sum / 1GB
+
+#  IF CURIIOUS ABOUT DEPENDENCY TREE:
+#       pip install pipdeptree  
+#       pipdeptree -p great-expectations
+
+# Size check, Package count:
+# du -sh .venv_aws_etl
+# pip list | wc -l
+
+#
+#
+# ============================================================================
+
+
+
+

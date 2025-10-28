@@ -104,6 +104,3 @@ class TestUploadScript:
         
         assert success is True
         assert key == 'prefix/CSV-FILES/test.csv'
-
-
-# Run with: pytest tests/test_aws_s3.py -v

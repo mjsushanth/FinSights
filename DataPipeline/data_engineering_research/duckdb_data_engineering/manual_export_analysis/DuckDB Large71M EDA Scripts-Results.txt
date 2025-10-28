@@ -1,0 +1,426 @@
+-- A1. File schema 
+SELECT * FROM parquet_schema(parquet_path());
+
+-- A2. Row-group inventory
+-- RG rows & compressed bytes (one row per row group)
+WITH meta AS (
+  SELECT
+    file_name,
+    row_group_id,
+    MAX(num_values)                   AS rows_in_rg,          -- across columns
+    SUM(row_group_compressed_bytes)   AS rg_compressed_bytes  -- same for every column, sum is fine
+  FROM parquet_metadata(parquet_path())
+  GROUP BY 1,2
+)
+SELECT file_name, row_group_id, rows_in_rg, rg_compressed_bytes
+FROM meta
+ORDER BY row_group_id
+LIMIT 50;
+
+
+-- A3. Total rows and avg.
+WITH meta AS (
+  SELECT row_group_id, MAX(num_values) AS rows_in_rg
+  FROM parquet_metadata(parquet_path())
+  GROUP BY 1
+)
+SELECT SUM(rows_in_rg) AS total_rows, AVG(rows_in_rg) AS avg_rows_per_rg
+FROM meta;
+
+--#,total_rows,avg_rows_per_rg
+--1,"71,866,962","261,334.4072727273"
+
+------------------------------------------------------------------------------------------------------------------------------------------
+
+
+
+-- D0. Understand the schema
+SELECT "name","type",type_length,repetition_type,num_children,converted_type,"scale","precision",field_id,logical_type,duckdb_type 
+FROM parquet_schema(parquet_path());
+
+--#,file_name,name,type,type_length,repetition_type,num_children,converted_type,scale,precision,field_id,logical_type,duckdb_type
+-- filename: D:/JoelDesktop folds_24/NEU FALL2025/MLops IE7374 Project/finrag-insights-mlops/data/exports/sec_filings_large_full.parquet
+--#,name,type,type_length,repetition_type,num_children,converted_type,scale,precision,field_id,logical_type,duckdb_type
+--1,root,[NULL],[NULL],[NULL],19,[NULL],[NULL],[NULL],[NULL],[NULL],[NULL]
+--2,cik,BYTE_ARRAY,[NULL],OPTIONAL,[NULL],UTF8,[NULL],[NULL],[NULL],StringType(),VARCHAR
+--3,sentence,BYTE_ARRAY,[NULL],OPTIONAL,[NULL],UTF8,[NULL],[NULL],[NULL],StringType(),VARCHAR
+--4,section,INT64,[NULL],OPTIONAL,[NULL],[NULL],[NULL],[NULL],[NULL],[NULL],BIGINT
+--5,labels,[NULL],[NULL],OPTIONAL,3,[NULL],[NULL],[NULL],[NULL],[NULL],[NULL]
+--6,1d,INT64,[NULL],OPTIONAL,[NULL],[NULL],[NULL],[NULL],[NULL],[NULL],BIGINT
+--7,5d,INT64,[NULL],OPTIONAL,[NULL],[NULL],[NULL],[NULL],[NULL],[NULL],BIGINT
+--8,30d,INT64,[NULL],OPTIONAL,[NULL],[NULL],[NULL],[NULL],[NULL],[NULL],BIGINT
+--9,filingDate,BYTE_ARRAY,[NULL],OPTIONAL,[NULL],UTF8,[NULL],[NULL],[NULL],StringType(),VARCHAR
+--10,name,BYTE_ARRAY,[NULL],OPTIONAL,[NULL],UTF8,[NULL],[NULL],[NULL],StringType(),VARCHAR
+--11,docID,BYTE_ARRAY,[NULL],OPTIONAL,[NULL],UTF8,[NULL],[NULL],[NULL],StringType(),VARCHAR
+--12,sentenceID,BYTE_ARRAY,[NULL],OPTIONAL,[NULL],UTF8,[NULL],[NULL],[NULL],StringType(),VARCHAR
+--13,sentenceCount,INT64,[NULL],OPTIONAL,[NULL],[NULL],[NULL],[NULL],[NULL],[NULL],BIGINT
+--14,tickers,[NULL],[NULL],OPTIONAL,1,LIST,[NULL],[NULL],[NULL],ListType(),[NULL]
+--15,list,[NULL],[NULL],REPEATED,1,[NULL],[NULL],[NULL],[NULL],[NULL],[NULL]
+--16,element,BYTE_ARRAY,[NULL],OPTIONAL,[NULL],UTF8,[NULL],[NULL],[NULL],StringType(),VARCHAR
+--17,exchanges,[NULL],[NULL],OPTIONAL,1,LIST,[NULL],[NULL],[NULL],ListType(),[NULL]
+--18,list,[NULL],[NULL],REPEATED,1,[NULL],[NULL],[NULL],[NULL],[NULL],[NULL]
+--19,element,BYTE_ARRAY,[NULL],OPTIONAL,[NULL],UTF8,[NULL],[NULL],[NULL],StringType(),VARCHAR
+--20,entityType,BYTE_ARRAY,[NULL],OPTIONAL,[NULL],UTF8,[NULL],[NULL],[NULL],StringType(),VARCHAR
+--21,sic,BYTE_ARRAY,[NULL],OPTIONAL,[NULL],UTF8,[NULL],[NULL],[NULL],StringType(),VARCHAR
+--22,stateOfIncorporation,BYTE_ARRAY,[NULL],OPTIONAL,[NULL],UTF8,[NULL],[NULL],[NULL],StringType(),VARCHAR
+--23,tickerCount,INT32,[NULL],OPTIONAL,[NULL],[NULL],[NULL],[NULL],[NULL],[NULL],INTEGER
+--24,acceptanceDateTime,BYTE_ARRAY,[NULL],OPTIONAL,[NULL],UTF8,[NULL],[NULL],[NULL],StringType(),VARCHAR
+--25,form,BYTE_ARRAY,[NULL],OPTIONAL,[NULL],UTF8,[NULL],[NULL],[NULL],StringType(),VARCHAR
+--26,reportDate,BYTE_ARRAY,[NULL],OPTIONAL,[NULL],UTF8,[NULL],[NULL],[NULL],StringType(),VARCHAR
+--27,returns,[NULL],[NULL],OPTIONAL,3,[NULL],[NULL],[NULL],[NULL],[NULL],[NULL]
+--28,1d,[NULL],[NULL],OPTIONAL,5,[NULL],[NULL],[NULL],[NULL],[NULL],[NULL]
+--29,closePriceEndDate,FLOAT,[NULL],OPTIONAL,[NULL],[NULL],[NULL],[NULL],[NULL],[NULL],FLOAT
+--30,closePriceStartDate,FLOAT,[NULL],OPTIONAL,[NULL],[NULL],[NULL],[NULL],[NULL],[NULL],FLOAT
+--31,endDate,BYTE_ARRAY,[NULL],OPTIONAL,[NULL],UTF8,[NULL],[NULL],[NULL],StringType(),VARCHAR
+--32,startDate,BYTE_ARRAY,[NULL],OPTIONAL,[NULL],UTF8,[NULL],[NULL],[NULL],StringType(),VARCHAR
+--33,ret,FLOAT,[NULL],OPTIONAL,[NULL],[NULL],[NULL],[NULL],[NULL],[NULL],FLOAT
+--34,5d,[NULL],[NULL],OPTIONAL,5,[NULL],[NULL],[NULL],[NULL],[NULL],[NULL]
+--35,closePriceEndDate,FLOAT,[NULL],OPTIONAL,[NULL],[NULL],[NULL],[NULL],[NULL],[NULL],FLOAT
+--36,closePriceStartDate,FLOAT,[NULL],OPTIONAL,[NULL],[NULL],[NULL],[NULL],[NULL],[NULL],FLOAT
+--37,endDate,BYTE_ARRAY,[NULL],OPTIONAL,[NULL],UTF8,[NULL],[NULL],[NULL],StringType(),VARCHAR
+--38,startDate,BYTE_ARRAY,[NULL],OPTIONAL,[NULL],UTF8,[NULL],[NULL],[NULL],StringType(),VARCHAR
+--39,ret,FLOAT,[NULL],OPTIONAL,[NULL],[NULL],[NULL],[NULL],[NULL],[NULL],FLOAT
+--40,30d,[NULL],[NULL],OPTIONAL,5,[NULL],[NULL],[NULL],[NULL],[NULL],[NULL]
+--41,closePriceEndDate,FLOAT,[NULL],OPTIONAL,[NULL],[NULL],[NULL],[NULL],[NULL],[NULL],FLOAT
+--42,closePriceStartDate,FLOAT,[NULL],OPTIONAL,[NULL],[NULL],[NULL],[NULL],[NULL],[NULL],FLOAT
+--43,endDate,BYTE_ARRAY,[NULL],OPTIONAL,[NULL],UTF8,[NULL],[NULL],[NULL],StringType(),VARCHAR
+--44,startDate,BYTE_ARRAY,[NULL],OPTIONAL,[NULL],UTF8,[NULL],[NULL],[NULL],StringType(),VARCHAR
+--45,ret,FLOAT,[NULL],OPTIONAL,[NULL],[NULL],[NULL],[NULL],[NULL],[NULL],FLOAT
+
+
+------------------------------------------------------------------------------------------------------------------------------------------
+
+
+-- D1. Quick column inventory + sample row
+SELECT * FROM read_parquet(parquet_path()) LIMIT 5;
+-- Output:
+--#,cik,sentence,section,1d,5d,30d,filingDate,name,docID,sentenceID,sentenceCount,tickers,exchanges,entityType,sic,stateOfIncorporation,tickerCount,acceptanceDateTime,form,reportDate,1d,5d,30d
+--1,0000001750,"ITEM 1.BUSINESS General AAR CORP. and its subsidiaries are referred to herein collectively as “AAR,” “Company,” “we,” “us,” and “our” unless the context indicates otherwise.",0,0,1,0,2020-07-21,AAR CORP,0000001750_10-K_2020,0000001750_10-K_2020_section_1_0,1,{'AIR'},{'NYSE'},operating,3720,DE,1,2020-07-21T17:19:15.000Z,10-K,2020-05-31,"{closePriceEndDate=19.01, closePriceStartDate=18.19, endDate=2020-07-22T00:00:00-04:00, startDate=2020-07-20T00:00:00-04:00, ret=0.045079697}","{closePriceEndDate=17.72, closePriceStartDate=18.19, endDate=2020-07-27T00:00:00-04:00, startDate=2020-07-20T00:00:00-04:00, ret=-0.025838438}","{closePriceEndDate=19.25, closePriceStartDate=18.19, endDate=2020-08-20T00:00:00-04:00, startDate=2020-07-20T00:00:00-04:00, ret=0.058273744}"
+--2,0000001750,"AAR was founded in 1951, organized in 1955 and reincorporated in Delaware in 1966.",0,0,1,0,2020-07-21,AAR CORP,0000001750_10-K_2020,0000001750_10-K_2020_section_1_1,2,{'AIR'},{'NYSE'},operating,3720,DE,1,2020-07-21T17:19:15.000Z,10-K,2020-05-31,"{closePriceEndDate=19.01, closePriceStartDate=18.19, endDate=2020-07-22T00:00:00-04:00, startDate=2020-07-20T00:00:00-04:00, ret=0.045079697}","{closePriceEndDate=17.72, closePriceStartDate=18.19, endDate=2020-07-27T00:00:00-04:00, startDate=2020-07-20T00:00:00-04:00, ret=-0.025838438}","{closePriceEndDate=19.25, closePriceStartDate=18.19, endDate=2020-08-20T00:00:00-04:00, startDate=2020-07-20T00:00:00-04:00, ret=0.058273744}"
+--3,0000001750,We are a diversified provider of products and services to the worldwide aviation and government and defense markets.,0,0,1,0,2020-07-21,AAR CORP,0000001750_10-K_2020,0000001750_10-K_2020_section_1_2,3,{'AIR'},{'NYSE'},operating,3720,DE,1,2020-07-21T17:19:15.000Z,10-K,2020-05-31,"{closePriceEndDate=19.01, closePriceStartDate=18.19, endDate=2020-07-22T00:00:00-04:00, startDate=2020-07-20T00:00:00-04:00, ret=0.045079697}","{closePriceEndDate=17.72, closePriceStartDate=18.19, endDate=2020-07-27T00:00:00-04:00, startDate=2020-07-20T00:00:00-04:00, ret=-0.025838438}","{closePriceEndDate=19.25, closePriceStartDate=18.19, endDate=2020-08-20T00:00:00-04:00, startDate=2020-07-20T00:00:00-04:00, ret=0.058273744}"
+--4,0000001750,Fiscal 2020 began with strategic initiatives focused on growth and execution across all of our activities in the commercial and government markets.,0,0,1,0,2020-07-21,AAR CORP,0000001750_10-K_2020,0000001750_10-K_2020_section_1_3,4,{'AIR'},{'NYSE'},operating,3720,DE,1,2020-07-21T17:19:15.000Z,10-K,2020-05-31,"{closePriceEndDate=19.01, closePriceStartDate=18.19, endDate=2020-07-22T00:00:00-04:00, startDate=2020-07-20T00:00:00-04:00, ret=0.045079697}","{closePriceEndDate=17.72, closePriceStartDate=18.19, endDate=2020-07-27T00:00:00-04:00, startDate=2020-07-20T00:00:00-04:00, ret=-0.025838438}","{closePriceEndDate=19.25, closePriceStartDate=18.19, endDate=2020-08-20T00:00:00-04:00, startDate=2020-07-20T00:00:00-04:00, ret=0.058273744}"
+--5,0000001750,"Our momentum from a successful fiscal 2019 carried into the new year as we saw continued strength in our parts supply activities, as well as in government programs.",0,0,1,0,2020-07-21,AAR CORP,0000001750_10-K_2020,0000001750_10-K_2020_section_1_4,5,{'AIR'},{'NYSE'},operating,3720,DE,1,2020-07-21T17:19:15.000Z,10-K,2020-05-31,"{closePriceEndDate=19.01, closePriceStartDate=18.19, endDate=2020-07-22T00:00:00-04:00, startDate=2020-07-20T00:00:00-04:00, ret=0.045079697}","{closePriceEndDate=17.72, closePriceStartDate=18.19, endDate=2020-07-27T00:00:00-04:00, startDate=2020-07-20T00:00:00-04:00, ret=-0.025838438}","{closePriceEndDate=19.25, closePriceStartDate=18.19, endDate=2020-08-20T00:00:00-04:00, startDate=2020-07-20T00:00:00-04:00, ret=0.058273744}"
+
+
+
+------------------------------------------------------------------------------------------------------------------------------------------
+
+
+-- Seeing Types for Dates. 
+SELECT * FROM parquet_schema(parquet_path()) WHERE name IN ('reportDate','filingDate','acceptanceDateTime');
+--Output:
+--#,file_name,name,type,type_length,repetition_type,num_children,converted_type,scale,precision,field_id,logical_type,duckdb_type
+--1,D:/JoelDesktop folds_24/NEU FALL2025/MLops IE7374 Project/finrag-insights-mlops/data/exports/sec_filings_large_full.parquet,filingDate,BYTE_ARRAY,[NULL],OPTIONAL,[NULL],UTF8,[NULL],[NULL],[NULL],StringType(),VARCHAR
+--2,D:/JoelDesktop folds_24/NEU FALL2025/MLops IE7374 Project/finrag-insights-mlops/data/exports/sec_filings_large_full.parquet,acceptanceDateTime,BYTE_ARRAY,[NULL],OPTIONAL,[NULL],UTF8,[NULL],[NULL],[NULL],StringType(),VARCHAR
+--3,D:/JoelDesktop folds_24/NEU FALL2025/MLops IE7374 Project/finrag-insights-mlops/data/exports/sec_filings_large_full.parquet,reportDate,BYTE_ARRAY,[NULL],OPTIONAL,[NULL],UTF8,[NULL],[NULL],[NULL],StringType(),VARCHAR
+
+---------------------------------------------------------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------------------------------------------------------------
+
+-- Section distribution
+SELECT 
+    section,
+    COUNT(DISTINCT cik || '-' || year) as filings_with_section,
+    COUNT(*) as sentence_count,
+    ROUND(AVG(COUNT(*)) OVER (), 2) as avg_sentences_per_section_type
+FROM financial_data
+GROUP BY section
+ORDER BY sentence_count DESC;
+
+------------------------------------------------------------------------------------------------------------------------------------------
+
+
+-- Global Counts 
+SELECT
+  COUNT(*)                                        AS total_rows,
+  COUNT(DISTINCT filing_id)                       AS distinct_filings,
+  COUNT(DISTINCT company)                         AS distinct_companies,
+  COUNT(DISTINCT year)                            AS distinct_years,
+  /* include if you have it */
+  /* COUNT(DISTINCT sic)                          AS distinct_sic_codes */
+FROM parquet_scan(parquet_path())
+COLUMNS(filing_id, company, year /*, sic */);
+-- Global counts result.
+--"distinct_filings","total_rows","distinct_companies","distinct_years"
+--4674,71866962,32473083,20
+
+------------------------------------------------------------------------------------------------------------------------------------------
+
+
+-- Per-year distribution (exact)
+WITH base AS (
+  SELECT reportDate
+  FROM parquet_scan(parquet_path())          
+),
+parsed AS (
+  SELECT
+    COALESCE(
+      try_strptime(reportDate, '%Y-%m-%d'),
+      try_strptime(reportDate, '%Y/%m/%d'),
+      try_strptime(reportDate, '%Y-%m-%d %H:%M:%S'),
+      try_strptime(reportDate, '%Y-%m-%dT%H:%M:%S'),
+      try_strptime(reportDate, '%Y%m%d')
+    ) AS dt
+  FROM base
+),
+yr AS (
+  SELECT CAST(EXTRACT(YEAR FROM dt) AS INTEGER) AS year
+  FROM parsed
+  WHERE dt IS NOT NULL
+)
+SELECT year, COUNT(*) AS n_rows
+FROM yr
+WHERE year BETWEEN 1990 AND 2035
+GROUP BY 1
+ORDER BY 1;
+
+-- Output:
+--#,year,n_rows
+--1,"1,993","95,656"
+--2,"1,994","161,979"
+--3,"1,995","201,689"
+--4,"1,996","341,578"
+--5,"1,997","395,949"
+--6,"1,998","499,079"
+--7,"1,999","552,642"
+--8,"2,000","619,359"
+--9,"2,001","726,803"
+--10,"2,002","1,346,747"
+--11,"2,003","1,482,700"
+--12,"2,004","1,689,486"
+--13,"2,005","1,892,228"
+--14,"2,006","2,177,177"
+--15,"2,007","2,447,572"
+--16,"2,008","2,851,907"
+--17,"2,009","3,030,451"
+--18,"2,010","3,167,374"
+--19,"2,011","3,341,330"
+--20,"2,012","3,585,997"
+--21,"2,013","3,864,860"
+--22,"2,014","4,213,875"
+--23,"2,015","4,531,285"
+--24,"2,016","4,820,528"
+--25,"2,017","5,280,456"
+--26,"2,018","5,733,604"
+--27,"2,019","6,091,130"
+--28,"2,020","6,723,521"
+
+
+------------------------------------------------------------------------------------------------------------------------------------------
+
+
+-- S1. Section distribution - critical for stratification
+-- Sections have VERY different characteristics (Item 1A vs Item 7)
+SELECT 
+  section,
+  COUNT(DISTINCT cik) as companies_with_section,
+  COUNT(DISTINCT CONCAT(cik, '-', year)) as filings_with_section,
+  COUNT(*) as n_sentences,
+  ROUND(COUNT(*)::DOUBLE / SUM(COUNT(*)) OVER () * 100, 2) as pct_of_corpus,
+  ROUND(AVG(COUNT(*)) OVER (), 1) as overall_avg_per_section
+FROM read_parquet(parquet_path())
+GROUP BY section
+ORDER BY n_sentences DESC;
+
+
+------------------------------------------------------------------------------------------------------------------------------------------
+
+
+-- D2. Grain cardinalities 
+-- Understanding our stratification levels
+-- Understanding our stratification levels
+WITH grain_counts AS (
+  SELECT 
+    COUNT(DISTINCT cik) as n_companies,
+    COUNT(DISTINCT docID) as n_filings,
+    COUNT(DISTINCT CONCAT(cik, '-', YEAR(reportDate::DATE), '-', section)) as n_filing_sections,
+    COUNT(DISTINCT YEAR(reportDate::DATE)) as n_years,
+    COUNT(*) as n_sentences
+  FROM read_parquet(parquet_path())
+)
+SELECT 
+  n_companies,
+  n_filings,
+  n_filing_sections,
+  n_years,
+  n_sentences,
+  -- Critical ratios
+  ROUND(n_sentences::DOUBLE / n_filings, 1) as avg_sentences_per_filing,
+  ROUND(n_sentences::DOUBLE / n_filing_sections, 1) as avg_sentences_per_section,
+  ROUND(n_filing_sections::DOUBLE / n_filings, 2) as avg_sections_per_filing
+FROM grain_counts;
+
+--Output:
+--#,n_companies,n_filings,n_filing_sections,n_years,n_sentences,avg_sentences_per_filing,avg_sentences_per_section,avg_sections_per_filing
+--1,"4,674","55,096","1,021,030",28,"71,866,962","1,304.4",70.4,18.53
+
+
+------------------------------------------------------------------------------------------------------------------------------------------
+
+
+-- D3. Distribution of sentences per filing
+-- Are some filings 10x larger than others?
+WITH filing_sizes AS (
+  SELECT 
+    docID,
+    cik,
+    YEAR(reportDate::DATE) as report_year,
+    COUNT(*) as sentence_count
+  FROM read_parquet(parquet_path())
+  GROUP BY docID, cik, report_year
+)
+SELECT 
+  MIN(sentence_count) as min_sentences,
+  PERCENTILE_CONT(0.25) WITHIN GROUP (ORDER BY sentence_count) as p25,
+  PERCENTILE_CONT(0.50) WITHIN GROUP (ORDER BY sentence_count) as median,
+  PERCENTILE_CONT(0.75) WITHIN GROUP (ORDER BY sentence_count) as p75,
+  PERCENTILE_CONT(0.90) WITHIN GROUP (ORDER BY sentence_count) as p90,
+  PERCENTILE_CONT(0.95) WITHIN GROUP (ORDER BY sentence_count) as p95,
+  MAX(sentence_count) as max_sentences,
+  ROUND(AVG(sentence_count), 1) as mean_sentences,
+  ROUND(STDDEV(sentence_count), 1) as stddev,
+  -- Skew indicator
+  ROUND((PERCENTILE_CONT(0.95) WITHIN GROUP (ORDER BY sentence_count))::DOUBLE / 
+        NULLIF((PERCENTILE_CONT(0.50) WITHIN GROUP (ORDER BY sentence_count))::DOUBLE, 0), 2) as p95_to_median_ratio
+FROM filing_sizes;
+
+-- Output:
+--#,min_sentences,p25,median,p75,p90,p95,max_sentences,mean_sentences,stddev,p95_to_median_ratio
+--1,2,845,"1,271","1,684","2,112","2,402","8,286","1,304.4",648.7,1.89
+
+------------------------------------------------------------------------------------------------------------------------------------------
+
+
+-- S1. Section distribution
+-- Which sections dominate the corpus?
+SELECT 
+  section,
+  COUNT(DISTINCT cik) as companies_with_section,
+  COUNT(DISTINCT docID) as filings_with_section,
+  COUNT(*) as n_sentences,
+  ROUND(COUNT(*)::DOUBLE / SUM(COUNT(*)) OVER () * 100, 2) as pct_of_corpus,
+  ROUND(COUNT(*)::DOUBLE / COUNT(DISTINCT docID), 1) as avg_sentences_per_filing
+FROM read_parquet(parquet_path())
+GROUP BY section
+ORDER BY n_sentences DESC;
+
+-- Output
+--#,section,companies_with_section,filings_with_section,n_sentences,pct_of_corpus,avg_sentences_per_filing
+--1,8,"4,665","54,321","14,648,162",20.38,269.7
+--2,10,"4,663","54,365","14,170,561",19.72,260.7
+--3,0,"4,627","53,074","12,181,378",16.95,229.5
+--4,1,"4,600","42,729","10,869,087",15.12,254.4
+--5,19,"4,648","48,547","9,756,826",13.58,201
+--6,14,"4,636","52,828","1,275,162",1.77,24.1
+--7,18,"4,649","53,230","1,198,657",1.67,22.5
+--8,6,"4,669","54,554","1,060,478",1.48,19.4
+--9,9,"4,580","49,835","950,647",1.32,19.1
+--10,12,"4,637","47,181","897,029",1.25,19
+--11,3,"4,627","53,116","874,892",1.22,16.5
+--12,15,"4,622","51,621","862,198",1.2,16.7
+--13,4,"4,667","54,436","763,038",1.06,14
+--14,16,"4,636","52,747","450,466",0.63,8.5
+--15,7,"4,647","53,149","430,566",0.6,8.1
+--16,17,"4,631","52,649","430,556",0.6,8.2
+--17,5,"4,652","53,054","381,084",0.53,7.2
+--18,11,"4,660","54,141","255,116",0.35,4.7
+--19,13,"4,593","43,848","214,190",0.3,4.9
+--20,2,"4,504","41,605","196,869",0.27,4.7
+
+------------------------------------------------------------------------------------------------------------------------------------------
+
+
+-- S2. Section × Filing size distribution
+-- Are certain sections consistently verbose across filings?
+WITH section_sizes AS (
+  SELECT 
+    section,
+    docID,
+    COUNT(*) as sentences_in_section
+  FROM read_parquet(parquet_path())
+  GROUP BY section, docID
+)
+SELECT 
+  section,
+  COUNT(*) as n_filings_with_section,
+  ROUND(AVG(sentences_in_section), 1) as avg_sentences,
+  PERCENTILE_CONT(0.50) WITHIN GROUP (ORDER BY sentences_in_section) as median_sentences,
+  PERCENTILE_CONT(0.90) WITHIN GROUP (ORDER BY sentences_in_section) as p90_sentences,
+  MAX(sentences_in_section) as max_sentences,
+  ROUND(STDDEV(sentences_in_section), 1) as stddev
+FROM section_sizes
+GROUP BY section
+ORDER BY avg_sentences DESC;
+
+-- Output:
+--#,section,n_filings_with_section,avg_sentences,median_sentences,p90_sentences,max_sentences,stddev
+--1,8,"54,321",269.7,250,508,"4,539",196.2
+--2,10,"54,365",260.7,197,653,"4,431",296.1
+--3,1,"42,729",254.4,213,509,"2,106",196.6
+--4,0,"53,074",229.5,187,458,"2,724",180.5
+--5,19,"48,547",201,42,580,"4,140",275.4
+--6,14,"52,828",24.1,7,76,"1,594",40.5
+--7,18,"53,230",22.5,4,21,"3,536",93.7
+--8,6,"54,554",19.4,15,30,"3,816",40.8
+--9,9,"49,835",19.1,11,37,"3,596",54
+--10,12,"47,181",19,16,32,794,15.3
+--11,15,"51,621",16.7,3,37,808,48
+--12,3,"53,116",16.5,9,24,"1,903",44.9
+--13,4,"54,436",14,5,32,"2,326",35.9
+--14,16,"52,747",8.5,4,20,"1,287",13.7
+--15,17,"52,649",8.2,3,17,837,19.8
+--16,7,"53,149",8.1,4,15,"2,156",28.9
+--17,5,"53,054",7.2,3,16,991,17.1
+--18,13,"43,848",4.9,3,5,813,20
+--19,2,"41,605",4.7,3,4,"2,414",34.8
+--20,11,"54,141",4.7,3,4,"2,330",32.4
+
+------------------------------------------------------------------------------------------------------------------------------------------
+
+
+-- D4. Temporal distribution - final check before sampling
+SELECT 
+  YEAR(reportDate::DATE) as report_year,
+  COUNT(DISTINCT cik) as n_companies,
+  COUNT(DISTINCT docID) as n_filings,
+  COUNT(*) as n_sentences,
+  ROUND(COUNT(*)::DOUBLE / SUM(COUNT(*)) OVER () * 100, 2) as pct_of_corpus
+FROM read_parquet(parquet_path())
+GROUP BY report_year
+ORDER BY report_year;
+
+--Output:
+--#,report_year,n_companies,n_filings,n_sentences,pct_of_corpus
+--1,"1,993",171,171,"95,656",0.13
+--2,"1,994",286,286,"161,979",0.23
+--3,"1,995",390,390,"201,689",0.28
+--4,"1,996",602,602,"341,578",0.48
+--5,"1,997",667,667,"395,949",0.55
+--6,"1,998",764,764,"499,079",0.69
+--7,"1,999",813,813,"552,642",0.77
+--8,"2,000",858,858,"619,359",0.86
+--9,"2,001",885,885,"726,803",1.01
+--10,"2,002","1,392","1,392","1,346,747",1.87
+--11,"2,003","1,420","1,420","1,482,700",2.06
+--12,"2,004","1,504","1,504","1,689,486",2.35
+--13,"2,005","1,559","1,559","1,892,228",2.63
+--14,"2,006","1,684","1,684","2,177,177",3.03
+--15,"2,007","1,844","1,844","2,447,572",3.41
+--16,"2,008","2,134","2,134","2,851,907",3.97
+--17,"2,009","2,315","2,315","3,030,451",4.22
+--18,"2,010","2,463","2,463","3,167,374",4.41
+--19,"2,011","2,520","2,520","3,341,330",4.65
+--20,"2,012","2,699","2,699","3,585,997",4.99
+--21,"2,013","2,862","2,862","3,864,860",5.38
+--22,"2,014","3,054","3,054","4,213,875",5.86
+--23,"2,015","3,213","3,213","4,531,285",6.31
+--24,"2,016","3,345","3,345","4,820,528",6.71
+--25,"2,017","3,578","3,578","5,280,456",7.35
+--26,"2,018","3,810","3,810","5,733,604",7.98
+--27,"2,019","4,005","4,005","6,091,130",8.48
+--28,"2,020","4,259","4,259","6,723,521",9.36
+
+
+------------------------------------------------------------------------------------------------------------------------------------------
+
+
