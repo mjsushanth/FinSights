@@ -31,7 +31,7 @@
         ├── dag/                         # Airflow DAGs for orchestration
         ├── src/                         # SEC data ingestion source code
         │
-        ├── DataSchemaValidation/           # Data quality & validation framework ( Great Expectations, Anamoly )
+        ├── data_auto_stats/           # Data quality & validation framework ( Great Expectations, Anamoly )
         │
         ├── src_aws_etl/                    # AWS S3 ETL operations ( Merge Incr + Historical, Archive, Log Management )
         │
