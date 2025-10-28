@@ -1,6 +1,6 @@
 # FinSights - DataPipeline 
 
-### 1️⃣ Clone & Setup Environment
+### 1. Clone & Setup Environment
 ```bash
 git clone https://github.com/Finsights-MLOps/MLOps_Final.git
 cd MLOps_Final/DataPipeline
@@ -8,24 +8,24 @@ conda env create -f environment.yml
 conda activate finsight-venv
 ```
 
-### 2️⃣ Configure Credentials
+### 2. Configure Credentials
 ```bash
 cp .env.template .env
 # Edit .env with AWS credentials. Please reach out to any team member of Group 4 for the access keys
 ```
 
-### 3️⃣ Start Airflow
+### 3. Start Airflow
 ```bash
 docker compose up airflow-init
 docker compose up
 ```
 
-### 4️⃣ Access UI
+### 4️. Access UI
 Open: http://localhost:8080
 - Username: `airflow`
 - Password: `airflow`
 
-### 5️⃣ Trigger Pipeline
+### 5. Trigger Pipeline
 Click ▶️ next to `sec_filings_etl_pipeline`
 
 ---

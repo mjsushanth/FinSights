@@ -27,8 +27,8 @@
 - We wrote comprehensive unit tests to validate the core functionality of the download_filings and extract_and_convert module as well as AWS connection modules(download_from_s3 and upload_to_s3).
 - All tests are written with pytest, use temporary directories for isolation, and run independently without needing any external data or network access.
   
-### Pipeline Orchestration (Airflow DAGs)
 
+### Pipeline Orchestration (Airflow DAGs)
 We designed an Airflow DAG that automates the full ETL workflow for SEC filings - from fetching company data to generating structured outputs in a parquet file. 
 
 #### How it works:
@@ -38,8 +38,8 @@ We designed an Airflow DAG that automates the full ETL workflow for SEC filings 
 - The processed outputs are then uploaded to cloud storage (AWS S3).
 - Next, the temporary files are cleaned up and task status is logged.
 - The next step is a core ETL pipeline based on polars on AWS S3 buckets, for a clean data merge concept between historical and live fact datasets. The fact datasets are also versioned and archived properly. (Ref: `src_aws_etl` folder.)
-- Post-processing includes generating metadata and statistics for the ingested data (Great Expectations), and anomaly alerts. (Ref: `data_auto_stats` folder.) 
-The DAG ensures all stages — download → extract → transform → upload → clean — run sequentially in the right order.
+- Post-processing includes generating metadata and statistics for the ingested data (Great Expectations), and anomaly alerts. (Ref: `data_auto_stats` folder.) [To be integrated into Docker-Airflow.]
+- The DAG ensures all stages — download → extract → transform → upload → clean — run sequentially in the right order.
 
 
 #### SETUP:
@@ -63,7 +63,6 @@ The pipeline flags anomalies during preprocessing and ingestion:
 - Conversion errors logged and surfaced as Airflow task alerts
 Future extension: Slack/email alerts for failed or incomplete extractions.
 
-### Pipeline Flow Optimization
 
 
 ## Bias Mitigation Documentation:

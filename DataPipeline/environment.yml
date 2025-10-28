@@ -21,6 +21,7 @@
 #
 # STEP 2: Create environment
 #   mamba env create -f environment.yml
+# 
 #   # OR with conda (slower):
 #   conda env create -f environment.yml
 #
