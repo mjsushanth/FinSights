@@ -20,6 +20,7 @@ The data engineering content of this project involves using DuckDB, a high-perfo
 
 
 ### Project layout - Preliminary
+```
     duckdb/
     00_pragmas.sql           -- threads, memory, extensions
     01_macros_sampling.sql   -- macros = "stored procedures"
@@ -34,6 +35,7 @@ The data engineering content of this project involves using DuckDB, a high-perfo
     ..
     qc_checks.sql            -- quick validations
     sampler.duckdb             -- the DB file DBeaver connects to
+```
 
 1. 01_macros_sampling.sql (define reusable “procs”) - Concepts such as Uniform (block) sampling to Parquet, Stratified sampling by (company, year). 
 2. Other ideas for sampling: Deterministic hash-based sampling.
@@ -121,15 +123,16 @@ TOTAL                 | ~47s        | 100%       | ✓✓ Production-Ready
 
 
 ### Grouping Idea For DuckDB Scripts:
-1. A_bootstrap/, B_params/, C_macros/, D_jobs/, E_qc/.
-2 Or, Numbering Scheme: 00_, 01_, 10_, 11_, 12_, qc_.sql, etc.
-    00–09 · Session bootstrap
-    10–19 · Reference / DDL 
-    20–29 · EDA / inspection
-    30–39 · Actions / jobs
-    ...
-    90–99 · QA / QC / audits
-
+```
+    1. A_bootstrap/, B_params/, C_macros/, D_jobs/, E_qc/.
+    2 Or, Numbering Scheme: 00_, 01_, 10_, 11_, 12_, qc_.sql, etc.
+        00–09 · Session bootstrap
+        10–19 · Reference / DDL 
+        20–29 · EDA / inspection
+        30–39 · Actions / jobs
+        ...
+        90–99 · QA / QC / audits
+```
 
 ### Disclaimer on Unmatched Tickers:
 - After extensive EDA query and excel-based double-checking, manual reviews, 89 companies out of the master list (for the historical fact table) have no name, ticker or any match in the 4675 distinct CIK-Company dimension, which comes from large data - 71 Million rows. 
