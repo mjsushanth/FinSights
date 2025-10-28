@@ -46,6 +46,8 @@
         ├── Dockerfile                      # Application container
         ├── environment.yml                 # Conda environment specification
 ```
+## DVC : 
+Data version Control has been implemented in this Repo, and the data is stored on an s3 Bucket managed by our team. The metadata is stored in the .dvc folder.
 
 ## High level Conceptual Flow:
 ```
