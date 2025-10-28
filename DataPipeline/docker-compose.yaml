@@ -74,7 +74,7 @@ x-airflow-common:
     _PIP_ADDITIONAL_REQUIREMENTS: ${_PIP_ADDITIONAL_REQUIREMENTS:- }
     # The following line can be used to set a custom config file, stored in the local config folder
     AIRFLOW_CONFIG: '/opt/airflow/config/airflow.cfg'
-    PYTHONPATH: '/opt/airflow:/opt/airflow/src:/opt/airflow/src_aws_etl' 
+    PPYTHONPATH: '/opt/airflow:/opt/airflow/src:/opt/airflow/src_aws_etl:/opt/airflow/data_auto_stats/src' 
 
   volumes:
     - ${AIRFLOW_PROJ_DIR:-.}/dags:/opt/airflow/dags
@@ -85,6 +85,8 @@ x-airflow-common:
     - ${AIRFLOW_PROJ_DIR:-.}/datasets:/opt/airflow/datasets
     - ${AIRFLOW_PROJ_DIR:-.}/.env:/opt/airflow/.env:ro
     - ${AIRFLOW_PROJ_DIR:-.}/src_aws_etl:/opt/airflow/src_aws_etl:ro  # Added for ETL AWS.
+    - ${AIRFLOW_PROJ_DIR:-.}/data_auto_stats:/opt/airflow/data_auto_stats:ro
+
 
   user: "${AIRFLOW_UID:-50000}:0"
   depends_on:

@@ -251,7 +251,7 @@ with DAG(
     )
 
     statistics_data = PythonOperator(
-        task_id="validate_data",
+        task_id="statistics_data",
         python_callable=task_statistics_data,
     )
     
