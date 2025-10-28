@@ -2,8 +2,9 @@
 #### Code & Doc Author: Joel Markapudi.
 
 ## Introduction
-The data engineering content of this project involves using DuckDB, a high-performance analytical database, to perform stratified sampling, complete data cleaning, data validation suite, data export suite, various EDA tasks, and complex SQL logic implementations achieved across 30+ SQL files. Will have details on **DuckDB Usage for finrag-insights-mlops** and of **polars, other research**.
+The data engineering content of this project involves using DuckDB, a high-performance analytical database, to perform stratified sampling, complete data cleaning, data validation suite, data export suite, various EDA tasks, and complex SQL logic implementations achieved across 30+ SQL files. Will have details on **DuckDB Usage for finrag-insights-mlops**.
 
+The objective of this module is to create a **production-grade, consolidated fact tables** and solve these manually analyzed, multi-source problems. Setup instructions, reproducibility are given but we recommend not attempting to setup the DB but rather to realize this layer's features and delivery - which is fed to successive ML or analytics layers.
 
 ### Repository Structure:
 ```
@@ -38,13 +39,10 @@ The data engineering content of this project involves using DuckDB, a high-perfo
     sampler.duckdb             -- the DB file DBeaver connects to
 ```
 
-1. 01_macros_sampling.sql (define reusable “procs”) - Concepts such as Uniform (block) sampling to Parquet, Stratified sampling by (company, year). 
-2. Other ideas for sampling: Deterministic hash-based sampling.
-
-
 ### Reproducibility considerations:
 
 1. **Reproducibility by Design**: Full end-to-end reproducibility (71.8M raw corpus → 1M sample) requires 1.6GB source parquet (`sec_filings_large_full.parquet`) which cannot be hosted due to size constraints. However, we provide 6 exported dimension tables (<1MB total) and complete SQL scripts that enable full pipeline reproduction.
+
 2. **Production Scripts are Fully Parameterized**: Core pipeline scripts, validation scripts, export scripts use session variable architecture with clear prerequisites documentation, enabling one-shot execution by modifying parameters.    
     - Do verify SQL Scripts such as, `31_run_n_company_table_creation, 31_run_stratified, 31_run_stratified_post_analysis, 32_1_NComp_21CompTable_Creation, 32_2_SectionName_DimensionCreation, etc.` 
 3. **Ad-Hoc Engineering Non-Reproducible**: Data exploration, company curation with fuzzy matching (S&P 500 integration, CIK resolution), and iterative schema design represent one-time discovery work documented for transparency but not designed for automation.
