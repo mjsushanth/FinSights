@@ -186,7 +186,7 @@ def main():
         
         # Run checks
         if not checker.run_checks():
-            print("\n❌ Pre-flight failed! Cannot proceed.")
+            print("\n Pre-flight failed! Cannot proceed.")
             return False
         
         # Handle archiving
@@ -199,7 +199,7 @@ def main():
         return True
     
     except Exception as e:
-        print(f"\n❌ Error: {e}")
+        print(f"\n Error: {e}")
         import traceback
         traceback.print_exc()
         return False

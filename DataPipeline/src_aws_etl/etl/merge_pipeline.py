@@ -93,13 +93,13 @@ class MergePipeline:
             base_uri = self.config.s3_uri(base_path)
             incr_uri = self.config.s3_uri(self.config.incr_path)
             
-            print(f"\n⏳ Reading {base_label}...")
+            print(f"\n Reading {base_label}...")
             print(f"   {base_path}")
             base_df = pl.read_parquet(base_uri, storage_options=self.storage_options)
             self.stats['base_rows'] = len(base_df)
             print(f"   ✓ {len(base_df):,} rows")
             
-            print(f"\n⏳ Reading incremental...")
+            print(f"\n Reading incremental...")
             print(f"   {self.config.incr_path}")
             incr_df = pl.read_parquet(incr_uri, storage_options=self.storage_options)
             self.stats['incr_rows'] = len(incr_df)
@@ -183,7 +183,7 @@ class MergePipeline:
             merged_df = pl.concat([base_df, incr_df])
             
             # Deduplicate (incremental overwrites base)
-            print(f"\n⏳ Deduplicating on sentenceID...")
+            print(f"\n Deduplicating on sentenceID...")
             merged_df = merged_df.unique(subset=['sentenceID'], keep='last')
             
             self.stats['duplicates_removed'] = len(base_df) + len(incr_df) - len(merged_df)
@@ -231,7 +231,7 @@ class MergePipeline:
             print("STEP 7: WRITE OUTPUT")
             print("=" * 70)
             
-            print(f"\n⏳ Writing to S3...")
+            print(f"\n Writing to S3...")
             
             # Write to local temp file first
             with tempfile.NamedTemporaryFile(suffix='.parquet', delete=False) as tmp:
@@ -258,7 +258,7 @@ class MergePipeline:
             
             # Done!
             print("\n" + "=" * 70)
-            print("✅ MERGE COMPLETED SUCCESSFULLY!")
+            print(" MERGE COMPLETED SUCCESSFULLY!")
             print("=" * 70)
             print(f"  Merge type: {self.stats['merge_type']}")
             print(f"  Duration: {self.stats['duration_sec']} seconds")
@@ -277,7 +277,7 @@ class MergePipeline:
             self.write_log()
             
             print("\n" + "=" * 70)
-            print("❌ MERGE FAILED!")
+            print(" MERGE FAILED!")
             print("=" * 70)
             print(f"  Error: {e}")
             import traceback
@@ -286,7 +286,7 @@ class MergePipeline:
     
     def write_log(self):
         """Append merge results to CSV log file on S3"""
-        print("\n⏳ Writing log entry...")
+        print("\n Writing log entry...")
         
         log_key = f"{self.config.log_path}/merge_history.csv"
         

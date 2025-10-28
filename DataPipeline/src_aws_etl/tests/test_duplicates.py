@@ -55,7 +55,7 @@ def check_duplicates():
     print(f"  Duplicates: {hist_dupes:,}")
     
     if hist_dupes > 0:
-        print(f"  ⚠️  Internal duplicates found!")
+        print(f"    Internal duplicates found!")
     else:
         print(f"  finsight-venv Clean (no duplicates)")
     
@@ -73,7 +73,7 @@ def check_duplicates():
     print(f"  Duplicates: {incr_dupes:,}")
     
     if incr_dupes > 0:
-        print(f"  ⚠️  Internal duplicates found!")
+        print(f"    Internal duplicates found!")
     else:
         print(f"  finsight-venv Clean (no duplicates)")
     

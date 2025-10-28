@@ -27,7 +27,12 @@
 - The source code this is exactly traced at `src_aws_etl/etl` folder. There are modular functions, a config loader service, and pre-flight checks.
 - Here is where, some discrepancies in external data schema from different sources are handled and schema harmonization is done before a final merge.
   
-![S3 Directory](S3_DataMerge_Dir.png)
+<!-- ![S3 Directory](demo_assets/S3_DataMerge_Dir.png) -->
+
+<div align="center">
+  <img src="demo_assets/S3_DataMerge_Dir.png" width="600" alt="S3 Directory Structure">
+  <p><em>S3 bucket organization showing data merge directories</em></p>
+</div>
 
 ### Test Modules
 - For huggingface dataset - Files such as `31_run_stratified_post_analysis.sql` and several other validation scripts, ad-hoc analysis scripts act as our data quality checks.
@@ -47,7 +52,10 @@ We designed an Airflow DAG that automates the full ETL workflow for SEC filings 
 - Post-processing includes generating metadata and statistics for the ingested data (Great Expectations), and anomaly alerts. (Ref: `data_auto_stats` folder.) [To be integrated into Docker-Airflow.]
 - The DAG ensures all stages — download → extract → transform → upload → clean — run sequentially in the right order.
 
-![Current DAG Example](demo_assets/DagExampleScreenshot.png)
+<p align="center">
+  <img src="demo_assets/DagExampleScreenshot.png" width="700" alt="Airflow DAG Run">
+</p>
+<p align="center"><em>Complete pipeline execution with all task instances</em></p>
 
 #### SETUP:
 Refer to **SETUP_README.md** file for details about setting up the environment for running the AirFlow pipeline locally.

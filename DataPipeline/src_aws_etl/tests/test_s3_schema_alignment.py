@@ -114,10 +114,10 @@ def inspect_schemas():
         
         # Determine status
         if col not in hist_schema:
-            status = " Derived" if col in DERIVED_COLUMNS else "⚠️ Incr Only"
+            status = " Derived" if col in DERIVED_COLUMNS else " Incr Only"
             incr_only.append(col)
         elif incr_orig_col is None:
-            status = " Derived" if col in DERIVED_COLUMNS else "⚠️ Hist Only"
+            status = " Derived" if col in DERIVED_COLUMNS else " Hist Only"
             hist_only.append(col)
         elif hist_type_norm == incr_type_norm:
             status = " Match"
