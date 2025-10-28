@@ -52,5 +52,17 @@ All intermediate datasets (raw, extracted, parquet) are tracked using DVC to ens
 ### Tracking and Logging
 Integrated logging has been implemented across all modules using Python’s logging module. Timestamps, severity levels, and filenames are logged for every stage. Airflow logs are also stored locally for now for each run.
 
+### Data Schema & Statistics Generation
+
+### Anomaly Detection & Alerts
+The pipeline flags anomalies during preprocessing and ingestion:
+- Missing sections or malformed filings
+- Year mismatch or out-of-range reports
+- Conversion errors logged and surfaced as Airflow task alerts
+Future extension: Slack/email alerts for failed or incomplete extractions.
+
+### Pipeline Flow Optimization
+
+
 
 
