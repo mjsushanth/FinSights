@@ -16,7 +16,7 @@ We designed an Airflow DAG that automates the full ETL workflow for SEC filings 
 
 - The next step is a core ETL pipeline based on polars on AWS S3 buckets, for a clean data merge concept between historical and live fact datasets. The fact datasets are also versioned and archived properly. (Ref: `src_aws_etl` folder.)
 
-- Post-processing includes generating metadata and statistics for the ingested data (Great Expectations), and anomaly alerts. (Ref: `data_auto_stats` folder.)
+- Post-processing includes generating metadata and statistics for the ingested data (Great Expectations), and anomaly alerts. (Ref: `data_auto_stats` folder.) 
 
 The DAG ensures all stages — download → extract → transform → upload → clean — run sequentially in the right order.
 

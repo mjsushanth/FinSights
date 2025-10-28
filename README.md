@@ -1,6 +1,6 @@
 # finrag-insights-mlops
 
-#### Course Project (MLOps IE7374) - FINRAG Insights! 
+#### Course Project (MLOps IE7374) - FINRAG Insights.
 - Building an AI-powered financial analysis pipeline for structured KPI extraction and explainable reporting from 10-K filings.
 
 ## Project Overview:
