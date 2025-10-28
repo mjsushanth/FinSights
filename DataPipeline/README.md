@@ -1,10 +1,10 @@
 ### Pipeline Orchestration (Airflow DAGs)
 
-We designed an Airflow DAG that automates the full ETL workflow for SEC filings - from fetching company data to generating structured outputs in a parquet file.
+We designed an Airflow DAG that automates the full ETL workflow for SEC filings - from fetching company data to generating structured outputs in a parquet file. 
 
-#### How it works
+#### How it works 
 
-- We first pull the list of companies and verify all required configurations.
+- We first pull the list of companies and verify all required configurations. 
 
 - Next, filings are automatically downloaded from official SEC sources.
 

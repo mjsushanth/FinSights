@@ -5,14 +5,14 @@
 
 ## Project Overview:
 
-1. For background, and Business HLD (High-Level Design) refer to the `design_docs/Finance RAG - HLD Draft v1.1.xlsx and Project Scoping_IE 7374_FinSights.pdf`. They explain the business problem, solution approach, and high-level architecture.
-    - The Excel file contains cloud cost estimates, tool research, and algorithm analysis—essential reference for developers.
+1. For background, and Business HLD (High-Level Design) refer to the `design_docs/Finance RAG - HLD Draft v1.1.xlsx and Project Scoping_IE 7374_FinSights.pdf`. They explain the business problem, solution approach, and high-level architecture.  
+    - The Excel file contains cloud cost estimates, tool research, and algorithm analysis—essential reference for developers. 
 
-2. The DataPipeline module hosts the live SEC data ingestion process. It's a step in **Data Preprocessing**, to handle crawl-download-parse and upload final structured filings to AWS S3 buckets. Main contents are the `DataPipeline/src` and it's related `DataPipeline/dag` which orchestrates it.
+2. The DataPipeline module hosts the live SEC data ingestion process. It's a step in **Data Preprocessing**, to handle crawl-download-parse and upload final structured filings to AWS S3 buckets. Main contents are the `DataPipeline/src` and it's related `DataPipeline/dag` which orchestrates it. 
 
 3. For initial data engineering, please refer to `DataPipeline/data_engineering_research` 
     - Here, `data_engineering_research/duckdb_data_engineering` has `README` and strategy documentation files related to key technical achievements, data quality approach, sampling strategies, etc. `duckdb_data_engineering/sql` has DuckDB SQL scripts for number of operations.
-    - Files like `data_engineering_research/exploratory_research` has `Research_README.md` and massive sets of EDA, experiment scripts with polars, EDA-charts, `Master_EDA_Notes.pdf` etc.
+    - Files like `data_engineering_research/exploratory_research` has `Research_README.md` and massive sets of EDA, experiment scripts with polars, EDA-charts, `Master_EDA_Notes.pdf` etc. 
 
 4. `src_aws_etl/` has the code, tests, configs, and requirements for the AWS S3 based ETL pipeline (Merge, Archive, Logs). Main code files are in `src_aws_etl/etl/`. 
     - Here is where bulk historical data and live data merge meaningfully and cleanly. Archival of older data and log management is also handled here.
