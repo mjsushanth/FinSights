@@ -1,7 +1,5 @@
 """
-Description: This file contains hard-coded lists of items for 10-K, 8-K and 10-Q reports.
-For 8-K reports we also need a secondary list for obsolete (older) reports since the item names were changed.
-In the case of 10-Q filings, the items are divided into two parts: part_1 and part_2.
+Description: This file contains hard-coded lists of items for 10-K
 """
 
 item_list_10k = [
