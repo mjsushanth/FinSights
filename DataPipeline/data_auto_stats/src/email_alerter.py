@@ -19,7 +19,7 @@ from dotenv import load_dotenv
 # Import existing config
 from config import MONITORING_CONFIG
 
-load_dotenv()
+load_dotenv('.env.email')
 
 logger = logging.getLogger(__name__)
 

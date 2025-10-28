@@ -9,7 +9,7 @@ import yaml
 from dotenv import load_dotenv
 
 # Load environment variables
-load_dotenv()
+load_dotenv('.env.email')
 
 # Base paths
 BASE_DIR = Path(__file__).parent.parent.absolute()
