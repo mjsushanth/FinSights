@@ -56,6 +56,33 @@ Integrated logging has been implemented across all modules using Python’s logg
 
 ### Data Schema & Statistics Generation
 
+We implemented a two-phase automated data validation system using Great Expectations.
+
+### How it works:
+
+**Phase 1: Early Validation (20-Column Schema)**
+- Runs immediately after the initial data extraction and merge step, before feature engineering
+- Validates schema conformance, structural integrity (CIK format, filing dates), temporal coherence, and null constraints
+- Halts pipeline on failure with email alerts to stakeholders
+
+**Phase 2: Comprehensive Statistics (24-Column Schema)**
+- Runs after feature engineering on final dataset with derived columns (`cik_int`, `tickers`, `likely_kpi`, `has_numbers`, `has_comparison`, `row_hash`)
+- Generates detailed statistical profiles, validates uniqueness constraints, monitors KPI extraction rates
+
+### Technical Stack:
+- Great Expectations for schema generation and validation rules
+- Boto3 for S3 data access (bucket: `sentence-data-ingestion`)
+- PyArrow for Parquet handling
+- Configurable validation rules per phase in `config.py`
+- Ephemeral GE context for Docker/Airflow compatibility
+
+### Output & Monitoring:
+- Validation results logged to `logs/` and saved as JSON artifacts in `output/`
+- Email alerts on quality threshold breaches
+- Quality metrics tracked: schema completeness, null distribution, temporal consistency, duplicate counts
+
+**Integration:** The GE code (validation and statistics) can be tested manually with 1 command. Cant be automated into docker run or DAG run. RCA being: dockercompose and GE library have some conflicts, issues about context discovery and writable root access.
+
 ### Anomaly Detection & Alerts
 The pipeline flags anomalies during preprocessing and ingestion:
 - Missing sections or malformed filings
@@ -80,4 +107,5 @@ Future extension: Slack/email alerts for failed or incomplete extractions.
    
 3. Documented Impact Analysis:
    - We will be able to update this section, informing of our impact as soon as our RAG pipeline is built fully.
+
 
