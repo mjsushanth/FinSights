@@ -5,8 +5,8 @@
 
 ## Project Overview:
 
-1. For background, and Business HLD (High-Level Design) refer to the [Design](design_docs/Finance_RAG_HLD_v1.xlsx) and [Scoping](design_docs/Project_Scoping_IE7374_FinSights.pdf). They explain the business problem, solution approach, and high-level architecture.  
-    - The Excel file contains cloud cost estimates, tool research, and algorithm analysis—essential reference for developers.
+1. For background, and Business HLD (High-Level Design) please feel free to skim through [Scoping](design_docs/Project_Scoping_IE7374_FinSights.pdf) and [Design](design_docs/Finance_RAG_HLD_v1.xlsx)(excel). They explain the business problem, solution approach, and high-level architecture.  
+    - The Excel file contains dataset initial understanding, cloud cost estimates, tool research, and algorithm analysis—essential reference for developers.
 
 2. The DataPipeline module hosts the live SEC data ingestion process. It's a step in **Data Preprocessing**, to handle crawl-download-parse and upload final structured filings to AWS S3 buckets. Main contents are the `DataPipeline/src` and it's related `DataPipeline/dag` which orchestrates it.
 
