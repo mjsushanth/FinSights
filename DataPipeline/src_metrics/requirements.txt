@@ -1,0 +1,18 @@
+pandas
+sec_edgar_api
+yfinance
+numpy
+edgartools
+openai
+requests
+datetime
+boto3
+apache-airflow>=2.7.0
+
+# Testing dependencies
+pytest>=7.4.0
+pytest-cov>=4.1.0
+pytest-mock>=3.11.0
+great-expectations>=0.18.0
+responses>=0.23.0
+mongomock>=4.1.3
