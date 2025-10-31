@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 from utils.helpers import safe_div
-from scripts import config
+from src_metrics import config
 from utils.helpers import setup_logger
 logger = setup_logger()
 

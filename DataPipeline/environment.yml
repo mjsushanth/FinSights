@@ -200,6 +200,13 @@ dependencies:
   - openssl>=3.0                # SSL/TLS library
   - ca-certificates             # Certificate authority bundle
   
+  # ============================================
+  # added packages for  
+  # ============================================
+  - openssl>=3.0                # SSL/TLS library
+  - ca-certificates             # Certificate authority bundle
+  
+
   # ============================================================================
   # PIP-ONLY PACKAGES
   # ============================================================================
@@ -236,6 +243,9 @@ dependencies:
       # - cloudpickle>=2.2.0
       # - importlib-metadata>=6.0.0
       # - protobuf>=3.20.0
+      - sec-edgar-downloader>=5.0.3
+      - sec-edgar-api>=0.5.0      # <-- add this for `from sec_edgar_api import EdgarClient`
+      - edgartools>=4.7.0   
 
 # ============================================================================
 #

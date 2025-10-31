@@ -1,7 +1,7 @@
 import boto3
 import json
 import datetime
-from scripts import config
+from src_metrics import config
 from utils.helpers import setup_logger
 logger = setup_logger()
 

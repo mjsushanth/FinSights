@@ -85,7 +85,8 @@ x-airflow-common:
     - ${AIRFLOW_PROJ_DIR:-.}/datasets:/opt/airflow/datasets
     - ${AIRFLOW_PROJ_DIR:-.}/.env:/opt/airflow/.env:ro
     - ${AIRFLOW_PROJ_DIR:-.}/src_aws_etl:/opt/airflow/src_aws_etl:ro  # Added for ETL AWS.
-
+    - ${AIRFLOW_PROJ_DIR:-.}/src_metrics:/opt/airflow/src_metrics:ro  # Added analytical layer.
+    - ${AIRFLOW_PROJ_DIR:-.}/utils:/opt/airflow/utils:ro #analytical layer utils
 
   user: "${AIRFLOW_UID:-50000}:0"
   depends_on:

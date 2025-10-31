@@ -3,7 +3,7 @@ import json
 import time
 from sec_edgar_api import EdgarClient
 from datetime import date
-from scripts import config
+from src_metrics import config
 from utils.helpers import setup_logger
 logger = setup_logger()
 

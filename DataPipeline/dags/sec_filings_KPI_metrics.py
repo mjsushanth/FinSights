@@ -10,9 +10,9 @@ sys.path.append(str(project_root))
 from datetime import datetime, timedelta
 from airflow import DAG
 from airflow.operators.python import PythonOperator
-from scripts import data_ingestion
-from scripts import data_loading
-from scripts import data_preprocessing
+from src_metrics import data_ingestion
+from src_metrics import data_loading
+from src_metrics import data_preprocessing
 from utils import notifier
 from utils.helpers import setup_logger
 
@@ -57,6 +57,9 @@ default_args = {
     "retries": 1,
     "retry_delay": timedelta(minutes=5),
 }
+
+
+
 
 with DAG(
     dag_id="sec_10k_pipeline",
