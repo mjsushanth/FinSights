@@ -8,7 +8,7 @@
 1. For background, and Business HLD (High-Level Design) please feel free to skim through [Scoping](design_docs/Project_Scoping_IE7374_FinSights.pdf) and [Design](design_docs/Finance_RAG_HLD_v1.xlsx)(excel). They explain the business problem, solution approach, and high-level architecture.  
     - The Excel file contains dataset initial understanding, cloud cost estimates, tool research, and algorithm analysis—essential reference for developers.
 
-2. The DataPipeline module hosts the live SEC data ingestion process. It's a step in **Data Preprocessing**, to handle crawl-download-parse and upload final structured filings to AWS S3 buckets. Main contents are the `DataPipeline/src` and it's related `DataPipeline/dag` which orchestrates it.
+2. The DataPipeline module hosts the live SEC(Securities and Exchange Commission) data ingestion process. It's a step in **Data Preprocessing**, to handle crawl-download-parse and upload final structured filings to AWS S3 buckets. Main contents are the `DataPipeline/src` and it's related `DataPipeline/dag` which orchestrates it.
 
 3. For initial data engineering, please refer to `DataPipeline/data_engineering_research` 
     - Here, [Data Engineering](DataPipeline/data_engineering_research/duckdb_data_engineering/Data_Engineering_README.md) and other README files document strategy, key technical achievements, data quality approach, sampling strategies, etc. `duckdb_data_engineering/sql` has DuckDB SQL scripts for number of operations. 
@@ -17,7 +17,10 @@
 4. `src_aws_etl/` has the code, tests, configs, and requirements for the AWS S3 based ETL pipeline (Merge, Archive, Logs). Main code files are in `src_aws_etl/etl/`. 
     - Here is where bulk historical data and live data merge meaningfully and cleanly. Archival of older data and log management is also handled here.
 
-5. Following that, `data_auto_stats/` has a really good collection of modules for schema validation, data quality checks, automated testing and stat-generation using `great_expectations` and `anamoly detection and alerts`.
+
+5. `src_metrics/` has the code, tests, configs, and requirements for the Data Ingestion pipeline, here we collect and process all the financial metrics(RAW numbers) from the 10-K SEC(Securities and Exchange Commission).
+
+6. Following that, `data_auto_stats/` has a really good collection of modules for schema validation, data quality checks, automated testing and stat-generation using `great_expectations` and `anamoly detection and alerts`.
 
 
 ## Project Structure:
@@ -34,6 +37,9 @@
         ├── data_auto_stats/           # Data quality & validation framework ( Great Expectations, Anamoly )
         │
         ├── src_aws_etl/                    # AWS S3 ETL operations ( Merge Incr + Historical, Archive, Log Management )
+        │
+        ├── src_metrics/                    # SEC data ingestion using Edgar SDK for Financial Metrics
+        │                           
         │
         ├── data_engineering_research/            # DuckDB data engineering workspace
         │  ├── duckdb_data_engineering/     
