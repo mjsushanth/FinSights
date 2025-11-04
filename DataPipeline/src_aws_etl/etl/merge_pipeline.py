@@ -146,20 +146,20 @@ class MergePipeline:
             
             # Add derived columns + align to base schema
             print("  Adding derived columns...")
+
             incr_df = incr_df.with_columns([
-                # Derived columns (compute from existing data)
                 pl.col('cik').cast(pl.Int32).alias('cik_int'),
                 
                 (pl.col('sentenceID') + pl.col('sentence'))
                     .map_elements(lambda x: hashlib.md5(x.encode()).hexdigest(), return_dtype=pl.String)
                     .alias('row_hash'),
                 
-                # Placeholder for text analysis features (set NULL for now)
+                # Placeholder for text analysis features ()
                 pl.lit(None).cast(pl.Boolean).alias('has_numbers'),
                 pl.lit(None).cast(pl.Boolean).alias('has_comparison'),
                 pl.lit(None).cast(pl.Boolean).alias('likely_kpi'),
                 
-                # Placeholder for company metadata (set NULL for now)
+                # Placeholder for company metadata ()
                 pl.lit(None).cast(pl.List(pl.String)).alias('tickers'),
             ])
             
