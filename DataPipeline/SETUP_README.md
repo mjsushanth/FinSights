@@ -3,7 +3,7 @@
 ### 1. Clone & Setup Environment
 ```bash
 git clone https://github.com/Finsights-MLOps/MLOps_Final.git
-cd MLOps_Final/DataPipeline
+cd FinSights/DataPipeline
 conda env create -f environment.yml
 conda activate finsight-venv
 ```
