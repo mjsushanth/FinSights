@@ -174,7 +174,7 @@ Window size W=5-N captures immediate discourse neighbors without requiring manua
 
 - **View1 / View2** (`view1_kpi_scan.json`, `view2_risk_atlas.json`)  
   Sentence-level KPI and risk atlases serving as initial candidate pools.
-
+   
 - **P3 Candidates** (`p3_candidates_kpi.json`, `p3_candidates_risk.json`)  
   High-quality single-sentence pools filtered by:
   - KPI: revenue/debt/net_income sentences with numeric anchors
@@ -183,14 +183,12 @@ Window size W=5-N captures immediate discourse neighbors without requiring manua
 - **V3/V4/V5 Bundles** (multi-sentence structured warehouses):
   - **`goldp3_v3_trend_bundles.json`** (224 bundles) → Cross-year KPI/risk evolution per company  
     *Structure*: `{cik, name, years[], topic_label, sentences[]}` where sentences span 2-8 fiscal years
-  
   - **`goldp3_v4_cross_company_bundles.json`** (316 bundles) → Same-year cross-issuer comparisons  
     *Structure*: `{report_year, topic_label, company_sentences[]}` grouping 2-5 companies per topic/year
-  
   - **`goldp3_v5_def_verify_candidates.json`** (26,268 sentences) → Definitions + verification targets  
     *Types*: Non-GAAP metric definitions, FX/supply-chain/COVID/regulatory impact attributions  
     *Structure*: `{cik, report_year, sentenceID, sentence_text, candidate_type: "definition"|"verification"}`
-
+ 
 **Key Innovations**:
 - **Bundle-based sampling** replaces random sentence selection with thematic coherence
 - **Difficulty calibration** via evidence count (1 sentence=easy, 2-3=medium, 4+=hard)
