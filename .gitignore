@@ -190,3 +190,6 @@ ModelPipeline/finrag_ml_tg1/data_cache/stage3_s3vectors/
 
 # Virtual Environments for Model RAG Pipeline
 ModelPipeline/finrag_ml_tg1/venv_ml_rag
+
+# AWS Credentials
+ModelPipeline/finrag_ml_tg1/.aws_secrets/aws_credentials_tpad_mjs.env.txt
