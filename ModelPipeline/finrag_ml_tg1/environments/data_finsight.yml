@@ -1,0 +1,345 @@
+# ============================================================================
+# FinRAG Unified Environment - Complete MLOps Pipeline
+# ============================================================================
+#
+# Purpose: Comprehensive environment supporting:
+#   - SEC EDGAR data collection & HTML parsing
+#   - AWS S3 ETL operations  
+#   - Data validation with Great Expectations
+#   - High-performance data processing (Pandas, Polars, DuckDB)
+#   - Testing & quality assurance
+#
+# ============================================================================
+#
+# INSTALLATION INSTRUCTIONS:
+# --------------------------
+#
+# RECOMMENDED: Use mamba for faster dependency resolution
+#
+# STEP 1: Install mamba (if not already installed)
+#   conda install -n base -c conda-forge mamba
+#
+# STEP 2: Create environment
+#   mamba env create -f environment.yml
+# 
+#   # OR with conda (slower):
+#   conda env create -f environment.yml
+#
+# STEP 3: Activate environment
+#   conda activate finsight-venv
+#
+# STEP 4: Verify critical packages
+#   python -c "import great_expectations, boto3, pandas, polars, pyarrow; print('✓ All critical imports successful')"
+#   python -c "from bs4 import BeautifulSoup; import nltk; print('✓ Parsing libraries ready')"
+#
+# UPDATE ENVIRONMENT:
+#   mamba env update -f environment.yml --prune
+#
+# EXPORT LOCK FILE (for exact reproducibility):
+#   conda env export --no-builds > environment.lock.yml
+#
+# CLEAN REINSTALL (if needed):
+#   conda deactivate
+#   conda env remove -n finsight-venv
+#   conda clean --all --yes
+#   mamba env create -f environment.yml
+#
+# ============================================================================
+
+name: finsight-venv
+
+channels:
+  - conda-forge
+  - defaults
+
+dependencies:
+  # ============================================
+  # Python & Build Tools
+  # ============================================
+  - python=3.11.14              # Pin to specific patch for reproducibility
+  - pip>=24.0                   # Modern pip with better resolver
+  - setuptools>=69.0.0          # Current stable version
+  - wheel>=0.42.0               # Standard build tool
+  
+  # ============================================
+  # CRITICAL: Data Interchange & Compatibility
+  # ============================================
+  # These versions are PINNED for cross-module compatibility
+  - pyarrow=14.0.0              # CRITICAL: Parquet format compatibility across all modules
+  - numpy>=1.24.0,<2.0          # v2.0 breaking changes, stay on 1.x
+  
+  # ============================================
+  # Data Processing - High Performance
+  # ============================================
+  - pandas=2.0.3                # Stable 2.x branch, good performance
+  - polars>=1.0.0,<2.0          # Modern, fast DataFrame library (flexible minor versions)
+  - scipy>=1.11.0,<1.13         # Scientific computing, compatible range
+  
+  # ============================================
+  # AWS Services - Core Stack
+  # ============================================
+  - boto3>=1.35.0,<1.41         # AWS SDK - flexible for minor updates, avoid breaking changes
+  - botocore>=1.35.0,<1.41      # AWS core (must match boto3)
+  - s3fs>=2024.6.0              # S3 filesystem interface
+  - s3transfer>=0.14.0          # S3 transfer utilities
+  
+  # ============================================
+  # Web Scraping & HTML Parsing
+  # ============================================
+  - beautifulsoup4>=4.12.0      # HTML/XML parser
+  - lxml>=4.9.3                 # Fast XML/HTML processor (C-based)
+  - soupsieve>=2.5              # CSS selector library for BeautifulSoup
+  - cssutils>=2.9.0             # CSS parsing for styled content
+  
+  # ============================================
+  # Natural Language Processing
+  # ============================================
+  - nltk>=3.8.0                 # Text processing toolkit
+  - regex>=2023.12.0            # Advanced regex (better than stdlib re)
+  
+  # ============================================
+  # HTTP & Network
+  # ============================================
+  - requests>=2.31.0            # HTTP library
+  - urllib3>=1.26.0,<2.0        # HTTP client (v2.0 has breaking changes)
+  - certifi>=2024.0.0           # SSL certificates
+  - charset-normalizer>=3.3.0   # Character encoding detection
+  - idna>=3.6                   # Internationalized domain names
+  
+  # ============================================
+  # Configuration & Environment
+  # ============================================
+  - python-dotenv>=1.0.0        # .env file support
+  - pyyaml>=6.0                 # YAML parsing
+  - click>=8.1.0                # CLI framework
+  
+  # ============================================
+  # Templating
+  # ============================================
+  - jinja2>=3.1.0               # Template engine
+  - markupsafe>=2.1.0           # HTML escaping
+  
+  # ============================================
+  # Utilities & Display
+  # ============================================
+  - tqdm>=4.66.0                # Progress bars
+  - colorama>=0.4.6             # Cross-platform colored terminal
+  - pygments>=2.17.0            # Syntax highlighting
+  - rich>=13.7.0                # Beautiful terminal formatting
+  - tabulate>=0.9.0             # Table formatting
+  
+  # ============================================
+  # Parallel Processing
+  # ============================================
+  - joblib>=1.4.0               # Parallel computing tools
+  - pathos>=0.3.1               # Advanced parallel processing
+  - multiprocess>=0.70.0        # Better multiprocessing
+  - dill>=0.3.8                 # Enhanced pickling
+  - pox>=0.3.4                  # Utilities for pathos
+  - ppft>=1.7.6                 # Parallel Python
+  
+  # ============================================
+  # Date/Time Handling
+  # ============================================
+  - python-dateutil>=2.9.0      # Date parsing extensions
+  - pytz>=2024.1                # Timezone definitions
+  
+  # ============================================
+  # Data Serialization
+  # ============================================
+  - xmltodict>=0.13.0           # XML to dict conversion
+  
+  # ============================================
+  # Testing Framework
+  # ============================================
+  - pytest>=8.0.0,<9.0          # Testing framework
+  - pytest-cov>=4.1.0           # Coverage plugin
+  - pytest-mock>=3.12.0         # Mocking plugin
+  - moto>=5.0.0                 # AWS service mocking
+  - responses>=0.25.0           # HTTP response mocking
+  - pluggy>=1.4.0               # Plugin system
+  - iniconfig>=2.0.0            # INI parsing
+  - tomli>=2.0.0                # TOML parsing (Python <3.11)
+  - exceptiongroup>=1.2.0       # Exception groups backport
+  
+  # ============================================
+  # Security & Cryptography
+  # ============================================
+  - cryptography>=42.0.0        # Cryptographic recipes
+  - cffi>=1.16.0                # C Foreign Function Interface
+  - pycparser>=2.21             # C parser
+  
+  # ============================================
+  # Monitoring & System
+  # ============================================
+  - psutil>=5.9.0               # System and process utilities
+  
+  # ============================================
+  # Visualization (for validation reports)
+  # ============================================
+  - matplotlib>=3.7.0           # Plotting library
+  - seaborn>=0.13.0             # Statistical visualization
+  - plotly>=5.18.0              # Interactive plots
+  
+  # ============================================
+  # Web Framework (for testing/mocking)
+  # ============================================
+  - werkzeug>=3.0.0             # WSGI utility library
+  
+  # ============================================
+  # Miscellaneous Core
+  # ============================================
+  - six>=1.16.0                 # Python 2/3 compatibility
+  - jmespath>=1.0.0             # JSON query language
+  - packaging>=24.0             # Package version handling
+  - typing-extensions>=4.9.0    # Backported typing features
+  
+  # ============================================
+  # System Libraries (conda-managed)
+  # ============================================
+  - openssl>=3.0                # SSL/TLS library
+  - ca-certificates             # Certificate authority bundle
+  
+  # ============================================
+  # added packages for  
+  # ============================================
+  - openssl>=3.0                # SSL/TLS library
+  - ca-certificates             # Certificate authority bundle
+  
+
+  # ============================================================================
+  # PIP-ONLY PACKAGES
+  # ============================================================================
+  # Packages unavailable in conda-forge or with better pip distribution
+  # ============================================================================
+  - pip:
+      # ===== SEC EDGAR Data Collection =====
+      # Not in conda-forge, pip is the official distribution
+      - sec-edgar-downloader>=5.0.3
+      
+      # ===== Rate Limiting =====
+      # Better maintained on PyPI
+      - pyrate-limiter>=3.7.0
+      
+      # ===== Data Validation Framework =====
+      # Great Expectations - pip is the primary distribution channel
+      - great-expectations==0.18.8
+      
+      # ===== ML Experiment Tracking (Optional) =====
+      # Uncomment if needed for model tracking
+      # - mlflow>=2.8.0,<2.12
+      
+      # ===== MLflow Dependencies (if mlflow enabled) =====
+      # - flask>=2.2.0
+      # - sqlalchemy>=1.4.0
+      # - alembic>=1.8.0
+      # - markdown>=3.3
+      # - querystring-parser>=1.2.4
+      # - sqlparse>=0.4.0
+      # - gitpython>=3.1.0
+      # - databricks-cli>=0.18
+      # - docker>=6.0.0
+      # - gunicorn>=20.1.0
+      # - cloudpickle>=2.2.0
+      # - importlib-metadata>=6.0.0
+      # - protobuf>=3.20.0
+      - sec-edgar-downloader>=5.0.3
+      - sec-edgar-api>=0.5.0      # <-- add this for `from sec_edgar_api import EdgarClient`
+      - edgartools>=4.7.0   
+
+# ============================================================================
+#
+# DESIGN DECISIONS & VERSION STRATEGY:
+# -------------------------------------
+#
+# STRICT PINNING (exact versions):
+#   - python=3.11.14           → Reproducibility across team
+#   - pyarrow=14.0.0           → CRITICAL for parquet compatibility
+#   - pandas=2.0.3             → Stable API, tested combination
+#   - scipy=1.11.0             → Known working version
+#   - great-expectations       → Validation framework stability
+#
+# FLEXIBLE RANGES (minor version updates allowed):
+#   - boto3/botocore           → AWS SDK updates frequently, stay current
+#   - polars                   → Fast-moving library, accept improvements
+#   - requests, urllib3        → Security patches important
+#   - beautifulsoup4, lxml     → Scraping improvements welcome
+#   - Testing tools            → Bug fixes and enhancements useful
+#
+# MAJOR VERSION CAPS:
+#   - numpy<2.0                → v2.0 has breaking changes
+#   - urllib3<2.0              → v2.0 restructured API
+#   - pytest<9.0               → Future major version guard
+#
+# ============================================================================
+#
+# CROSS-MODULE COMPATIBILITY:
+# ---------------------------
+#
+# This environment supports:
+#
+# 1. HTML Parsing Pipeline:
+#    ✓ beautifulsoup4, lxml, cssutils
+#    ✓ sec-edgar-downloader
+#    ✓ requests, urllib3
+#    ✓ boto3/s3 for uploads
+#
+# 2. Data Processing & ETL:
+#    ✓ pandas, polars for DataFrames
+#    ✓ pyarrow for parquet I/O (CRITICAL: same version everywhere)
+#    ✓ numpy for numerical operations
+#
+# 3. Data Validation (Great Expectations):
+#    ✓ great-expectations
+#    ✓ pytest for testing
+#    ✓ pandas/pyarrow for data interchange
+#
+# 4. AWS Operations:
+#    ✓ boto3/botocore/s3fs
+#    ✓ Compatible versions across all modules
+#
+# 5. NLP & Text Processing:
+#    ✓ nltk, regex
+#    ✓ beautifulsoup4 for HTML text extraction
+#
+# ============================================================================
+#
+# DATA INTERCHANGE BEST PRACTICES:
+# ---------------------------------
+#
+# When passing data between modules:
+#
+# 1. Use Parquet format (not CSV):
+#    df.to_parquet('data.parquet', engine='pyarrow', compression='snappy')
+#
+# 2. Standardize datetime handling:
+#    df['date_column'] = pd.to_datetime(df['date_column'], utc=True)
+#
+# 3. Validate schema at boundaries:
+#    from great_expectations import dataset
+#    ge_df = dataset.PandasDataset(df)
+#    ge_df.expect_column_to_exist('required_column')
+#
+# 4. Use consistent compression:
+#    Snappy is default and fast, use 'gzip' for better compression ratio
+#
+# ============================================================================
+#
+#
+# ============================================================================
+#
+# MAINTENANCE:
+# ------------
+#
+# Security updates (run monthly):
+#   mamba update --all
+#
+#   conda list --outdated
+#
+# Verify no conflicts:
+#   conda list --explicit
+#
+# Re-export lock file after updates:
+#   conda env export --no-builds > environment.lock.yml
+#
+# ============================================================================

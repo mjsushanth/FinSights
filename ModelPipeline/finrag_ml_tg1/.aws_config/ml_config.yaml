@@ -1,0 +1,273 @@
+# ============================================================================
+# FinRAG ML Pipeline - Path Configuration
+# Purpose: S3 paths for data inputs/outputs
+# ============================================================================
+
+# AWS S3 Bucket Configuration
+s3:
+  bucket_name: sentence-data-ingestion
+  region: us-east-1
+  base_path_etl: DATA_MERGE_ASSETS
+  base_path_ml: ML_EMBED_ASSETS
+
+# ============================================================================
+# DATA PATHS - ETL LAYER (Reference/Input)
+# ============================================================================
+data_etl:
+  # Historical fact table (base dataset)
+  historical:
+    path: DATA_MERGE_ASSETS/HISTORICAL_DATA
+    filename: finrag_sec_fact_historical.parquet
+    description: "Base historical dataset from DuckDB export"
+  
+  # Incremental staging data (new/updated rows)
+  crawled_incremental_stg:
+    path: DATA_MERGE_ASSETS/INCREMENTAL_DATA
+    filename: finrag_sec_incremental_stg_data.parquet
+    description: "New data from API ingestion pipeline"
+
+  # Final merged fact table (Stage 1 - Input for ML)
+  sentence_fact:
+    path: DATA_MERGE_ASSETS/FINRAG_FACT_SENTENCES
+    filename: finrag_fact_sentences.parquet
+    description: "Stage 1 - Original ETL output (24 columns)"
+    compression: zstd
+
+# ============================================================================
+# DATA PATHS - ML LAYER (Output)
+# ============================================================================
+data_ml:
+  # Enhanced fact table with embedding metadata
+  meta_embeds:
+    path: ML_EMBED_ASSETS/EMBED_META_FACT
+    filename: finrag_fact_sentences_meta_embeds.parquet
+    description: "Stage 2 - With embedding metadata + RAG helpers (35 columns)"
+    compression: zstd
+
+  
+  # S3 Vectors staging (Stage 3 - Ready for ingestion)
+  s3_vectors_staging:
+    base_path: ML_EMBED_ASSETS/S3_VECTORS_STAGING  # for consistency
+    
+    cohere_1024d:
+      path: ML_EMBED_ASSETS/S3_VECTORS_STAGING/cohere_1024d
+      filename: finrag_embeddings_s3vectors_cohere_1024d.parquet
+      dimensions: 1024
+      description: "Stage 3 - Cohere 1024d vectors prepared for S3 Vectors"
+      compression: zstd
+    
+    titan_1024d:
+      path: ML_EMBED_ASSETS/S3_VECTORS_STAGING/titan_1024d
+      filename: finrag_embeddings_s3vectors_titan_1024d.parquet
+      dimensions: 1024
+      description: "Stage 3 - Titan 1024d vectors prepared for S3 Vectors"
+      compression: zstd
+
+  
+  # Embeddings: Separate storage per provider
+  embeddings:
+    base_path: ML_EMBED_ASSETS/EMBED_VECTORS
+    
+    cohere_768d:
+      path: ML_EMBED_ASSETS/EMBED_VECTORS/cohere_768d
+      filename: finrag_embeddings_cohere_768d.parquet
+      metadata_file: embedding_metadata.json
+      dimensions: 768
+    
+    cohere_1024d:  
+      path: ML_EMBED_ASSETS/EMBED_VECTORS/cohere_1024d
+      filename: finrag_embeddings_cohere_1024d.parquet
+      metadata_file: embedding_metadata.json
+      dimensions: 1024
+
+    titan_1024d:
+      path: ML_EMBED_ASSETS/EMBED_VECTORS/titan_1024d
+      filename: finrag_embeddings_titan_1024d.parquet
+      metadata_file: embedding_metadata.json
+      dimensions: 1024
+
+# ============================================================================
+# EMBEDDING CONFIGURATION
+# ============================================================================
+
+  # filters:
+  #   cik_int: [ 34088, 59478, 104169, 200406, 320193, 789019, 813762, 814585, 890926, 909832, 
+  #               1018724, 1045810, 1065280, 1141391, 1273813, 1276520, 1318605, 1326801, 1341439, 1403161,
+  #                1652044 ]     
+  #   year:  [2015, 2016, 2017, 2018, 2019, 2020]             
+  #   sections: null
+
+  # Tesla and Microsoft for 2016 and 2017
+  # cik_int: [1318605, 789019]     # (list)
+  # year: [2016, 2017]             
+
+  # Batch across 5 at a time.
+  # cik_int: [ 34088, 59478, 104169, 200406, 320193 ] 
+  # cik_int: [ 789019, 813762, 814585, 890926, 909832 ] 
+  # cik_int: [ 1018724, 1045810, 1065280, 1141391, 1273813 ] 
+  # cik_int: [ 1276520, 1318605, 1326801, 1341439, 1403161, 1652044 ]     
+
+embedding_execution:
+  mode: parameterized
+  
+  filters:
+    cik_int: [ 1276520, 1318605, 1326801, 1341439, 1403161, 1652044 ] 
+    year:  [2015, 2016, 2017, 2018, 2019, 2020]             
+    sections: null
+  
+  force_replace_vectors: false
+  force_replace_meta: false
+
+
+
+embedding:
+
+  default_provider: bedrock
+
+  # Direct Cohere API (commented - backup option)
+  # cohere:
+  #   model: embed-english-v3.0
+  #   api_key_env: COHERE_API_KEY
+  #   dimensions: 768
+  #   input_type: search_document
+  #   batch_size: 96
+  #   max_retries: 3
+  #   timeout_seconds: 30
+  
+  # AWS Bedrock - Multiple model options
+  bedrock:
+    region: us-east-1
+    
+    # Available models (choose one as default)
+    models:
+      cohere_embed_v3:
+        model_id: cohere.embed-english-v3
+        dimensions: 1024
+        batch_size: 96
+        input_type: search_document
+      
+      cohere_embed_v4:
+        model_id: cohere.embed-v4:0
+        dimensions: 1024
+        batch_size: 96
+        input_type: search_document
+      
+      titan_v2:
+        model_id: amazon.titan-embed-text-v2:0
+        dimensions: 1024
+        batch_size: 25
+    
+    # Default model to use
+    default_model: cohere_embed_v4
+  
+  filtering:
+    min_char_length: 30
+    max_char_length: 1000
+    max_token_count: 500
+    exclude_sections:
+      - ITEM_15
+      - ITEM_16
+      
+
+# ============================================================================
+# RETRIEVAL CONFIGURATION
+# ============================================================================
+retrieval:
+  top_k: 10
+  similarity_metric: cosine
+  context_window: 2
+  
+  priority_sections:
+    - ITEM_1A
+    - ITEM_7
+    - ITEM_8
+    - ITEM_1
+  
+  recent_years_threshold: 2018
+
+# ============================================================================
+# COST TRACKING
+# ============================================================================
+costs:
+  embedding_budget_usd: 5.00
+  alert_threshold_pct: 80
+  
+  rates:
+    cohere_768d: 0.0001
+    bedrock_titan_1024d: 0.0001
+
+# ============================================================================
+# LOGGING
+# ============================================================================
+logging:
+  level: INFO
+  log_to_s3: true
+  log_path: ML_EMBED_ASSETS/LOGS
+  log_filename_pattern: "ml_pipeline_{timestamp}.log"
+
+# ============================================================================
+# METADATA
+# ============================================================================
+metadata:
+  pipeline_version: "1.0.0"
+  last_updated: "2024-11-07"
+  owner: "Joel Markapudi"
+  project: "FinRAG IE7374 MLOps"
+
+
+
+
+# ============================================================================
+# RAG ORCHESTRATOR CONFIGURATION
+# ============================================================================
+
+## query_embedding - user submission query uses exactly this config.
+
+rag_orchestrator:
+  # Query embedding configuration (uses same Bedrock setup as document embeddings)
+  query_embedding:
+    provider: bedrock
+    region: us-east-1
+    model_id: cohere.embed-v4:0  
+    dimensions: 1024
+    input_type: search_query  
+    batch_size: 96
+  
+  # LLM configuration for final response generation
+  llm:
+    provider: bedrock
+    region: us-east-1
+    model_id: anthropic.claude-3-5-sonnet-20240620-v1:0
+    max_tokens: 4096
+    temperature: 0.7
+  
+
+
+  # Vector search configuration
+  vector_search:
+    method: s3_vectors  
+    top_k: 10
+    similarity_threshold: 0.7
+    context_window: 2  # Include neighboring chunks
+        
+    # If using S3 Vectors
+    s3_vectors:
+      index_name: finrag-embeddings
+      namespace: production
+
+  # External pipeline paths
+  external_pipelines:
+    metric_pipeline_path: ../metric_pipeline
+    rag_search_path: ../rag_pipeline
+  
+  # Execution settings
+  execution:
+    parallel_processing: true
+    timeout_seconds: 30
+    max_retries: 3
+  
+  # Response formatting
+  response:
+    include_sources: true
+    max_context_chunks: 5
+    include_analytical_data: true

@@ -1,0 +1,173 @@
+# ============================================================================
+# FinRAG ML Pipeline - Core Dependencies
+# Purpose: Embedding generation, vector search, and RAG retrieval
+
+
+# # Step 1: Navigate to project directory
+# cd ModelPipeline/finrag_ml_tg1
+
+# # Step 2: Create virtual environment
+# uv venv venv_ml_rag --python 3.11
+
+# # Step 3: Activate environment
+# # On Windows:
+# venv_ml_rag\Scripts\activate
+
+# # On macOS/Linux:
+# source venv_ml_rag/bin/activate
+
+# # Step 4: Install all dependencies
+# uv pip install -r environments/requirements.txt
+
+
+# Create Jupyter kernel pointing to this venv
+# python -m ipykernel install --user --name=finrag_ml_kernel --display-name="FinRAG ML (Python 3.11)"
+# jupyter kernelspec list
+
+# For updating:
+# 
+# & "venv_ml_rag\Scripts\Activate.ps1"
+# uv pip install --upgrade -r environments/requirements.txt
+
+# ============================================================================
+
+# ============================================================================
+# CORE DATA PROCESSING
+# ============================================================================
+polars>=1.0.0                         # Fast DataFrame operations (Rust-based)
+numpy>=1.24.0,<2.0                    # Numerical computing (avoid v2.0 breaking changes)
+pyarrow>=14.0.0                       # Parquet I/O, Arrow format
+pandas>=2.0.0                         # Fallback for legacy code, interop
+
+# ============================================================================
+# AWS CLOUD SERVICES
+# ============================================================================
+boto3>=1.35.0                   # AWS SDK (S3, Bedrock, Lambda)
+botocore>=1.35.0                # AWS core library
+s3fs>=2024.6.0                  # S3 filesystem interface
+python-dotenv>=1.0.0            # Environment variable management
+
+# ============================================================================
+# CONFIGURATION & UTILITIES
+# ============================================================================
+pyyaml>=6.0.0                   # YAML config parsing
+click>=8.1.0                    # CLI framework (for scripts)
+tqdm>=4.66.0                    # Progress bars
+rich>=13.7.0                    # Beautiful terminal output
+
+# ============================================================================
+# EMBEDDING PROVIDERS (API-based)
+# ============================================================================
+cohere>=5.0.0                   # Cohere Embed API (primary provider)
+openai>=1.0.0                   # OpenAI embeddings (backup provider)
+# anthropic>=0.25.0             # Claude API (future LLM calls)
+
+# ============================================================================
+# VECTOR SEARCH & SIMILARITY
+# ============================================================================
+scikit-learn>=1.3.0             # Cosine similarity, clustering, metrics
+faiss-cpu>=1.7.4                # Facebook AI Similarity Search (local vector DB)
+# qdrant-client>=1.7.0          # Qdrant vector DB (if scaling beyond local)
+
+# ============================================================================
+# RETRIEVAL ALGORITHMS & RANKING
+# ============================================================================
+sentence-transformers>=2.2.0    # Local embedding models (backup/experimentation)
+rank-bm25>=0.2.2                # BM25 keyword search (hybrid retrieval)
+# pyserini>=0.22.0              # Sparse retrieval (BM25, SPLADE) - heavy install
+
+# ============================================================================
+# RAG ORCHESTRATION (Optional Framework)
+# ============================================================================
+langchain>=0.1.0                # RAG framework (prompt chains, retrievers)
+langchain-community>=0.0.20     # Community integrations
+# llama-index>=0.10.0           # Alternative RAG framework (if needed)
+
+# ============================================================================
+# RERANKING & ADVANCED RETRIEVAL
+# ============================================================================
+# cross-encoder                 # Cross-encoder reranking (via sentence-transformers)
+transformers>=4.35.0            # HuggingFace models (for rerankers, tokenizers)
+tokenizers>=0.15.0              # Fast tokenization
+
+# ============================================================================
+# TEXT PROCESSING & NLP
+# ============================================================================
+nltk>=3.8.0                     # Sentence tokenization, stopwords
+regex>=2023.12.0                # Advanced regex (better than stdlib)
+# spacy>=3.7.0                  # Advanced NLP (if needed for entity extraction)
+
+# ============================================================================
+# EVALUATION & METRICS
+# ============================================================================
+# ragas>=0.1.0                  # RAG evaluation framework
+# rouge-score>=0.1.2            # ROUGE metrics for summarization
+
+# ============================================================================
+# CACHING & PERFORMANCE
+# ============================================================================
+diskcache>=5.6.0                # Disk-based cache (for expensive API calls)
+joblib>=1.3.0                   # Parallel processing, memoization
+
+# ============================================================================
+# HTTP & API UTILITIES
+# ============================================================================
+requests>=2.31.0                # HTTP requests
+httpx>=0.25.0                   # Async HTTP (future async operations)
+
+# ============================================================================
+# JUPYTER NOTEBOOK SUPPORT
+# ============================================================================
+ipykernel>=6.27.0               # Jupyter kernel
+jupyter>=1.0.0                  # Notebook interface
+ipywidgets>=8.1.0               # Interactive widgets
+
+# ============================================================================
+# TESTING & VALIDATION (Development)
+# ============================================================================
+pytest>=8.0.0                   # Testing framework
+pytest-asyncio>=0.23.0          # Async test support
+# pytest-benchmark>=4.0.0       # Performance benchmarking
+
+# ============================================================================
+# VISUALIZATION (For analysis notebooks)
+# ============================================================================
+matplotlib>=3.7.0               # Basic plotting
+seaborn>=0.13.0                 # Statistical plots
+# plotly>=5.18.0                # Interactive visualizations
+
+mmh3<=4.1.0
+
+# ============================================================================
+# TYPING & CODE QUALITY (Development)
+# ============================================================================
+# mypy>=1.7.0                   # Static type checking
+# ruff>=0.1.0                   # Fast linter (Rust-based)
+
+# ============================================================================
+# NOTES ON PACKAGE SELECTION
+# ============================================================================
+#
+# INCLUDED (Core RAG Stack):
+# - polars: Fast data manipulation for 500K+ sentences
+# - scikit-learn: Cosine similarity, basic ML utilities
+# - faiss-cpu: Local vector search (production: use cloud vector DB)
+# - sentence-transformers: Local embeddings + reranking models
+# - langchain: RAG orchestration, prompt management
+# - rank-bm25: Hybrid retrieval (BM25 + semantic)
+# - transformers: Rerankers, tokenization
+#
+# COMMENTED (Install if needed):
+# - qdrant-client: If scaling beyond FAISS (1M+ vectors)
+# - pyserini: Heavy Java dependency, only if need Lucene/SPLADE
+# - llama-index: Alternative to LangChain, pick one
+# - ragas: RAG evaluation, add when optimizing quality
+# - spacy: Only if doing entity extraction/NER
+# - plotly: Interactive plots, add if making dashboards
+#
+# NOT INCLUDED (Cloud handles it):
+# - torch/pytorch: API-based embeddings, no local models
+# - chromadb: Using FAISS locally, cloud vector DB in production
+# - pinecone-client: Proprietary, prefer open alternatives
+#
+# ============================================================================

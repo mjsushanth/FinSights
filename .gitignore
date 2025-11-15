@@ -170,3 +170,23 @@ cython_debug/
 #  and can be added to the global gitignore or merged into this file.  For a more nuclear
 #  option (not recommended) you can uncomment the following to ignore the entire idea folder.
 .idea/
+
+
+
+
+
+# ============================================
+# ============================================
+
+# Notebooks
+ModelPipeline/finrag_ml_tg1/notebooks-experiments/**/*.ipynb
+ModelPipeline/finrag_ml_tg1/notebooks-experiments/**/*.py
+
+!ModelPipeline/finrag_ml_tg1/notebooks-experiments/README.md
+
+# Large Embedding Cache Files
+ModelPipeline/finrag_ml_tg1/data_cache/embeddings/
+ModelPipeline/finrag_ml_tg1/data_cache/stage3_s3vectors/
+
+# Virtual Environments for Model RAG Pipeline
+ModelPipeline/finrag_ml_tg1/venv_ml_rag
