@@ -1,0 +1,37 @@
+
+GOLD_TEST_QUESTIONS = [ 
+    "What does EXXON MOBIL CORP report as its total revenue in 2008, and how is this figure described in the filing?",
+    "What does ELI LILLY & Co report as its net income in 2006, and how is this figure described in the filing?",
+    "What does Walmart Inc. report as its operating income in 2018, and how is this figure described in the filing?",
+    "What does JOHNSON & JOHNSON report as its cash flow from operations in 2016, and how is this figure described in the filing?",
+    "What does Apple Inc. report as its earnings per share in 2006, and how is this figure described in the filing?",
+    "How does MICROSOFT CORP describe the change in its Intelligent Cloud revenue in 2017, including both the direction and magnitude of the change?",
+    "What regulatory and compliance risks does GENWORTH FINANCIAL INC highlight in its 2019 Risk Factors section?",
+    "What regulatory and compliance risks does GENWORTH FINANCIAL INC highlight in its 2018 Risk Factors section?",
+    "What regulatory and compliance risks does JOHNSON & JOHNSON highlight in its 2021 Risk Factors section?",
+    "What liquidity, funding, or credit risks does MBIA INC highlight in its 2013 Risk Factors section?",
+    "What liquidity, funding, or credit risks does MBIA INC highlight in its 2016 Risk Factors section?",
+    "What liquidity, funding, or credit risks does MBIA INC highlight in its 2009 Risk Factors section?",
+    "What operational or supply chain risks does Walmart Inc. highlight in its 2011 Risk Factors section?",
+    "What operational or supply chain risks does Walmart Inc. highlight in its 2021 Risk Factors section?",
+    "What market or competitive risks does Walmart Inc. highlight in its 2021 Risk Factors section?",
+    "What market or competitive risks does Walmart Inc. highlight in its 2022 Risk Factors section?",
+    "What cybersecurity or data security risks does Meta Platforms, Inc. highlight in its 2023 Risk Factors section?",
+    "What cybersecurity or data security risks does Meta Platforms, Inc. highlight in its 2024 Risk Factors section?",
+    "What legal, IP, or litigation risks does VISA INC. highlight in its 2008 Risk Factors section?",
+    "What legal, IP, or litigation risks does Apple Inc. highlight in its 2014 Risk Factors section?",
+    "What general business risk risks does MICROSOFT CORP highlight in its 2012 Risk Factors section?",
+    "Across its fiscal 2018-2020 10-K filings, how does Walmart Inc. explain the main drivers behind changes in its long-term debt and related cash flows from financing activities?",
+    "Over time, how does Meta Platforms describe the regulatory and policy risks that could affect its advertising business and use of data, including anti-corruption laws, privacy rules and emerging AI frameworks?",
+    "Between 2022 and 2024, how does Johnson & Johnson describe the impact of COVID-19 on selected consumer and infectious disease product sales in its 10-K MD&A discussions?",
+    "In their 2009 Form 10-K risk-factor disclosures, how do Radian Group, Netflix and Mastercard each describe their exposure to data protection, information security and customer privacy risks?",
+    "For 2010, how do Walmart, Apple, Microsoft and Icahn Enterprises describe their exposure to liquidity and credit-related risks in their Item 1A risk-factor discussions?",
+    "In their 2023 Form 10-K filings, what revenue-related themes do Exxon Mobil and Eli Lilly highlight around technology licensing and U.S. drug programs that affect revenue?",
+    "Where does Tesla define Adjusted EBITDA in its 2022 Form 10-K, and how does the company describe that metric?",
+    "How does Icahn Enterprises define Adjusted EBITDA in its 2011 Form 10-K, and what types of items does it exclude?",
+    "Does Johnson & Johnson explicitly attribute the decline in 2024 infectious disease product sales to lower COVID-19 vaccine revenue, and how is that described?",
+    "In its 2015 and 2016 Form 10-K filings, does Meta explicitly attribute movements in 'Other income/(expense), net' to foreign currency remeasurement, and what does it say?"
+    
+    "What risks does Walmart Inc. highlight in its Risk Factors sections across years 2015, 2016, 2017, 2018, 2019, 2020?",
+]
+

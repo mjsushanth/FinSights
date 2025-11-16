@@ -4,7 +4,12 @@ Extract structured filters (ticker, year, metric) from natural language queries
 
 import re
 from typing import Optional, Dict, List
-from config.metric_mappings import COMPANY_TO_TICKER, METRIC_MAPPINGS
+
+# replacing: because relative import structure exists. 
+# from config.metric_mappings import COMPANY_TO_TICKER, METRIC_MAPPINGS
+
+# variant 2- mj
+from ..config.metric_mappings import COMPANY_TO_TICKER, METRIC_MAPPINGS
 
 
 def simple_fuzzy_match(word: str, choices: list, threshold: float = 0.8) -> tuple:

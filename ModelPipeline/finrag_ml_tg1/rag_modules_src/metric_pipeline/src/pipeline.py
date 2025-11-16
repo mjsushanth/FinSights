@@ -3,11 +3,17 @@ Main metric pipeline orchestration
 """
 
 from typing import Dict, Optional
-from src.filter_extractor import FilterExtractor, simple_fuzzy_match
-from src.metric_lookup import MetricLookup
-from config.metric_mappings import METRIC_KEYWORDS, QUANTITATIVE_INDICATORS
 import re
 
+## old- imports.
+# from src.filter_extractor import FilterExtractor, simple_fuzzy_match
+# from src.metric_lookup import MetricLookup
+# from config.metric_mappings import METRIC_KEYWORDS, QUANTITATIVE_INDICATORS
+
+# new- imports. relative structure.
+from .filter_extractor import FilterExtractor, simple_fuzzy_match
+from .metric_lookup import MetricLookup
+from ..config.metric_mappings import METRIC_KEYWORDS
 
 class MetricPipeline:
     """Orchestrate the full metric extraction and lookup pipeline"""

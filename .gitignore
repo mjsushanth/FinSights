@@ -193,5 +193,7 @@ ModelPipeline/finrag_ml_tg1/venv_ml_rag
 
 # AWS Credentials
 ModelPipeline/finrag_ml_tg1/.aws_secrets/aws_credentials_tpad_mjs.env.txt
+ModelPipeline/finrag_ml_tg1/.aws_secrets/aws_credentials.env.txt
 
-
+ModelPipeline/finrag_ml_tg1/.aws_secrets/aws_credentials_tpad_mjs.env
+ModelPipeline/finrag_ml_tg1/.aws_secrets/aws_credentials.env

@@ -82,3 +82,5 @@ QUANTITATIVE_INDICATORS = [
     'how much', 'how many', 'what is', 'what was',
     'what were', 'total', 'amount', 'value', 'number'
 ]
+
+
