@@ -193,3 +193,16 @@ Window size W=5-N captures immediate discourse neighbors without requiring manua
 - **Bundle-based sampling** replaces random sentence selection with thematic coherence
 - **Difficulty calibration** via evidence count (1 sentence=easy, 2-3=medium, 4+=hard)
 - **Answer type diversity**: `span` (narrative), `list` (per-company), `boolean` (yes/no + explanation), `numeric` (with tolerance)
+
+
+### Part 6: NL-to-Entities Module. Deep-fuzzy heavy NLP work.
+
+- Objective: Convert unstructured analyst questions into structured entity representations. This subsystem is the semantic front-end that all downstream RAG modules must rely on.
+- **Company Universe + Company Extraction**: Automatic alias generation concept, punctuation normalization, case variants, suffix stripping, ticker-to-CIK mapping, multi-token normalization (e.g., “meta platforms”, “meta platforms inc”, “meta’s”, etc.) Fuzzy fallback with strict similarity threshold. 
+- Basically, using either CIK, or usual name variants, or ticker symbols, the system recognizes.
+- **Year Extraction (Multi-Year Aware)**: Single years, Ranges, Mixed punctuation. Outputs a typed YearMatches object: informs about years list, past_years, current_year, future_years, and notable warning etc. (ex: “Query includes future years 2030. These filings do not exist…”)
+- **Metric Extraction (Mapping)**: Extends the FilterExtractor concept, Can extract multiple metrics per query. Maps to canonical metric IDs from the analytical warehouse. 
+- **Section Universe + Section Extraction**: unifies three sources- Section dimension table. Custom curated NL SECTION_KEYWORDS, Explicit literal detections, Fuzzy match fallback. 
+- **Risk Topic Matching**: Risk-topic detection aligns tightly to custom curated View2 Risk Atlas- liquidity_credit, regulatory, market_competitive, operational_supply_chain, cybersecurity_tech, legal_ip_litigation, general_risk.
+- Unified EntityAdapter: Combines all extractors into one coherent interface. **This layer has been tested against extremely hard, noisy queries**!!
+

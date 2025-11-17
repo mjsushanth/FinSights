@@ -1,3 +1,22 @@
+"""
+v1. 
+Takes region and model_id as direct constructor arguments
+Creates boto3 client directly with passed parameters
+
+# Stateless - No configuration object stored
+# Explicit - Every parameter passed at construction
+# Standalone without MLConfig
+
+# 1. Construct Bedrock API request
+# 2. Invoke Bedrock
+# 3. Parse response (handles v3 vs v4 format differences)
+# 4. Extract embedding vector
+# Complex parsing due to v3/v4 format differences:
+    # v4: {"embeddings": {"float": [[...]]}}
+    # v3: {"embeddings": [[...]]}
+##  return embedding  # List[float]
+"""
+
 import boto3
 import json
 from typing import List

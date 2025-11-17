@@ -10,13 +10,17 @@ from pathlib import Path
 sys.path.append(os.path.join(os.path.dirname(__file__), '../../loaders'))
 from ml_config_loader import MLConfig
 
+
 # Import external pipelines
 # sys.path.append(os.path.join(os.path.dirname(__file__), '../metric_pipeline/src'))
 # from pipeline import MetricPipeline  
 
 # Import local modules
-from query_embedder import QueryEmbedder
+from ModelPipeline.finrag_ml_tg1.rag_modules_src.utilities.query_embedder import QueryEmbedder
 from bedrock_client import BedrockClient
+
+# or:: from ..utilities.query_embedder import QueryEmbedder
+
 
 logger = logging.getLogger(__name__)
 
