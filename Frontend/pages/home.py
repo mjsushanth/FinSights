@@ -15,7 +15,7 @@ def render_home():
                 Markets shouldn't overwhelm — <span>filings should explain</span>.
             </div>
             <div class="hero-subtitle">
-                Finsights turns raw 10-K filings into a conversational surface for your research.
+                Finsights turns raw 10-K filings into a question and answer surface for your research.
                 Ask questions, surface KPIs, and trace every answer back to the underlying text
                 in seconds.
             </div>
@@ -44,13 +44,13 @@ def render_home():
             <div class="metrics-grid">
                 <div class="metric-card">
                     <div class="metric-label">Time saved / 10-K</div>
-                    <div class="metric-value">60–80%</div>
-                    <div class="metric-caption">From first question to key takeaways.</div>
+                    <div class="metric-value">Faster Research</div>
+                    <div class="metric-caption">From first question to key insights.</div>
                 </div>
                 <div class="metric-card">
-                    <div class="metric-label">KPI coverage</div>
-                    <div class="metric-value">50+ KPIs</div>
-                    <div class="metric-caption">Margins, cash flow, leverage & more.</div>
+                    <div class="metric-label">Section coverage</div>
+                    <div class="metric-value">Core SEC Items</div>
+                    <div class="metric-caption">Risk Factors, Business Overview, MD&A & more.</div>
                 </div>
                 <div class="metric-card">
                     <div class="metric-label">Answer traceability</div>
@@ -76,8 +76,7 @@ def render_home():
         """
         <div class="section-heading">What Finsights unlocks</div>
         <div class="section-sub">
-            A single conversational surface on top of your SEC filing pipeline—built for analysts,
-            PMs, and research teams who live in 10-Ks.
+            A clean, question-and-answer layer on top of SEC filings — built for analysts, PMs, and research teams who rely on 10-K disclosures.
         </div>
         """,
         unsafe_allow_html=True,
@@ -90,27 +89,24 @@ def render_home():
             "not a generic model memory.",
         ),
         (
-            "KPI-first analytics",
-            "Surface revenue, margin, capex and leverage KPIs as structured views you can "
-            "export or plug into dashboards.",
+            "Section-level Insights",
+            "Quickly access the most important parts of a filing, including Risk Factors, Business Overview, and MD&A, all parsed into clean sections.",
         ),
         (
-            "Risk & footnote summarization",
-            "Summarize Risk Factors, MD&A and footnotes into precise narratives with direct "
-            "links back to the original sections.",
+            "Risk & narrative summarization",
+            "Generate concise summaries of dense sections like Risk Factors or MD&A, tied back to their source paragraphs.",
         ),
         (
             "Citation-first answers",
-            "Every answer includes filing-level references, so you always know exactly where "
-            "numbers and claims come from.",
+            "Every response includes filing-level references so you always know exactly where the information came from.",
         ),
         (
-            "Portfolio-ready workflows",
-            "Switch between company deep dives and portfolio-wide KPI comparisons in a single interface.",
+            "Multi-company support",
+            "Ask about any supported filing — Apple 2023, Google 2020, Microsoft 2022 — and get a section-grounded answer each time.",
         ),
         (
             "Compliance-aware design",
-            "Keep a clear audit trail of prompts, responses and document references for internal review.",
+            "Each answer provides clear document references, supporting internal review and transparent research documentation.",
         ),
     ]
 
