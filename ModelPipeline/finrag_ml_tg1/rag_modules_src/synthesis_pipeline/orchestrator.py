@@ -15,7 +15,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__), '../metric_pipeline'))
 from src.pipeline import MetricPipeline
 
 # Import local modules
-from query_embedder import QueryEmbedder
+from utilities.query_embedder import QueryEmbedder
 from bedrock_client import BedrockClient
 
 logger = logging.getLogger(__name__)
@@ -77,8 +77,8 @@ class QueryOrchestrator:
         """Initialize external pipeline components."""
         try:
             # Initialize metric pipeline with paths
-            base_path = Path(__file__).resolve().parents[1]  # Go to rag_modules_src
-            metrics_data_path = base_path / "metric_pipeline" / "data" / "downloaded_data.json"
+            base_path = Path(__file__).resolve().parents[2]  # Go to rag_modules_src
+            metrics_data_path = base_path / "rag_modules_src"/"metric_pipeline" / "data" / "downloaded_data.json"
             company_dim_path = base_path / "data_cache" / "dimensions" / "finrag_dim_companies_21.parquet"
             
             self.metric_pipeline = MetricPipeline(
