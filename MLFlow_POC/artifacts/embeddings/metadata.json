@@ -1,0 +1,53 @@
+{
+  "model_name": "sentence-transformers/all-MiniLM-L6-v2",
+  "dimension": 384,
+  "num_vectors": 18915,
+  "chunk_size": 3,
+  "company": [
+    "NVIDIA CORP"
+  ],
+  "years": [
+    2006,
+    2007,
+    2008,
+    2009,
+    2010,
+    2011,
+    2012,
+    2013,
+    2014,
+    2015,
+    2016,
+    2017,
+    2018,
+    2019,
+    2020,
+    2021,
+    2022,
+    2023,
+    2024,
+    2025
+  ],
+  "sections": [
+    "ITEM_10",
+    "ITEM_11",
+    "ITEM_12",
+    "ITEM_13",
+    "ITEM_14",
+    "ITEM_15",
+    "ITEM_1A",
+    "ITEM_1B",
+    "ITEM_1",
+    "ITEM_2",
+    "ITEM_3",
+    "ITEM_4",
+    "ITEM_5",
+    "ITEM_6",
+    "ITEM_7A",
+    "ITEM_7",
+    "ITEM_8",
+    "ITEM_9A",
+    "ITEM_9B",
+    "ITEM_9"
+  ]
+}

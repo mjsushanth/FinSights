@@ -1,0 +1,195 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+pip-wheel-metadata/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual Environment
+venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+.venv/
+
+# Environment Variables
+.env
+.env.local
+.env.*.local
+*.env
+
+# AWS Credentials
+.aws/
+credentials
+config
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+*.sublime-project
+*.sublime-workspace
+
+# Jupyter Notebook
+.ipynb_checkpoints
+*.ipynb
+
+# MLflow
+mlruns/
+mlartifacts/
+mlflow.db
+*.db
+
+# Data Files (large files should not be committed)
+data/*.parquet
+data/*.csv
+data/*.xlsx
+artifacts/embeddings/*.parquet
+artifacts/faiss_index/*.index
+artifacts/faiss_index/*.pkl
+
+# Keep example/sample data structure
+!data/gold_dataset.json
+!data/.gitkeep
+!artifacts/.gitkeep
+!artifacts/embeddings/.gitkeep
+!artifacts/faiss_index/.gitkeep
+
+# Logs
+logs/
+*.log
+*.out
+*.err
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.nox/
+.hypothesis/
+*.cover
+*.py,cover
+.cache
+nosetests.xml
+coverage.xml
+*.coveragerc
+
+# Temporary files
+*.tmp
+*.temp
+temp/
+tmp/
+*.bak
+*.swp
+
+# Model files (if downloading models locally)
+models/
+*.bin
+*.pt
+*.pth
+*.ckpt
+*.safetensors
+
+# Documentation builds
+docs/_build/
+docs/.doctrees/
+site/
+
+# OS specific
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Package managers
+poetry.lock
+Pipfile.lock
+.pdm.toml
+
+# Secrets and credentials
+secrets/
+*.pem
+*.key
+*.crt
+*.p12
+*.pfx
+
+# Evaluation outputs
+evaluation_results/
+*.json.bak
+
+# Compiled files
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# Distribution
+*.whl
+*.tar.gz
+*.zip
+
+# MyPy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Pyre type checker
+.pyre/
+
+# pytype static type analyzer
+.pytype/
+
+# Cython debug symbols
+cython_debug/
+
+# Local configuration overrides
+config.local.py
+settings.local.py
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+
+# Cache directories
+.cache/
+__pypackages__/
+
+# Streamlit (if using)
+.streamlit/
+
+# Docker
+*.dockerfile.swp
+docker-compose.override.yml
+
+# Backup files
+*.backup
+*_backup.*
+backup_*/

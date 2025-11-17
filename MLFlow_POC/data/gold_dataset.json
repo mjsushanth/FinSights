@@ -1,0 +1,65 @@
+[
+  {
+    "query": "What was NVDA's revenue in 2023?",
+    "ticker": "NVDA",
+    "ground_truth": null,
+    "expected_facts": ["2023", "revenue"],
+    "metrics_involved": ["income_stmt_Revenue"]
+  },
+  {
+    "query": "Show me NVDA's profit margins from 2020 to 2023",
+    "ticker": "NVDA",
+    "ground_truth": null,
+    "expected_facts": ["profit margin", "2020", "2023"],
+    "metrics_involved": ["Gross Profit Margin %"]
+  },
+  {
+    "query": "What was Nvidia's net income in 2022?",
+    "ticker": "NVDA",
+    "ground_truth": null,
+    "expected_facts": ["2022", "net income"],
+    "metrics_involved": ["income_stmt_Net Income"]
+  },
+  {
+    "query": "Why did NVDA's revenue grow in recent years?",
+    "ticker": "NVDA",
+    "ground_truth": null,
+    "expected_facts": ["AI", "data center", "gaming", "growth drivers"],
+    "metrics_involved": []
+  },
+  {
+    "query": "What are the main risks mentioned in NVDA's filings?",
+    "ticker": "NVDA",
+    "ground_truth": null,
+    "expected_facts": ["competition", "supply chain", "regulatory"],
+    "metrics_involved": []
+  },
+  {
+    "query": "Explain Nvidia's business strategy",
+    "ticker": "NVDA",
+    "ground_truth": null,
+    "expected_facts": ["AI", "data center", "gaming", "strategy"],
+    "metrics_involved": []
+  },
+  {
+    "query": "Analyze NVDA's revenue trends and explain the key drivers",
+    "ticker": "NVDA",
+    "ground_truth": null,
+    "expected_facts": ["revenue trend", "growth", "AI", "data center"],
+    "metrics_involved": ["income_stmt_Revenue"]
+  },
+  {
+    "query": "What were the main drivers of revenue growth for NVDA?",
+    "ticker": "NVDA",
+    "ground_truth": null,
+    "expected_facts": ["revenue", "growth", "drivers"],
+    "metrics_involved": ["income_stmt_Revenue"]
+  },
+  {
+    "query": "How did NVDA's profitability change from 2020 to 2023 and why?",
+    "ticker": "NVDA",
+    "ground_truth": null,
+    "expected_facts": ["profitability", "2020", "2023", "change"],
+    "metrics_involved": ["income_stmt_Net Income", "Gross Profit Margin %"]
+  }
+]
