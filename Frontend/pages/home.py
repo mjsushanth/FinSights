@@ -134,9 +134,9 @@ def render_home():
     st.markdown(
         """
         - “What is Google's Revenue for 2023?”  
-        - “Summarize the **top 3 risk factors** and how they evolved versus last year.”  
-        - “What does management say about **free cash flow priorities**?”  
-        - “How does **net leverage** today compare to three years ago?”  
+        - “What drove Apple's revenue and margin changes in its 2023 annual report?”  
+        - “How did Microsoft's Cloud and Productivity segments perform compared to last year?”  
+        - “What strategic priorities did Amazon outline for the coming year in its annual filing?”  
         """,
         unsafe_allow_html=True,
     )
