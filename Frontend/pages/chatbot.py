@@ -35,7 +35,7 @@ def _render_chat_history():
 
 
 def render_chatbot():
-    st.header("💬 Finsights 10-K Chatbot")
+    st.header("Finsights 10-K Chatbot")
     st.caption("Ask questions in natural language and get answers grounded in SEC filings.")
 
     # simple public session id
