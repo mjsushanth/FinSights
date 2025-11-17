@@ -99,4 +99,4 @@ def render_chatbot():
             }
         )
 
-        st.experimental_rerun()
+        st.rerun()

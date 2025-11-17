@@ -26,7 +26,8 @@ def render_home():
         cta = st.button("Try the 10-K chatbot →", key="hero_chat_button")
         if cta:
             st.session_state.page = "Chatbot"
-            st.experimental_rerun()
+            st.rerun()
+
 
         st.markdown(
             """
