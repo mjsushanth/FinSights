@@ -4,64 +4,43 @@ Extract structured filters (ticker, year, metric) from natural language queries
 
 import re
 from typing import Optional, Dict, List
+from pathlib import Path
 
-# replacing: because relative import structure exists. 
-# from config.metric_mappings import COMPANY_TO_TICKER, METRIC_MAPPINGS
+# Import the v2 mappings
+from config.metric_mappings import METRIC_MAPPINGS
 
-# variant 2- mj
-from ..config.metric_mappings import COMPANY_TO_TICKER, METRIC_MAPPINGS
+import sys
+sys.path.append(str(Path(__file__).resolve().parents[2]))  # Add rag_modules_src to path
 
-
-def simple_fuzzy_match(word: str, choices: list, threshold: float = 0.8) -> tuple:
-    """
-    Simple fuzzy matching using Levenshtein distance (no external libs needed)
-    Returns: (best_match, similarity_score)
-    """
-    def levenshtein_distance(s1: str, s2: str) -> int:
-        """Calculate edit distance between two strings"""
-        if len(s1) < len(s2):
-            return levenshtein_distance(s2, s1)
-        if len(s2) == 0:
-            return len(s1)
-        
-        previous_row = range(len(s2) + 1)
-        for i, c1 in enumerate(s1):
-            current_row = [i + 1]
-            for j, c2 in enumerate(s2):
-                insertions = previous_row[j + 1] + 1
-                deletions = current_row[j] + 1
-                substitutions = previous_row[j] + (c1 != c2)
-                current_row.append(min(insertions, deletions, substitutions))
-            previous_row = current_row
-        
-        return previous_row[-1]
-    
-    def similarity(s1: str, s2: str) -> float:
-        """Calculate similarity ratio (0-1)"""
-        distance = levenshtein_distance(s1.lower(), s2.lower())
-        max_len = max(len(s1), len(s2))
-        return 1 - (distance / max_len) if max_len > 0 else 0
-    
-    best_match = None
-    best_score = 0
-    
-    for choice in choices:
-        score = similarity(word, choice)
-        if score > best_score:
-            best_score = score
-            best_match = choice
-    
-    if best_score >= threshold:
-        return (best_match, best_score * 100)
-    return (None, 0)
-
+from entity_adapter.company_universe import CompanyUniverse
+from entity_adapter.company_extractor import CompanyExtractor
+from entity_adapter.string_utils import simple_fuzzy_match
 
 class FilterExtractor:
     """Extract ticker, year, and metric from user queries"""
     
-    def __init__(self):
-        self.company_map = COMPANY_TO_TICKER
+    def __init__(self, company_dim_path: Optional[str] = None):
+        """
+        Initialize with company universe
+        
+        Args:
+            company_dim_path: Path to company dimension parquet file
+                            If None, uses default path
+        """
+        # Set up company universe path
+        if company_dim_path is None:
+            # Default: go up to rag_modules_src, then to data_cache
+            base_path = Path(__file__).resolve().parents[2]
+            company_dim_path = base_path / "data_cache" / "dimensions" / "finrag_dim_companies_21.parquet"
+        
+        # Initialize company universe and extractor
+        self.company_universe = CompanyUniverse(dim_path=company_dim_path)
+        self.company_extractor = CompanyExtractor(self.company_universe)
+        
+        # Keep metric map
         self.metric_map = METRIC_MAPPINGS
+        
+        print(f"✓ FilterExtractor initialized with {len(self.company_universe.tickers)} companies")
     
     def extract(self, query: str) -> Dict[str, any]:
         """
@@ -71,99 +50,83 @@ class FilterExtractor:
             query: User's natural language query
             
         Returns:
-            Dictionary with ticker, year, metrics (list), and confidence
+            Dictionary with tickers (list), years (list), metrics (list), and confidence
         """
         filters = {
-            'ticker': self._extract_ticker(query),
-            'year': self._extract_year(query),
+            'tickers': self._extract_tickers(query),
+            'years': self._extract_years(query),
             'metrics': self._extract_metrics(query),
             'query': query
         }
         
         # Calculate confidence based on how many filters were found
-        has_ticker = filters['ticker'] is not None
-        has_year = filters['year'] is not None
+        has_tickers = len(filters['tickers']) > 0
+        has_years = len(filters['years']) > 0
         has_metrics = len(filters['metrics']) > 0
         
-        found_filters = sum([has_ticker, has_year, has_metrics])
+        found_filters = sum([has_tickers, has_years, has_metrics])
         filters['confidence'] = found_filters / 3.0
         
         return filters
     
-    def _extract_ticker(self, query: str) -> Optional[str]:
+    def _extract_tickers(self, query: str) -> List[str]:
         """
-        Extract ticker symbol or map company name to ticker with FUZZY MATCHING
-        Handles both uppercase and lowercase tickers
+        Extract ALL ticker symbols using CompanyExtractor
         
-        Examples:
-            "NVDA revenue" -> "NVDA"
-            "nvda revenue" -> "NVDA"  (NEW!)
-            "NVIDIA revenue" -> "NVDA"
-            "nvida revenue" -> "NVDA" (typo correction!)
+        This leverages the full company universe with:
+        - Ticker matching (NVDA, AAPL)
+        - CIK matching
+        - Company name matching with fuzzy logic (NVIDIA -> NVDA)
+        - Alias matching (apple -> AAPL, microsoft -> MSFT)
+        
+        Returns:
+            List of ticker symbols (uppercase)
         """
-        # First, try to find explicit ticker (2-5 letters, case-insensitive)
-        ticker_pattern = r'\b([A-Za-z]{2,5})\b'
+        company_matches = self.company_extractor.extract(query)
         
-        # Find all potential ticker matches
-        for match in re.finditer(ticker_pattern, query):
-            potential_ticker = match.group(1).upper()  # Convert to uppercase
-            
-            # Filter out common words
-            common_words = {'IN', 'IT', 'IS', 'AS', 'AT', 'TO', 'OR', 'AND', 'THE', 'WHAT', 'WAS', 'ARE', 'FOR'}
-            
-            # Check if it looks like a ticker (not a common word)
-            if potential_ticker not in common_words:
-                # Additional validation: if it's all uppercase in original query, likely a ticker
-                # OR if it's 2-4 chars and not a common word, likely a ticker
-                if match.group(1).isupper() or (2 <= len(potential_ticker) <= 4):
-                    return potential_ticker
-        
-        # Fallback: Check for company names with FUZZY MATCHING
-        query_lower = query.lower()
-        
-        # First try exact substring matching (fast)
-        for company_name, ticker in self.company_map.items():
-            if company_name in query_lower:
-                return ticker
-        
-        # If no exact match, try fuzzy matching
-        words = query_lower.split()
-        
-        for word in words:
-            # Skip very short words and common words
-            if len(word) < 3 or word in ['the', 'and', 'what', 'how', 'was', 'is', 'are']:
-                continue
-            
-            # Use our simple fuzzy matcher
-            best_match, score = simple_fuzzy_match(
-                word, 
-                list(self.company_map.keys()),
-                threshold=0.8
-            )
-            
-            if best_match and score >= 80:
-                return self.company_map[best_match]
-        
-        return None
+        # Return the tickers list (already uppercase and deduplicated)
+        return company_matches.tickers
     
-    def _extract_year(self, query: str) -> Optional[int]:
+    def _extract_years(self, query: str) -> List[int]:
         """
-        Extract year from query
+        Extract ALL years from query, including ranges
         
         Examples:
-            "revenue in 2024" -> 2024
-            "2023 earnings" -> 2023
+            "revenue in 2024" -> [2024]
+            "2021 to 2023 earnings" -> [2021, 2022, 2023]
+            "compare 2020, 2021, and 2022" -> [2020, 2021, 2022]
+            "from 2015-2020" -> [2015, 2016, 2017, 2018, 2019, 2020]
+        
+        Returns:
+            List of years (sorted, can be empty)
         """
+        years_set = set()
+        
+        # Pattern for year ranges: "2015 to 2020", "2015-2020", "2015 - 2020"
+        range_pattern = r'\b((19|20)\d{2})\s*(?:to|-|–|—)\s*((19|20)\d{2})\b'
+        
+        for match in re.finditer(range_pattern, query, re.IGNORECASE):
+            start_year = int(match.group(1))
+            end_year = int(match.group(3))
+            
+            # Ensure correct order
+            if start_year > end_year:
+                start_year, end_year = end_year, start_year
+            
+            # Expand range
+            if 1950 <= start_year <= 2030 and 1950 <= end_year <= 2030:
+                for year in range(start_year, end_year + 1):
+                    years_set.add(year)
+        
+        # Pattern for individual years
         year_pattern = r'\b((19|20)\d{2})\b'
-        year_match = re.search(year_pattern, query)
         
-        if year_match:
-            year = int(year_match.group(1))
-            # Sanity check: years should be reasonable (1950-2030)
+        for match in re.finditer(year_pattern, query):
+            year = int(match.group(1))
             if 1950 <= year <= 2030:
-                return year
+                years_set.add(year)
         
-        return None
+        return sorted(list(years_set))
     
     def _extract_metrics(self, query: str) -> List[str]:
         """
@@ -239,7 +202,54 @@ class FilterExtractor:
         Check if extracted filters are sufficient for lookup
         """
         return all([
-            filters.get('ticker'),
-            filters.get('year'),
+            len(filters.get('tickers', [])) > 0,
+            len(filters.get('years', [])) > 0,
             len(filters.get('metrics', [])) > 0
         ])
+
+
+# LEGACY FUNCTION - kept for backward compatibility with older code
+def simple_fuzzy_match_legacy(word: str, choices: list, threshold: float = 0.8) -> tuple:
+    """
+    Simple fuzzy matching using Levenshtein distance (no external libs needed)
+    Returns: (best_match, similarity_score)
+    
+    NOTE: This is the LEGACY version. New code should import from entity_adapter.string_utils
+    """
+    def levenshtein_distance(s1: str, s2: str) -> int:
+        """Calculate edit distance between two strings"""
+        if len(s1) < len(s2):
+            return levenshtein_distance(s2, s1)
+        if len(s2) == 0:
+            return len(s1)
+        
+        previous_row = range(len(s2) + 1)
+        for i, c1 in enumerate(s1):
+            current_row = [i + 1]
+            for j, c2 in enumerate(s2):
+                insertions = previous_row[j + 1] + 1
+                deletions = current_row[j] + 1
+                substitutions = previous_row[j] + (c1 != c2)
+                current_row.append(min(insertions, deletions, substitutions))
+            previous_row = current_row
+        
+        return previous_row[-1]
+    
+    def similarity(s1: str, s2: str) -> float:
+        """Calculate similarity ratio (0-1)"""
+        distance = levenshtein_distance(s1.lower(), s2.lower())
+        max_len = max(len(s1), len(s2))
+        return 1 - (distance / max_len) if max_len > 0 else 0
+    
+    best_match = None
+    best_score = 0
+    
+    for choice in choices:
+        score = similarity(word, choice)
+        if score > best_score:
+            best_score = score
+            best_match = choice
+    
+    if best_score >= threshold:
+        return (best_match, best_score * 100)
+    return (None, 0)

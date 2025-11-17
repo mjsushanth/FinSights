@@ -3,6 +3,7 @@ Entry point for the metric pipeline
 """
 
 from src.pipeline import MetricPipeline
+from pathlib import Path
 
 
 def main():
@@ -10,19 +11,43 @@ def main():
     
     # Initialize pipeline
     print("Initializing Metric Pipeline...")
-    pipeline = MetricPipeline(data_path='data/downloaded_data.json')
+    
+    # Set paths
+    metrics_data_path = 'data/downloaded_data.json'
+    
+    # Optional: specify company dimension path
+    # If None, FilterExtractor will use default path
+    base_path = Path(__file__).resolve().parents[1]  # Go up to rag_modules_src
+    company_dim_path = base_path / "data_cache" / "dimensions" / "finrag_dim_companies_21.parquet"
+    
+    pipeline = MetricPipeline(
+        data_path=metrics_data_path,
+        company_dim_path=company_dim_path
+    )
     print()
     
-    # Example queries
+    # Example queries - NOW WITH MULTI-COMPANY SUPPORT
     test_queries = [
-        "What is NVIDIA's revenue in the year 2024?",
-        "What was NVDA's net income in 2023?",
-        "Show me NVDA profit and revenue in 2013",  # Multiple metrics
-        "MSFT total assets and liabilities 2025",  # Multiple metrics
-        "What are nvidia's current assets, liabilities, and equity in 2022?",  # 3 metrics
-        "Microsoft operating cash flow 2022",
-        "Show me NVDA gross profit margin for 2025",
-        "Tell me about AI trends",  # Should skip metric layer
+        # Single company, single year
+        "What is NVIDIA's revenue in 2024?",
+        
+        # Multiple companies (by name), single year
+        "Compare Apple and Microsoft revenue in 2023",
+        
+        # Multiple companies, multiple metrics
+        "Show me NVDA and AAPL profit and revenue in 2023",
+        
+        # Year range
+        "NVIDIA revenue from 2020 to 2023",
+        
+        # Complex: multiple companies, years, metrics
+        "What was Apple's, Microsoft's, and Nvidia's revenue and net income in 2021, 2022, and 2023?",
+        
+        # Fuzzy company name matching
+        "Compare nvida and microsft total assets in 2022",
+        
+        # Should skip metric layer
+        "Tell me about AI trends",
     ]
     
     print("=" * 60)

@@ -5,27 +5,23 @@ Main metric pipeline orchestration
 from typing import Dict, Optional
 import re
 
-## old- imports.
-# from src.filter_extractor import FilterExtractor, simple_fuzzy_match
-# from src.metric_lookup import MetricLookup
-# from config.metric_mappings import METRIC_KEYWORDS, QUANTITATIVE_INDICATORS
+from src.filter_extractor import FilterExtractor
+from src.metric_lookup import MetricLookup
+from config.metric_mappings import METRIC_KEYWORDS, QUANTITATIVE_INDICATORS
 
-# new- imports. relative structure.
-from .filter_extractor import FilterExtractor, simple_fuzzy_match
-from .metric_lookup import MetricLookup
-from ..config.metric_mappings import METRIC_KEYWORDS
 
 class MetricPipeline:
     """Orchestrate the full metric extraction and lookup pipeline"""
     
-    def __init__(self, data_path: str):
+    def __init__(self, data_path: str, company_dim_path: Optional[str] = None):
         """
         Initialize pipeline
         
         Args:
             data_path: Path to metrics JSON data
+            company_dim_path: Path to company dimension parquet (optional)
         """
-        self.extractor = FilterExtractor()
+        self.extractor = FilterExtractor(company_dim_path=company_dim_path)
         self.lookup = MetricLookup(data_path)
     
     def needs_metric_layer(self, query: str) -> bool:
@@ -47,8 +43,9 @@ class MetricPipeline:
         # Check for year
         has_year = bool(re.search(r'\b(19|20)\d{2}\b', query))
         
-        # Check for ticker
-        has_ticker = bool(re.search(r'\b[A-Za-z]{2,5}\b', query))
+        # Check for ticker/company name (use the extractor to be consistent)
+        tickers = self.extractor._extract_tickers(query)
+        has_ticker = len(tickers) > 0
         
         # Check for metric keywords with fuzzy matching
         has_metric = False
@@ -58,6 +55,7 @@ class MetricPipeline:
             has_metric = True
         else:
             # Fuzzy match each word against metric keywords
+            from entity_adapter.string_utils import simple_fuzzy_match
             words = query_lower.split()
             
             for word in words:
@@ -85,7 +83,7 @@ class MetricPipeline:
     
     def process(self, query: str) -> Dict[str, any]:
         """
-        Main processing pipeline
+        Main processing pipeline - NOW SUPPORTS MULTI-COMPANY, MULTI-YEAR
         
         Args:
             query: User's natural language query
@@ -108,24 +106,32 @@ class MetricPipeline:
         if not self.extractor.is_valid(filters):
             return {
                 'success': False,
-                'reason': 'Could not extract all required filters (ticker, year, metrics)',
+                'reason': 'Could not extract all required filters (tickers, years, metrics)',
                 'extracted_filters': filters,
                 'query': query
             }
         
-        # Step 4: Lookup data for ALL metrics
-        results = self.lookup.query_multiple(
-            ticker=filters['ticker'],
-            year=filters['year'],
+        # Step 4: Lookup data for ALL combinations using optimized batch query
+        results = self.lookup.query_batch_optimized(
+            tickers=filters['tickers'],
+            years=filters['years'],
             metrics=filters['metrics']
         )
         
-        # Step 5: Handle results
+        # Step 5: Get statistics
+        stats = self.lookup.get_batch_statistics(
+            tickers=filters['tickers'],
+            years=filters['years'],
+            metrics=filters['metrics']
+        )
+        
+        # Step 6: Handle results
         if not results:
             return {
                 'success': False,
-                'reason': 'No data found for any of the requested metrics',
+                'reason': 'No data found for any of the requested combinations',
                 'filters': filters,
+                'stats': stats,
                 'query': query
             }
         
@@ -137,14 +143,16 @@ class MetricPipeline:
                 'success': False,
                 'reason': 'Data found but all values are missing/NaN',
                 'filters': filters,
+                'stats': stats,
                 'query': query
             }
         
         # Success!
         return {
             'success': True,
-            'data': valid_results,  # Returns a LIST of results
+            'data': valid_results,
             'filters': filters,
+            'stats': stats,
             'query': query,
             'count': len(valid_results)
         }
@@ -152,6 +160,7 @@ class MetricPipeline:
     def format_response(self, pipeline_result: Dict[str, any]) -> str:
         """
         Format pipeline result into human-readable response
+        NOW SUPPORTS MULTI-COMPANY, MULTI-YEAR OUTPUT
         
         Args:
             pipeline_result: Output from process() method
@@ -166,43 +175,61 @@ class MetricPipeline:
             if 'extracted_filters' in pipeline_result:
                 filters = pipeline_result['extracted_filters']
                 msg += f"\nExtracted filters:\n"
-                msg += f"  - Ticker: {filters.get('ticker', 'NOT FOUND')}\n"
-                msg += f"  - Year: {filters.get('year', 'NOT FOUND')}\n"
+                msg += f"  - Tickers: {filters.get('tickers', 'NOT FOUND')}\n"
+                msg += f"  - Years: {filters.get('years', 'NOT FOUND')}\n"
                 msg += f"  - Metrics: {filters.get('metrics', 'NOT FOUND')}\n"
             
-            if 'available_years' in pipeline_result:
-                years = pipeline_result['available_years']
-                if years:
-                    msg += f"\n💡 Data available for years: {years}\n"
+            if 'stats' in pipeline_result:
+                stats = pipeline_result['stats']
+                msg += f"\n📊 Coverage:\n"
+                msg += f"  - Total combinations requested: {stats['total_combinations']}\n"
+                msg += f"  - Found with values: {stats['found_with_values']}\n"
+                msg += f"  - Coverage: {stats['coverage_pct']:.1f}%\n"
             
             return msg
         
-        # Success case - handle multiple results
+        # Success case - handle multiple companies/years/metrics
         data_list = pipeline_result['data']
         count = pipeline_result['count']
+        stats = pipeline_result.get('stats', {})
         
-        msg = f"✓ Found {count} metric{'s' if count > 1 else ''}!\n"
+        msg = f"✓ Found {count} data points!\n"
+        msg += f"📊 Coverage: {stats.get('coverage_pct', 0):.1f}%\n\n"
         
-        # Get ticker and year from first result (same for all)
-        ticker = data_list[0]['ticker']
-        year = data_list[0]['year']
-        
-        msg += f"\n{ticker} in {year}:\n"
+        # Group by company, then year
+        from collections import defaultdict
+        by_company = defaultdict(lambda: defaultdict(list))
         
         for data in data_list:
-            value = data['value']
-            metric_name = data['metric'].replace('_', ' ')
+            ticker = data['ticker']
+            year = data['year']
+            by_company[ticker][year].append(data)
+        
+        # Format output
+        for ticker in sorted(by_company.keys()):
+            msg += f"{'='*60}\n"
+            msg += f"📈 {ticker}\n"
+            msg += f"{'='*60}\n"
             
-            # Format value based on magnitude
-            if abs(value) >= 1_000_000_000:
-                formatted_value = f"${value/1_000_000_000:.2f}B"
-            elif abs(value) >= 1_000_000:
-                formatted_value = f"${value/1_000_000:.2f}M"
-            elif value < 0:
-                formatted_value = f"-${abs(value):,.2f}"
-            else:
-                formatted_value = f"${value:,.2f}"
+            for year in sorted(by_company[ticker].keys()):
+                msg += f"\n  Year {year}:\n"
+                
+                for data in by_company[ticker][year]:
+                    value = data['value']
+                    metric_name = data['metric'].replace('_', ' ')
+                    
+                    # Format value based on magnitude
+                    if abs(value) >= 1_000_000_000:
+                        formatted_value = f"${value/1_000_000_000:.2f}B"
+                    elif abs(value) >= 1_000_000:
+                        formatted_value = f"${value/1_000_000:.2f}M"
+                    elif value < 0:
+                        formatted_value = f"-${abs(value):,.2f}"
+                    else:
+                        formatted_value = f"${value:,.2f}"
+                    
+                    msg += f"    • {metric_name}: {formatted_value}\n"
             
-            msg += f"  • {metric_name}: {formatted_value}\n"
+            msg += "\n"
         
         return msg

@@ -10,17 +10,13 @@ from pathlib import Path
 sys.path.append(os.path.join(os.path.dirname(__file__), '../../loaders'))
 from ml_config_loader import MLConfig
 
-
-# Import external pipelines
-# sys.path.append(os.path.join(os.path.dirname(__file__), '../metric_pipeline/src'))
-# from pipeline import MetricPipeline  
+# Import metric pipeline
+sys.path.append(os.path.join(os.path.dirname(__file__), '../metric_pipeline'))
+from src.pipeline import MetricPipeline
 
 # Import local modules
-from ModelPipeline.finrag_ml_tg1.rag_modules_src.utilities.query_embedder import QueryEmbedder
+from query_embedder import QueryEmbedder
 from bedrock_client import BedrockClient
-
-# or:: from ..utilities.query_embedder import QueryEmbedder
-
 
 logger = logging.getLogger(__name__)
 
@@ -44,8 +40,8 @@ class QueryOrchestrator:
                     '../../.aws_config/ml_config.yaml'
                 )
             ml_config = MLConfig(config_path)
-            self.config = ml_config.cfg  # Access the cfg attribute
-            self.ml_config = ml_config  # Keep reference to MLConfig object
+            self.config = ml_config.cfg
+            self.ml_config = ml_config
         else:
             self.config = config
             self.ml_config = None
@@ -80,11 +76,19 @@ class QueryOrchestrator:
     def _init_external_components(self):
         """Initialize external pipeline components."""
         try:
-            self.metric_extractor = MetricPipeline()  # Using the aliased class
-            logger.info("Metric extractor initialized")
+            # Initialize metric pipeline with paths
+            base_path = Path(__file__).resolve().parents[1]  # Go to rag_modules_src
+            metrics_data_path = base_path / "metric_pipeline" / "data" / "downloaded_data.json"
+            company_dim_path = base_path / "data_cache" / "dimensions" / "finrag_dim_companies_21.parquet"
+            
+            self.metric_pipeline = MetricPipeline(
+                data_path=str(metrics_data_path),
+                company_dim_path=str(company_dim_path)
+            )
+            logger.info("Metric pipeline initialized successfully")
         except Exception as e:
-            logger.warning(f"Metric extractor initialization failed: {e}")
-            self.metric_extractor = None
+            logger.warning(f"Metric pipeline initialization failed: {e}")
+            self.metric_pipeline = None
         
         # RAG search - placeholder until teammate's module is ready
         self.rag_search = None
@@ -116,7 +120,13 @@ class QueryOrchestrator:
             analytical_results = self._extract_metrics(user_query)
             query_embedding = self._generate_embedding(user_query)
         
-        rag_context = self._search_documents(query_embedding)
+        # Extract filters for S3 metadata filtering (future use)
+        s3_filters = self._extract_s3_filters(analytical_results)
+        
+        # Vector search (currently mock)
+        rag_context = self._search_documents(query_embedding, s3_filters)
+        
+        # Generate final response
         final_response = self._generate_response(user_query, analytical_results, rag_context)
         
         return {
@@ -124,25 +134,148 @@ class QueryOrchestrator:
             'response': final_response,
             'metadata': {
                 'analytical_results': analytical_results,
+                's3_filters': s3_filters,
                 'num_context_chunks': len(rag_context) if rag_context else 0,
                 'top_sources': self._extract_top_sources(rag_context),
-                'has_analytical_data': analytical_results is not None and bool(analytical_results.get('data')),
+                'has_analytical_data': analytical_results is not None and len(analytical_results) > 0,  # String check
                 'has_rag_context': bool(rag_context)
             }
         }
     
     def _extract_metrics(self, query: str) -> Optional[Dict]:
-        """Step 2: Extract metrics from query."""
-        if not self.metric_extractor:
+        """
+        Step 2: Extract metrics from query using MetricPipeline.
+        
+        Returns:
+            Compact analytical results or None
+        """
+        if not self.metric_pipeline:
+            logger.warning("Metric pipeline not available")
             return None
+        
         try:
-            # Check what method the metric pipeline uses - might be .extract(), .process(), or .run()
-            results = self.metric_extractor.extract(query)
-            logger.info(f"Extracted metrics: {results}")
-            return results
+            # Run metric pipeline
+            result = self.metric_pipeline.process(query)
+            
+            if not result.get('success', False):
+                logger.info(f"Metric pipeline: {result.get('reason', 'No data')}")
+                return None
+            
+            # Format results compactly for LLM
+            compact_result = self._format_analytical_compact(result)
+            
+            # === NEW: Print what's being sent to LLM ===
+            print("\n" + "="*60)
+            print("📊 METRIC PIPELINE OUTPUT → LLM")
+            print("="*60)
+            print(json.dumps(compact_result, indent=2))
+            print("="*60 + "\n")
+            
+            logger.info(f"Extracted {result.get('count', 0)} data points from metric pipeline")
+            return compact_result
+        
         except Exception as e:
-            logger.warning(f"Metric extraction failed: {e}")
+            logger.error(f"Metric extraction failed: {e}", exc_info=True)
             return None
+    
+    def _format_analytical_compact(self, raw_result: Dict) -> Optional[str]:
+        """
+        Format metric pipeline output as PURE STRING to minimize LLM tokens.
+        
+        Format: "TICKER YEAR: metric1=$X, metric2=$Y"
+        
+        Args:
+            raw_result: Raw output from metric_pipeline.process()
+            
+        Returns:
+            Ultra-compact string or None
+        """
+        if not raw_result.get('success'):
+            return None
+        
+        data = raw_result.get('data', [])
+        
+        if not data:
+            return None
+        
+        # Group by ticker and year
+        from collections import defaultdict
+        grouped = defaultdict(lambda: defaultdict(dict))
+        
+        for item in data:
+            if item.get('found'):
+                ticker = item['ticker']
+                year = item['year']
+                metric = item['metric']
+                value = item['value']
+                
+                # Ultra-short metric names (remove prefixes and underscores)
+                metric_short = (metric.replace('income_stmt_', '')
+                                    .replace('balance_sheet_', '')
+                                    .replace('cash_flow_', '')
+                                    .replace('_', ''))
+                
+                grouped[ticker][year][metric_short] = value
+        
+        # Convert to string format
+        lines = []
+        for ticker, years_data in sorted(grouped.items()):
+            for year, metrics in sorted(years_data.items()):
+                # Format values compactly
+                metrics_str = ', '.join([
+                    f"{k}={self._format_value_compact(v)}" 
+                    for k, v in metrics.items()
+                ])
+                lines.append(f"{ticker} {year}: {metrics_str}")
+        
+        return '\n'.join(lines)
+
+    def _format_value_compact(self, value: float) -> str:
+        """Format financial values ultra-compactly."""
+        if abs(value) >= 1_000_000_000:
+            return f"${value/1_000_000_000:.1f}B"
+        elif abs(value) >= 1_000_000:
+            return f"${value/1_000_000:.1f}M"
+        elif abs(value) >= 1_000:
+            return f"${value/1_000:.0f}K"
+        else:
+            return f"${value:.0f}"
+    
+    def _extract_s3_filters(self, analytical_results: Optional[str]) -> Dict:
+        """
+        Extract clean S3 metadata filters from analytical results string.
+        
+        Args:
+            analytical_results: Compact string format "TICKER YEAR: ..."
+            
+        Returns:
+            Dictionary with S3 filter lists
+        """
+        if not analytical_results:
+            return {
+                'tickers': [],
+                'year': [],
+                'sec_item_canonical': []
+            }
+        
+        # Parse the string to extract tickers and years
+        import re
+        tickers = set()
+        years = set()
+        
+        # Pattern: "TICKER YEAR: ..."
+        pattern = r'([A-Z]+)\s+(\d{4}):'
+        matches = re.findall(pattern, analytical_results)
+        
+        for ticker, year in matches:
+            tickers.add(ticker)
+            years.add(int(year))
+        
+        return {
+            'tickers': sorted(list(tickers)),
+            'year': sorted(list(years)),
+            'sec_item_canonical': []
+        }
     
     def _generate_embedding(self, query: str) -> List[float]:
         """Step 3: Generate query embedding."""
@@ -154,25 +287,36 @@ class QueryOrchestrator:
         logger.info(f"Generated query embedding (dim: {len(embedding)})")
         return embedding
     
-    def _search_documents(self, embedding: List[float]) -> List[Dict]:
-        """Step 4: Vector search."""
+    def _search_documents(self, embedding: List[float], s3_filters: Dict) -> List[Dict]:
+        """
+        Step 4: Vector search with metadata filtering.
+        
+        Args:
+            embedding: Query embedding vector
+            s3_filters: Metadata filters (tickers, years, sections)
+        """
         if not self.rag_search:
             logger.warning("RAG search not available - using mock data")
-            return [{
-                'text': 'Mock SEC filing content...',
-                'company': 'AAPL',
-                'year': 2023,
-                'section': 'ITEM_1A',
+            # Mock data that respects filters if available
+            mock_data = [{
+                'text': 'Mock SEC filing content about revenue growth and market conditions...',
+                'company': s3_filters.get('tickers', ['AAPL'])[0] if s3_filters.get('tickers') else 'AAPL',
+                'year': s3_filters.get('year', [2023])[0] if s3_filters.get('year') else 2023,
+                'section': 'ITEM_7',
                 'similarity_score': 0.85
             }]
+            return mock_data
         
         try:
             search_config = self.orchestrator_config.get('vector_search', {})
+            
+            # Call RAG search with metadata filters
             results = self.rag_search.search(
                 embedding=embedding,
-                top_k=search_config.get('top_k', 10)
+                top_k=search_config.get('top_k', 10),
+                metadata_filters=s3_filters  # Pass filters to S3 Vectors
             )
-            logger.info(f"Found {len(results)} relevant chunks")
+            logger.info(f"Found {len(results)} relevant chunks with filters: {s3_filters}")
             return results
         except Exception as e:
             logger.error(f"Vector search failed: {e}")
@@ -213,7 +357,7 @@ class QueryOrchestrator:
             'config_loaded': bool(self.config),
             'embedder': False,
             'llm_client': False,
-            'metric_extractor': self.metric_extractor is not None,
+            'metric_pipeline': self.metric_pipeline is not None,
             'rag_search': self.rag_search is not None
         }
         

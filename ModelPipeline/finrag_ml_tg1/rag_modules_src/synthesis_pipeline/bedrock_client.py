@@ -35,7 +35,7 @@ class BedrockClient:
         
         Args:
             user_query: Original user question
-            analytical_results: Output from metric pipeline (can be None)
+            analytical_results: Compact output from metric pipeline (can be None)
             rag_context: Relevant chunks from vector search
             
         Returns:
@@ -72,54 +72,72 @@ class BedrockClient:
             raise
     
     def _build_prompt(self, 
-                     user_query: str,
-                     analytical_results: Optional[Dict],
-                     rag_context: List[Dict]) -> str:
+                 user_query: str,
+                 analytical_results: Optional[str],
+                 rag_context: List[Dict]) -> str:
         """
-        Construct the prompt for Claude.
+        Construct the prompt for Claude - PURE STRING FORMAT.
         
         Args:
             user_query: User's question
-            analytical_results: Structured financial data
+            analytical_results: Ultra-compact string format
             rag_context: Text chunks from SEC filings
             
         Returns:
-            Formatted prompt string
+            Formatted prompt string (token-optimized)
         """
         prompt_parts = []
         
-        # System context
+        # System context (minimal)
         prompt_parts.append(
-            "You are a financial analysis assistant. You have access to both "
-            "structured financial data and contextual information from SEC filings. "
-            "Provide accurate, comprehensive answers based on this information.\n"
+            "Financial assistant with KPI data and SEC excerpts. Answer accurately.\n"
         )
         
-        # Add analytical data if available
-        if analytical_results and analytical_results.get('data'):
-            prompt_parts.append("=== STRUCTURED FINANCIAL DATA ===")
-            prompt_parts.append(json.dumps(analytical_results, indent=2))
+        # Add analytical data if available (PURE STRING)
+        if analytical_results:
+            prompt_parts.append("FINANCIALS:")
+            prompt_parts.append(analytical_results)
             prompt_parts.append("")
         
-        # Add RAG context
+        # Add RAG context (COMPACT)
         if rag_context:
-            prompt_parts.append("=== CONTEXT FROM SEC FILINGS ===")
-            for i, chunk in enumerate(rag_context[:5], 1):
-                prompt_parts.append(f"\n[Context {i}]")
-                prompt_parts.append(f"Company: {chunk.get('company', 'Unknown')}")
-                prompt_parts.append(f"Year: {chunk.get('year', 'Unknown')}")
-                prompt_parts.append(f"Section: {chunk.get('section', 'Unknown')}")
-                prompt_parts.append(f"Text: {chunk.get('text', '')[:500]}...")
+            prompt_parts.append("CONTEXT:")
+            for i, chunk in enumerate(rag_context, 1):
+                co = chunk.get('company', '?')
+                yr = chunk.get('year', '?')
+                sec = chunk.get('section', '?').replace('ITEM_', '')
+                text = chunk.get('text', '')[:350]
+                
+                prompt_parts.append(f"[{i}] {co} {yr} {sec}: {text}")
             prompt_parts.append("")
         
         # User query
-        prompt_parts.append("=== USER QUESTION ===")
-        prompt_parts.append(user_query)
-        prompt_parts.append("")
-        prompt_parts.append(
-            "Please provide a comprehensive answer based on the structured data "
-            "and context provided above. If the data conflicts, explain the discrepancy. "
-            "If information is missing, acknowledge what you don't know."
-        )
+        prompt_parts.append("Q: " + user_query)
+        prompt_parts.append("A:")
         
-        return "\n".join(prompt_parts)
+        final_prompt = "\n".join(prompt_parts)
+        
+        # Log token estimate
+        token_estimate = len(final_prompt) // 4
+        logger.info(f"Prompt: ~{token_estimate} tokens")
+        
+        return final_prompt
+    
+    def _format_value_compact(self, value: float) -> str:
+        """
+        Format financial values ultra-compactly.
+        
+        Args:
+            value: Raw financial value
+            
+        Returns:
+            Compact string representation (e.g., "$27.0B", "$3.5M", "$1.2K")
+        """
+        if abs(value) >= 1_000_000_000:
+            return f"${value/1_000_000_000:.1f}B"
+        elif abs(value) >= 1_000_000:
+            return f"${value/1_000_000:.1f}M"
+        elif abs(value) >= 1_000:
+            return f"${value/1_000:.0f}K"
+        else:
+            return f"${value:.0f}"
