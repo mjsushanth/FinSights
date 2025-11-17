@@ -1,3 +1,5 @@
+# ModelPipeline\finrag_ml_tg1\rag_modules_src\entity_adapter\models.py
+
 from __future__ import annotations
 
 from dataclasses import dataclass

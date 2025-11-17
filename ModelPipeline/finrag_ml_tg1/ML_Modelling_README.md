@@ -206,3 +206,18 @@ Window size W=5-N captures immediate discourse neighbors without requiring manua
 - **Risk Topic Matching**: Risk-topic detection aligns tightly to custom curated View2 Risk Atlas- liquidity_credit, regulatory, market_competitive, operational_supply_chain, cybersecurity_tech, legal_ip_litigation, general_risk.
 - Unified EntityAdapter: Combines all extractors into one coherent interface. **This layer has been tested against extremely hard, noisy queries**!!
 
+### Part 7: Query-to-Embedding Module with Guardrails
+- Config-Driven Embedding Runtime: embedder is fully parameterized by ml_config.yaml and inherits the same model ID, dimension (1024-d), input type, and region used. ( compatibility between user-query embeddings and the S3 Vectors index).
+- Bedrock v4 Output-Dimension Control: QueryEmbedderV2 mirrors the Stage-1 ingestion API contract.
+- Guardrails: Length + Semantic Scope Filtering. 
+  - Length guardrail → rejects excessively long inputs, 
+  - Semantic scope guardrail → uses EntityExtractionResult to detect whether the query contains any financial/SEC-relevant signal (companies, metrics, years, sections, or risk topics).
+  - Irrelevant queries raise QueryOutOfScopeError exceptions.
+- Embedder handles both Cohere v3 ({"embeddings":[…]}) and v4 ({"embeddings":{"float":[…]}}) formats.
+- (Note: QueryEmbedderV2 accepts a Bedrock client created by the MLConfig service object, which loads .aws_secrets/aws_credentials.env + ml_config.yaml)
+
+### Part 7.1 - Important.
+- Supply Line 1 and Line 2.
+- `Query → EntityAdapter.extract() → MetricPipeline.process() → format_analytical_compact()`
+- `Query → EntityAdapter.extract() → QueryEmbedderV2.embed_query() → 1024-d Cohere v4 embedding`
+- Cleansed over 30 py files, sys.path adjustments, hacks, path corruption issues with resolver.

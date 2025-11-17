@@ -1,24 +1,21 @@
-import sys
-import os
+# ModelPipeline\finrag_ml_tg1\rag_modules_src\synthesis_pipeline\orchestrator.py
+
+from __future__ import annotations
+
 import json
 from typing import Dict, Optional, List
 import logging
 import concurrent.futures
 from pathlib import Path
 
-# Import your existing config loader
-sys.path.append(os.path.join(os.path.dirname(__file__), '../../loaders'))
-from ml_config_loader import MLConfig
-
-# Import metric pipeline
-sys.path.append(os.path.join(os.path.dirname(__file__), '../metric_pipeline'))
-from src.pipeline import MetricPipeline
-
-# Import local modules
-from utilities.query_embedder import QueryEmbedder
-from bedrock_client import BedrockClient
+from finrag_ml_tg1.loaders.ml_config_loader import MLConfig
+from finrag_ml_tg1.rag_modules_src.metric_pipeline.src.pipeline import MetricPipeline
+from finrag_ml_tg1.rag_modules_src.utilities.query_embedder_v2 import QueryEmbedderV2
+from .bedrock_client import BedrockClient
 
 logger = logging.getLogger(__name__)
+
+
 
 
 class QueryOrchestrator:  
@@ -376,3 +373,22 @@ class QueryOrchestrator:
 def create_orchestrator(config_path: str = None) -> QueryOrchestrator:
     """Factory function to create orchestrator."""
     return QueryOrchestrator(config_path=config_path)
+
+
+
+
+""" Old- No sys hacks
+# Import your existing config loader
+sys.path.append(os.path.join(os.path.dirname(__file__), '../../loaders'))
+from ml_config_loader import MLConfig
+
+# Import metric pipeline
+sys.path.append(os.path.join(os.path.dirname(__file__), '../metric_pipeline'))
+from src.pipeline import MetricPipeline
+
+# Import local modules
+from utilities.query_embedder import QueryEmbedder
+from bedrock_client import BedrockClient
+
+logger = logging.getLogger(__name__)
+"""

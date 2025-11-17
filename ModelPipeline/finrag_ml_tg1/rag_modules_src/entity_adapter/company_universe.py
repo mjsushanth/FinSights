@@ -1,3 +1,5 @@
+# ModelPipeline\finrag_ml_tg1\rag_modules_src\entity_adapter\company_universe.py
+
 from __future__ import annotations
 
 from pathlib import Path

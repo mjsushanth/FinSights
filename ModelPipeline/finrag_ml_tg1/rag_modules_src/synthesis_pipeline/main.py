@@ -1,12 +1,16 @@
+# ModelPipeline\finrag_ml_tg1\rag_modules_src\synthesis_pipeline\main.py
+
 import logging
 import json
-from orchestrator import create_orchestrator
+
+from .orchestrator import create_orchestrator
 
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 )
 logger = logging.getLogger(__name__)
+
 
 
 def main():

@@ -1,5 +1,7 @@
 
 """
+ModelPipeline\finrag_ml_tg1\rag_modules_src\entity_adapter\entity_adapter.py
+
 Entity adapter: top-level NL → {company, year, metric, section, risk_topic} extraction.
 
 ## Usage example: !
@@ -31,6 +33,7 @@ from .section_extractor import SectionExtractor
 from .models import CompanyMatches, YearMatches, MetricMatches
 
 logger = logging.getLogger(__name__)
+
 
 
 @dataclass
@@ -106,9 +109,8 @@ class EntityAdapter:
 
     def __init__(
         self,
-        project_root: Optional[Path] = None,
-        company_dim_path: Optional[Path] = None,
-        sections_dim_path: Optional[Path] = None,
+        company_dim_path: str | Path,
+        section_dim_path: str | Path,
         *,
         # Allow dependency injection for advanced/testing use
         company_universe: CompanyUniverse | None = None,
@@ -119,45 +121,32 @@ class EntityAdapter:
         section_extractor: SectionExtractor | None = None,
     ) -> None:
         """
-        Create a full-featured entity adapter.
-
-        Args
-        ----
-        project_root:
-            Root path of the finrag_ml_tg1 project. If not given, inferred
-            from this file location (two levels up).
-        company_dim_path:
-            Path to finrag_dim_companies_*.parquet. If None, defaults to
-            `<project_root>/data_cache/dimensions/finrag_dim_companies_21.parquet`.
-        sections_dim_path:
-            Path to finrag_dim_sec_sections.parquet. If None, defaults to
-            `<project_root>/data_cache/dimensions/finrag_dim_sec_sections.parquet`.
+        Initialize EntityAdapter with explicit dimension file paths.
+        
+        Args:
+            company_dim_path: Full path to company dimension parquet file
+            section_dim_path: Full path to section dimension parquet file
+            company_universe: Optional pre-built CompanyUniverse (for testing)
+            section_universe: Optional pre-built SectionUniverse (for testing)
+            company_extractor: Optional pre-built CompanyExtractor (for testing)
+            year_extractor: Optional pre-built YearExtractor (for testing)
+            metric_adapter: Optional pre-built MetricAdapter (for testing)
+            section_extractor: Optional pre-built SectionExtractor (for testing)
+        
+        Raises:
+            FileNotFoundError: If dimension files don't exist
         """
-
-        self.company_table_name = "finrag_dim_companies_21.parquet"
-        self.sections_table_name = "finrag_dim_sec_sections.parquet"    
-
-        # ----------------------------
-        # 1) Resolve paths / universes
-        # ----------------------------
-        if project_root is None:
-            # .../finrag_ml_tg1/rag_modules_src/entity_adapter/entity_adapter.py
-            # parents[0] = entity_adapter
-            # parents[1] = entity_adapter/
-            # parents[2] = rag_modules_src/
-            # parents[3] = finrag_ml_tg1/
-            project_root = Path(__file__).resolve().parents[2]
-
-        self.project_root = project_root
-
-        if company_dim_path is None:
-            company_dim_path = (
-                project_root / "data_cache" / "dimensions" / self.company_table_name
-            )
-        if sections_dim_path is None:
-            sections_dim_path = (
-                project_root / "data_cache" / "dimensions" / self.sections_table_name
-            )
+        # Convert to Path and validate existence
+        company_dim_path = Path(company_dim_path)
+        section_dim_path = Path(section_dim_path)
+        
+        if not company_dim_path.exists():
+            raise FileNotFoundError(f"Company dimension file not found: {company_dim_path}")
+        if not section_dim_path.exists():
+            raise FileNotFoundError(f"Section dimension file not found: {section_dim_path}")
+        
+        logger.info(f"EntityAdapter using company_dim: {company_dim_path}")
+        logger.info(f"EntityAdapter using section_dim: {section_dim_path}")
 
         # Company universe / extractor
         if company_universe is None:
@@ -167,7 +156,7 @@ class EntityAdapter:
 
         # Section universe / extractor
         if section_universe is None:
-            section_universe = SectionUniverse(dim_path=sections_dim_path)
+            section_universe = SectionUniverse(dim_path=section_dim_path)
         if section_extractor is None:
             section_extractor = SectionExtractor(section_universe)
 
@@ -175,7 +164,7 @@ class EntityAdapter:
         if year_extractor is None:
             year_extractor = YearExtractor()
         if metric_adapter is None:
-            metric_adapter = MetricAdapter()
+            metric_adapter = MetricAdapter(company_dim_path=company_dim_path)
 
         self.company_universe = company_universe
         self.section_universe = section_universe
@@ -185,8 +174,10 @@ class EntityAdapter:
         self.metric_adapter = metric_adapter
         self.section_extractor = section_extractor
 
-
         logger.info("EntityAdapter initialized successfully")
+
+
+
 
     # -------------------------------------------------------------
     # Public API

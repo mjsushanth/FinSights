@@ -1,3 +1,5 @@
+# ModelPipeline\finrag_ml_tg1\rag_modules_src\synthesis_pipeline\bedrock_client.py
+
 import boto3
 import json
 from typing import Dict, List, Optional

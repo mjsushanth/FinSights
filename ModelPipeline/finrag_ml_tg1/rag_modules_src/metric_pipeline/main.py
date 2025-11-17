@@ -1,9 +1,12 @@
 """
 Entry point for the metric pipeline
+ModelPipeline\finrag_ml_tg1\rag_modules_src\metric_pipeline\main.py
 """
 
-from src.pipeline import MetricPipeline
+from __future__ import annotations
 from pathlib import Path
+
+from .src.pipeline import MetricPipeline
 
 
 def main():

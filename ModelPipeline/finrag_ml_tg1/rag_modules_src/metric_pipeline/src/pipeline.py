@@ -1,13 +1,26 @@
 """
 Main metric pipeline orchestration
+
+ModelPipeline\finrag_ml_tg1\rag_modules_src\metric_pipeline\src\pipeline.py
+
 """
+
+# uses src.* and config.*.
+# Relative within src for FilterExtractor and MetricLookup ? use relative .
+# Absolute- use finrag_ml_tg1.rag_modules_src 
+
+from __future__ import annotations
 
 from typing import Dict, Optional
 import re
 
-from src.filter_extractor import FilterExtractor
-from src.metric_lookup import MetricLookup
-from config.metric_mappings import METRIC_KEYWORDS, QUANTITATIVE_INDICATORS
+from .filter_extractor import FilterExtractor
+from .metric_lookup import MetricLookup
+from finrag_ml_tg1.rag_modules_src.metric_pipeline.config.metric_mappings import (
+    METRIC_KEYWORDS,
+    QUANTITATIVE_INDICATORS,
+)
+from finrag_ml_tg1.rag_modules_src.entity_adapter.string_utils import simple_fuzzy_match
 
 
 class MetricPipeline:
@@ -55,7 +68,6 @@ class MetricPipeline:
             has_metric = True
         else:
             # Fuzzy match each word against metric keywords
-            from entity_adapter.string_utils import simple_fuzzy_match
             words = query_lower.split()
             
             for word in words:
@@ -80,6 +92,7 @@ class MetricPipeline:
         # Trigger if: (has_metric AND (year OR ticker)) OR (quantitative AND ticker)
         return (has_metric and (has_year or has_ticker)) or \
                (has_quantitative and has_ticker)
+    
     
     def process(self, query: str) -> Dict[str, any]:
         """

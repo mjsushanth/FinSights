@@ -1,18 +1,22 @@
+# ModelPipeline\finrag_ml_tg1\rag_modules_src\entity_adapter\section_extractor.py
 from __future__ import annotations
 
 import logging
 import re
 from typing import List, Set, Tuple
 
-from rag_modules_src.constants.metric_mapping_v2 import (
+from finrag_ml_tg1.rag_modules_src.constants.metric_mapping_v2 import (
     SECTION_KEYWORDS,
     SECTION_ITEM_PATTERNS,
     RISK_TOPIC_KEYWORDS,
 )
-from rag_modules_src.entity_adapter.section_universe import SectionUniverse
-from rag_modules_src.entity_adapter.models import SectionMatches, RiskMatches
+
+## SectionUniverse and SectionMatches via relative imports (.) because they’re in the same entity_adapter package.
+from .section_universe import SectionUniverse
+from .models import SectionMatches, RiskMatches
 
 logger = logging.getLogger(__name__)
+
 
 
 class SectionExtractor:

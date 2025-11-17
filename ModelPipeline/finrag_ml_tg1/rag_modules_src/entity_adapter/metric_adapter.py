@@ -1,19 +1,22 @@
 # rag_modules_src/entity_adapter/metric_adapter.py
 
+# Reuse the *existing* metric pipeline logic
+# But point it at your richer v2 mapping constants
+
 from __future__ import annotations
 
 import logging
 from typing import List
 
-# Reuse the *existing* metric pipeline logic
-from rag_modules_src.metric_pipeline.src.filter_extractor import FilterExtractor
-
-# But point it at your richer v2 mapping constants
-from rag_modules_src.constants.metric_mapping_v2 import METRIC_MAPPINGS
+from finrag_ml_tg1.rag_modules_src.metric_pipeline.src.filter_extractor import (
+    FilterExtractor,
+)
+from finrag_ml_tg1.rag_modules_src.constants.metric_mapping_v2 import METRIC_MAPPINGS
 
 from .models import MetricMatches
 
 logger = logging.getLogger(__name__)
+
 
 
 class FilterExtractorV2(FilterExtractor):
@@ -44,50 +47,41 @@ class FilterExtractorV2(FilterExtractor):
 
 class MetricAdapter:
     """
-    Simple metric entity adapter for the RAG side.
-
-    Responsibilities
-    ----------------
-    - Call the v2-enabled FilterExtractor to reuse the other dev's
-      metric extraction logic.
-    - Return a clean MetricMatches object with just the list of
-      canonical metric IDs for a given query.
-
-    This adapter intentionally does *not* touch:
-    - the metric data tables
-    - MetricLookup
-    - MetricPipeline.process()
-
-    Those remain the analytical pipeline's responsibility.
+    Adapter for extracting metric entities from queries using v2 mappings.
+    
+    This wraps FilterExtractor but provides an interface consistent with
+    the rest of the entity_adapter package.
     """
-
-    def __init__(self) -> None:
-        self._extractor = FilterExtractorV2()
-
+    
+    def __init__(self, company_dim_path: Optional[str | Path] = None):
+        """
+        Initialize MetricAdapter.
+        
+        Args:
+            company_dim_path: Optional path to company dimension parquet file.
+                            If None, FilterExtractor uses its default path.
+        """
+        # Initialize FilterExtractor (it handles default path logic)
+        self.extractor = FilterExtractor(company_dim_path=company_dim_path)
+        
+        # Override with v2 metric mappings
+        self.extractor.metric_map = METRIC_MAPPINGS
+        
+        logger.info("MetricAdapter initialized with v2 metric mappings")
+    
     def extract(self, query: str) -> MetricMatches:
         """
-        Extract canonical metrics from a natural-language query.
-
-        Parameters
-        ----------
-        query:
-            The user's question, e.g.
-            "Show me NVDA revenue and net income in 2021 and 2022"
-
-        Returns
-        -------
-        MetricMatches
-            metrics: list of canonical metric names
-                     (deduplicated, sorted)
+        Extract metrics from a query.
+        
+        Args:
+            query: Natural language query
+            
+        Returns:
+            MetricMatches with list of canonical metric IDs
         """
-        logger.info(f"MetricAdapter extracting metrics from query: {query!r}")
+        # Use FilterExtractor's metric extraction logic
+        metrics = self.extractor._extract_metrics(query)
+        return MetricMatches(metrics=metrics)
+    
 
-        filters = self._extractor.extract(query)
-        raw_metrics: List[str] = filters.get("metrics", []) or []
-
-        # Deduplicate + sort for stability
-        uniq_metrics = sorted(set(raw_metrics))
-
-        logger.info(f"MetricAdapter found metrics: {uniq_metrics}")
-
-        return MetricMatches(metrics=uniq_metrics)
+    

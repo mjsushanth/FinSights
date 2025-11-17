@@ -2,36 +2,64 @@
 Extract structured filters (ticker, year, metric) from natural language queries
 """
 
+# All sys hacks commented- remove. Import the v2 mappings
+# from config.metric_mappings import METRIC_MAPPINGS
+# import sys
+# sys.path.append(str(Path(__file__).resolve().parents[2]))  # Add rag_modules_src to path
+
+# ModelPipeline\finrag_ml_tg1\rag_modules_src\metric_pipeline\src\filter_extractor.py
+
+from __future__ import annotations
+
 import re
 from typing import Optional, Dict, List
-from pathlib import Path
+from pathlib import Path 
+from finrag_ml_tg1.rag_modules_src.metric_pipeline.config.metric_mappings import ( METRIC_MAPPINGS, ) 
+from finrag_ml_tg1.rag_modules_src.entity_adapter.company_universe import ( CompanyUniverse, ) 
+from finrag_ml_tg1.rag_modules_src.entity_adapter.company_extractor import ( CompanyExtractor, ) 
+from finrag_ml_tg1.rag_modules_src.entity_adapter.string_utils import simple_fuzzy_match
 
-# Import the v2 mappings
-from config.metric_mappings import METRIC_MAPPINGS
 
-import sys
-sys.path.append(str(Path(__file__).resolve().parents[2]))  # Add rag_modules_src to path
+# ============================================================================
+# MODULE-LEVEL PATH CONSTANT
+# ============================================================================
+# This path is relative to ModelPipeline root
+DEFAULT_COMPANY_DIM_PATH = Path("finrag_ml_tg1/data_cache/dimensions/finrag_dim_companies_21.parquet")
 
-from entity_adapter.company_universe import CompanyUniverse
-from entity_adapter.company_extractor import CompanyExtractor
-from entity_adapter.string_utils import simple_fuzzy_match
 
 class FilterExtractor:
     """Extract ticker, year, and metric from user queries"""
     
-    def __init__(self, company_dim_path: Optional[str] = None):
+    def __init__(self, company_dim_path: Optional[str | Path] = None):
         """
-        Initialize with company universe
+        Initialize with company universe.
         
         Args:
-            company_dim_path: Path to company dimension parquet file
-                            If None, uses default path
+            company_dim_path: Path to company dimension parquet file.
+                            If None, uses DEFAULT_COMPANY_DIM_PATH constant.
+                            Can be absolute or relative to current working directory.
+        
+        Raises:
+            FileNotFoundError: If company dimension file doesn't exist
         """
-        # Set up company universe path
+        # Use default if not provided
         if company_dim_path is None:
-            # Default: go up to rag_modules_src, then to data_cache
-            base_path = Path(__file__).resolve().parents[2]
-            company_dim_path = base_path / "data_cache" / "dimensions" / "finrag_dim_companies_21.parquet"
+            company_dim_path = DEFAULT_COMPANY_DIM_PATH
+        
+        # Convert to Path object
+        company_dim_path = Path(company_dim_path)
+        
+        # Make absolute if relative (assumes cwd is ModelPipeline or contains it)
+        if not company_dim_path.is_absolute():
+            company_dim_path = company_dim_path.resolve()
+        
+        # Validate existence
+        if not company_dim_path.exists():
+            raise FileNotFoundError(
+                f"Company dimension file not found: {company_dim_path}\n"
+                f"Expected location: {DEFAULT_COMPANY_DIM_PATH}\n"
+                f"Make sure ModelPipeline/ is your working directory or on sys.path"
+            )
         
         # Initialize company universe and extractor
         self.company_universe = CompanyUniverse(dim_path=company_dim_path)
@@ -41,6 +69,8 @@ class FilterExtractor:
         self.metric_map = METRIC_MAPPINGS
         
         print(f"✓ FilterExtractor initialized with {len(self.company_universe.tickers)} companies")
+        print(f"  Using: {company_dim_path.name}")
+    
     
     def extract(self, query: str) -> Dict[str, any]:
         """
@@ -68,7 +98,9 @@ class FilterExtractor:
         filters['confidence'] = found_filters / 3.0
         
         return filters
-    
+
+
+
     def _extract_tickers(self, query: str) -> List[str]:
         """
         Extract ALL ticker symbols using CompanyExtractor
@@ -253,3 +285,29 @@ def simple_fuzzy_match_legacy(word: str, choices: list, threshold: float = 0.8) 
     if best_score >= threshold:
         return (best_match, best_score * 100)
     return (None, 0)
+
+
+
+"""
+
+import sys
+from pathlib import Path
+
+# cwd is ModelPipeline or inside it
+current = Path.cwd()
+if current.name != "ModelPipeline":
+    for parent in [current] + list(current.parents):
+        if parent.name == "ModelPipeline":
+            model_root = parent
+            break
+    else:
+        raise RuntimeError("Cannot find ModelPipeline root")
+else:
+    model_root = current
+
+if str(model_root) not in sys.path:
+    sys.path.insert(0, str(model_root))
+
+print("✓ sys.path root:", model_root)
+
+"""

@@ -1,3 +1,4 @@
+# ModelPipeline\finrag_ml_tg1\rag_modules_src\entity_adapter\company_extractor.py
 
 from __future__ import annotations
 
