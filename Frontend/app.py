@@ -25,8 +25,8 @@ inject_global_css()
 
 def top_nav():
     st.markdown('<div class="top-nav">', unsafe_allow_html=True)
-
-    col_logo, col_center, col_right = st.columns([1.6, 3.0, 1.8])
+    
+    col_logo, col_spacer, col_nav = st.columns([1.6, 4.0, 2.0])
 
     # LEFT: logo
     with col_logo:
@@ -40,21 +40,38 @@ def top_nav():
             unsafe_allow_html=True,
         )
 
-    # CENTER: Home link (graid-style center nav)
-    with col_center:
-        st.markdown('<div class="nav-center">', unsafe_allow_html=True)
-        if st.button("Home", key="nav_home"):
-            st.session_state.page = "Home"
-        st.markdown("</div>", unsafe_allow_html=True)
+    # MIDDLE: just empty
+    with col_spacer:
+        st.write("")
 
-    # RIGHT: single Chatbot CTA (no Login anymore)
-    with col_right:
+    # RIGHT: Home + Chatbot side by side
+    with col_nav:
         st.markdown('<div class="nav-right">', unsafe_allow_html=True)
-        if st.button("Chatbot", key="nav_chat"):
-            st.session_state.page = "Chatbot"
-        st.markdown("</div>", unsafe_allow_html=True)
 
-    st.markdown("</div>", unsafe_allow_html=True)
+        home_col, chat_col = st.columns([1, 1])
+
+        with home_col:
+            st.markdown('<div class="nav-home-btn">', unsafe_allow_html=True)
+            btn_home = st.button("Home", key="nav_home")
+            st.markdown('</div>', unsafe_allow_html=True)
+
+        with chat_col:
+            st.markdown('<div class="nav-chat-btn">', unsafe_allow_html=True)
+            btn_chat = st.button("Chatbot", key="nav_chat")
+            st.markdown('</div>', unsafe_allow_html=True)
+
+        st.markdown('</div>', unsafe_allow_html=True)
+
+    st.markdown('</div>', unsafe_allow_html=True)
+
+    # routing triggers
+    if btn_home:
+        st.session_state.page = "Home"
+        st.rerun()
+    if btn_chat:
+        st.session_state.page = "Chatbot"
+        st.rerun()
+
 
 
 top_nav()

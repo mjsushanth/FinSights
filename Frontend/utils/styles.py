@@ -5,7 +5,8 @@ def inject_global_css():
     st.markdown(
         """
         <style>
-        /* Hide default Streamlit sidebar completely */
+
+        /* Hide default Streamlit sidebar */
         [data-testid="stSidebar"], [data-testid="stSidebarNav"] {
             display: none !important;
         }
@@ -33,7 +34,7 @@ def inject_global_css():
             display: flex;
             align-items: center;
             justify-content: space-between;
-            background: radial-gradient(circle at top left, #020617 0, #020617 50%, #020617 100%);
+            background: #020617;
             border-bottom: 1px solid rgba(15,23,42,0.9);
             backdrop-filter: blur(18px);
         }
@@ -44,6 +45,64 @@ def inject_global_css():
             gap: 0.7rem;
             margin-top: 0.7rem;
         }
+
+        /* ------------- FIX: KEEP NAV BUTTONS SIDE-BY-SIDE -------------- */
+        .nav-right {
+            display: flex !important;
+            justify-content: flex-end !important;
+            align-items: center !important;
+        }
+
+        .nav-buttons {
+            display: flex !important;
+            flex-direction: row !important;
+            align-items: center !important;
+            gap: 1.0rem !important;
+        }
+
+        /* Remove Streamlit stacking */
+        .nav-buttons .stButton {
+            display: inline-block !important;
+            margin: 0 !important;
+            padding: 0 !important;
+        }
+
+        .nav-buttons .stButton > button {
+            white-space: nowrap !important;
+        }
+
+        /* Home = text link */
+        .nav-buttons .stButton:nth-child(1) > button {
+            background: transparent !important;
+            border: none !important;
+            box-shadow: none !important;
+            color: #e5e7eb !important;
+            font-size: 0.95rem !important;
+            font-weight: 500 !important;
+            padding: 0.3rem 0.8rem !important;
+        }
+
+        .nav-buttons .stButton:nth-child(1) > button:hover {
+            color: #f9fafb !important;
+        }
+
+        /* Chatbot = gradient pill */
+        .nav-buttons .stButton:nth-child(2) > button {
+            padding: 0.45rem 1.2rem !important;
+            border-radius: 999px !important;
+            border: none !important;
+            background: linear-gradient(135deg,#22c55e,#0ea5e9) !important;
+            color: #020617 !important;
+            font-size: 0.9rem !important;
+            font-weight: 600 !important;
+            box-shadow: 0 12px 28px rgba(8,47,73,0.6) !important;
+        }
+        .nav-buttons .stButton:nth-child(2) > button:hover {
+            filter: brightness(1.07);
+            box-shadow: 0 16px 40px rgba(8,47,73,0.9) !important;
+        }
+
+        /* Logo */
         .logo-dot {
             width: 11px;
             height: 11px;
@@ -61,23 +120,6 @@ def inject_global_css():
             color: #22c55e;
         }
 
-        }
-        /* Make nav buttons look like simple text links */
-        .top-nav-btn .stButton > button {
-        background: transparent !important;
-        border: none !important;
-        box-shadow: none !important;
-        color: #94a3b8 !important;
-        padding: 0.15rem 0.6rem !important;
-        border-radius: 0 !important;
-        font-size: 0.9rem !important;
-    }
-
-    .top-nav-btn .stButton > button:hover {
-        color: #e5e7eb !important;
-        background: rgba(15,23,42,0.7) !important;
-    }
-
         /* ---------------- HERO ---------------- */
         @keyframes heroGradient {
           0% {background-position: 0% 50%;}
@@ -86,14 +128,12 @@ def inject_global_css():
         }
 
         .hero {
-        margin-top: 1.5rem;
-        padding: 2.4rem 0;
-        /* Make this a full-width strip, not a pill */
-        border-radius: 0;          /* 🔑 no rounded pill */
-        border: none;              /* 🔑 no card border */
-        box-shadow: none;          /* 🔑 no raised card shadow */
+            margin-top: 1.5rem;
+            padding: 2.4rem 0;
+            border-radius: 0;
+            border: none;
+            box-shadow: none;
         }
-
 
         .hero-title {
             margin-top: 0.2rem;
@@ -104,12 +144,12 @@ def inject_global_css():
             color: #e5e7eb;
         }
         .hero-title span {
-          background: linear-gradient(120deg,#22c55e,#0ea5e9,#38bdf8);
-          background-size: 220% 220%;
-          -webkit-background-clip: text;
-          background-clip: text;
-          color: transparent;
-          animation: heroGradient 16s ease infinite;
+            background: linear-gradient(120deg,#22c55e,#0ea5e9,#38bdf8);
+            background-size: 220% 220%;
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            animation: heroGradient 16s ease infinite;
         }
 
         .hero-subtitle {
@@ -126,7 +166,7 @@ def inject_global_css():
             color: #94a3b8;
         }
 
-        /* CTA button ONLY inside hero */
+        /* CTA inside hero */
         .hero .stButton>button {
             padding: 0.55rem 1.3rem;
             border-radius: 999px;
@@ -143,6 +183,7 @@ def inject_global_css():
             box-shadow: 0 22px 52px rgba(8,47,73,0.9);
         }
 
+        /* ---------------- METRICS ---------------- */
         .metrics-grid {
             display: grid;
             grid-template-columns: repeat(2,minmax(0,1fr));
@@ -152,7 +193,7 @@ def inject_global_css():
             border-radius: 1.1rem;
             padding: 0.9rem 1.0rem;
             border: 1px solid rgba(148,163,184,0.65);
-            background: radial-gradient(circle at top,#020617 0,#020617 40%,#020617 100%);
+            background: #020617;
             color: #e5e7eb;
             box-shadow: 0 10px 28px rgba(15,23,42,0.9);
         }
@@ -186,26 +227,23 @@ def inject_global_css():
             margin-bottom: 1.2rem;
         }
 
-        /* Feature bubbles */
+        /* ---------------- CARD FEATURES ---------------- */
         .feature-card {
-                border-radius: 999px;
-                padding: 1.5rem 1.3rem;
-                margin: 1.0rem 1.0rem;
-                border: 1px solid rgba(30,64,175,0.6);
-                background: radial-gradient(circle at top,#020617 0,#020617 40%,#020617 100%);
-                color: #e5e7eb;
-                box-shadow: 0 18px 40px rgba(15,23,42,0.9);
-                transition: transform 150ms ease-out, box-shadow 150ms ease-out, border-color 150ms ease-out;
-
-                /* Centering fix */
-                text-align: center;
-                display: flex;
-                flex-direction: column;
-                justify-content: center;
-                align-items: center;
+            border-radius: 999px;
+            padding: 1.5rem 1.3rem;
+            margin: 1.0rem;
+            border: 1px solid rgba(30,64,175,0.6);
+            background: #020617;
+            color: #e5e7eb;
+            box-shadow: 0 18px 40px rgba(15,23,42,0.9);
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
         }
         .feature-card:hover {
-            transform: translateY(-2px) translateX(1px);
+            transform: translateY(-2px);
             box-shadow: 0 22px 58px rgba(8,47,73,0.95);
             border-color: rgba(34,197,94,0.8);
         }
@@ -219,7 +257,7 @@ def inject_global_css():
             color: #9ca3af;
         }
 
-        /* Chat bubbles */
+        /* ---------------- CHAT BUBBLES ---------------- */
         .chat-bubble-user {
           background: #020617;
           color: #e5e7eb;
@@ -241,6 +279,34 @@ def inject_global_css():
           color: #94a3b8;
           margin-bottom: 0.08rem;
         }
+
+        .nav-home-btn .stButton > button {
+            background: transparent !important;
+            border: none !important;
+            box-shadow: none !important;
+            color: #e5e7eb !important;
+            font-size: 0.95rem !important;
+            font-weight: 500 !important;
+            padding: 0.3rem 0.8rem !important;
+        }
+
+        /* Chatbot = CTA pill */
+        .nav-chat-btn .stButton > button {
+            padding: 0.45rem 1.2rem !important;
+            border-radius: 999px !important;
+            border: none !important;
+            background: linear-gradient(135deg,#22c55e,#0ea5e9) !important;
+            color: #020617 !important;
+            font-size: 0.9rem !important;
+            font-weight: 600 !important;
+            box-shadow: 0 12px 28px rgba(8,47,73,0.6) !important;
+        }
+        .nav-chat-btn .stButton > button:hover {
+            filter: brightness(1.07);
+            box-shadow: 0 16px 40px rgba(8,47,73,0.9) !important;
+        }
+
+
         </style>
         """,
         unsafe_allow_html=True,
