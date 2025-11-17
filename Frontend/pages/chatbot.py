@@ -1,5 +1,6 @@
 # pages/chatbot.py
 from datetime import datetime
+import uuid
 
 import streamlit as st
 
@@ -37,9 +38,9 @@ def render_chatbot():
     st.header("💬 Finsights 10-K Chatbot")
     st.caption("Ask questions in natural language and get answers grounded in SEC filings.")
 
-    if not st.session_state.get("is_authenticated", False):
-        st.warning("Please sign in first using the **Login** button in the top nav.")
-        return
+    # simple public session id
+    if "session_id" not in st.session_state:
+        st.session_state.session_id = f"public-{uuid.uuid4()}"
 
     c1, c2 = st.columns([2, 1])
     with c1:
@@ -76,6 +77,7 @@ def render_chatbot():
         send = st.button("Ask Finsights")
 
     if send and prompt:
+        # add user message
         st.session_state.messages.append(
             {
                 "role": "user",
@@ -84,11 +86,11 @@ def render_chatbot():
             }
         )
 
+        # query backend
         with st.spinner("Reading filings and generating an answer…"):
-            answer = query_backend(
-                prompt, session_id=st.session_state.get("user_email") or "anonymous"
-            )
+            answer = query_backend(prompt, session_id=st.session_state.session_id)
 
+        # add assistant message
         st.session_state.messages.append(
             {
                 "role": "assistant",

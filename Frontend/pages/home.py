@@ -132,7 +132,7 @@ def render_home():
     st.markdown("### Example questions")
     st.markdown(
         """
-        - “Walk me through **year-over-year changes** in operating margin in the latest 10-K.”  
+        - “What is Google's Revenue for 2023?”  
         - “Summarize the **top 3 risk factors** and how they evolved versus last year.”  
         - “What does management say about **free cash flow priorities**?”  
         - “How does **net leverage** today compare to three years ago?”  
