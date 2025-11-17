@@ -49,7 +49,7 @@ def render_chatbot():
                 """
                 - Mention the **company** and **filing year** whenever possible.  
                 - Ask about **trends** (margins, revenue mix, leverage) instead of single numbers.  
-                - Use follow-ups to drill into MD&A, Risk Factors, or specific notes.  
+                - Phrase questions clearly — each question is answered independently.
                 """
             )
     with c2:
@@ -72,7 +72,7 @@ def render_chatbot():
     with input_container:
         prompt = st.text_input(
             "Ask about a 10-K…",
-            placeholder="e.g. For Apple’s 2023 10-K, how did services revenue evolve vs. last year?",
+            placeholder="e.g., For Apple's 2023 10-K, what risks did the company highlight as most significant?",
         )
         send = st.button("Ask Finsights")
 
