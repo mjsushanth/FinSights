@@ -273,7 +273,13 @@ G(anchor) = {sentences from same (cik, year, section)
 - LLM response parsing via `json.loads()` with regex fallback, cross-references citations against ContextAssembler inventory.
 - Artifact exports separated: `logs/`, `contexts/`, `responses/`, `metadata/` tagged with query UUID for replay.
 - Cost ledger tracks tokens, Bedrock costs, S3 expenses per query with monthly projections.
+- Post-LLM Serves, Notebook has excellent tabular, formatted display of 7 gold tests and their answers, LLM-synthesized answer side by side.
+- **Log analytics** tables with query-wise and model-wise token costs, overall log view. 
 
+#### Part 10.5: Achieved similar to MLFlow but much stronger customization, lightweight:
+- Append-only logging, strong-types with structured schema, Artifact references, Error tracking (error, error_type, stage columns), Cost tracking, Custom analytics visuals.
+- Reason: Faster (no HTTP overhead), MLFlow UI felt weak with less visual capabilities, less boilerplate, server dependency reduced, and MLFlow runs on pandas. We achieve all the UI/Run Organization/Analytics/Tracking that MLFlow has. 
+- RAG only does inference and orchestration, no training. So, no need for a Model registry. 
 
 
 ---

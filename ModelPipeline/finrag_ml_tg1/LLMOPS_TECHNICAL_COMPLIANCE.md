@@ -60,8 +60,12 @@
 - **No singular, scalar preset.**
 - We have multiple potential parameters that keep getting tuned over the entire pipeline architecture; So it's not just one model selected. Our project does not hold true to the annual philosophy of training and checkpoints or a singular scalable model. Rather, it's an integration of multiple linear and complex components. 
 - For example, we use `AWS Bedrock Models`, `S3 vectors` with custom index, `cohere embed v3/4, amazon titan embeddings`. We use `Claude Haiku` or `Sonnet` during variant generation phase and LLM synthesis phase.
-  
-### 9. Other Considerations from Guidelines document
+
+### 9. Experiment tracking, Cost, Token, Result, Context, Artifact - tracking.
+- Please read [Result Tracking Deepdive](IMPLEMENTATION_GUIDE.md#L279) Part 10.5 for full details. 
+- We achieve Experiment tracking, Parameter logging, Metrics tracking, Artifact storage, Error logging, Analytics - custom logging with full control and zero bloat.  
+
+### 10. Other Considerations from Guidelines document
 - Training/ReTraining concepts: Not really applicable, this is a RAG system using served LLMs and vector stores.
 - Artifact Registry: Translates for us as S3 Vectors - our place for production vector bucket, data tables, access.
 
