@@ -150,5 +150,69 @@ Examples:
 
 This framework gives you a stable, quick mental math model to budget and monitor QueryVectors usage in both development and production.
 
+---
+
+## E2E Comprehensive FinRAG Cost Analysis
+
+### Production Baseline Scenario (1,500 queries/month)
+*Realistic production usage with mixed model deployment*
+
+**Query Pattern**: 1,500 queries/month (50 queries/day average)
+
+**Component Cost Breakdown**:
+
+| Component | Configuration | Cost | Type |
+|:----------|:--------------|-----:|:-----|
+| **Infrastructure** | | | |
+| - Vector Storage (S3) | 0.82 GB | $0.05 | Fixed |
+| - Parquet Logs (S3) | ~100MB/month | $0.003 | Fixed |
+| **Per-Query Costs** | | | |
+| - Vector Retrieval | K=30, C≈450 | $0.00045 | Variable |
+| - LLM Sonnet (35% of queries) | 6,153 in / 777 out | $0.02782 | Variable |
+| - LLM Haiku (65% of queries) | 6,153 in / 720 out | $0.01044 | Variable |
+| - S3 Egress | 35KB/query | $0.000001 | Variable |
+| **Development & Testing** | | | |
+| - Gold Test P1 (Initial) | 20 anchors × 2 calls | $0.42 | One-time |
+| - Gold Test P2 (40 anchors) | 40 × 2 calls × 2 runs | $1.68 | One-time |
+| - Gold Test P2 (60 anchors) | 60 × 2 calls × 3 runs | $3.78 | One-time |
+| - Dev iterations | ~500 test queries | $5.25 | One-time |
+
+**Monthly Cost Calculation**:
+
+| Category | Calculation | Monthly Cost |
+|:---------|:------------|------------:|
+| **Fixed Costs** | Storage + Logging | **$0.053** |
+| **Variable Costs** | | |
+| - Sonnet queries | 525 × ($0.00045 + $0.02782) | **$14.85** |
+| - Haiku queries | 975 × ($0.00045 + $0.01044) | **$10.60** |
+| **Monthly Recurring Total** | | **$25.50** |
+| | | |
+| **One-time Development** | | |
+| - Gold Test Suite Total | P1 + P2(40) + P2(60) | **$5.88** |
+| - Development Testing | 500 queries mixed | **$5.25** |
+| **One-time Total** | | **$11.13** |
+
+### **Cost Analysis Summary**
+| Metric | Value |
+|:-------|------:|
+| **Average cost per query** | $0.0170 |
+| **Monthly recurring** | $25.50 |
+| **Annual projection** | $306.00 |
+| **Development amortized (6 months)** | $1.86/month |
+| **True monthly cost (with amortization)** | **$27.36** |
+
+### **Key Insights**
+1. **Model Mix Impact**: The 35% Sonnet usage drives 58% of LLM costs despite being the minority of queries
+2. **Development ROI**: One-time testing costs ($11.13) amortize to negligible amounts over project lifetime
+3. **Vector Costs**: Still <2% of total - essentially free compared to synthesis
+4. **Scaling Formula**: 
+   ```
+   Monthly = $0.053 + (N_sonnet × $0.0283) + (N_haiku × $0.0109)
+   ```
+
+**Result**: FinRAG achieves **60-73% cost reduction** versus the commercial alternatives.
+
+
+
 ### Author
 - Joel Markapudi ( markapudi.j@northeastern.edu, mjsushanth@gmail.com )
