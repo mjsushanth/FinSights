@@ -1,6 +1,5 @@
 # FinRAG: Financial Retrieval-Augmented Generation System
 
-
 ---
 
 ## Overview

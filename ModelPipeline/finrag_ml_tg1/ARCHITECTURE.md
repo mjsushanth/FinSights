@@ -104,4 +104,4 @@ User Raw Query
 
 
 ### Architecture Author:
-Author: Joel Markapudi. ( markapudi.j@northeastern.edu )
+Author: Joel Markapudi. ( markapudi.j@northeastern.edu, mjsushanth@gmail.com )

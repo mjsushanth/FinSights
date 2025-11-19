@@ -280,8 +280,8 @@ G(anchor) = {sentences from same (cik, year, section)
 
 
 ## Author, License & Acknowledgments
-The implementation author/dev all of the above modules is - Joel Markapudi (mjsushanth@gmail.com). The implementation author/dev for modules mentioned: `metric_pipeline module, KPI/filter/risk cue pattern analysis, parallelized orchestratorV1` is -  Vishak Nair (nair.visha@northeastern.edu)..
+The implementation author/dev all of the above modules is - Joel Markapudi. The implementation author/dev for modules mentioned: `metric_pipeline module, KPI/filter/risk cue pattern analysis, parallelized orchestratorV1` is -  Vishak Nair.
 
 Please contact before making any changes to finrag_ml_tg1/ subdirectory.
-- Joel Markapudi (mjsushanth@gmail.com).
-- Vishak Nair (nair.visha@northeastern.edu).
+- Joel Markapudi ( markapudi.j@northeastern.edu, mjsushanth@gmail.com ).
+- Vishak Nair ( nair.visha@northeastern.edu ).

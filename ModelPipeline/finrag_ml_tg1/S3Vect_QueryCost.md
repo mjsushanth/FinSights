@@ -149,3 +149,6 @@ Examples:
 * The real cost centers are typically embeddings and LLM tokens, not vector comparisons.
 
 This framework gives you a stable, quick mental math model to budget and monitor QueryVectors usage in both development and production.
+
+### Author
+- Joel Markapudi ( markapudi.j@northeastern.edu, mjsushanth@gmail.com )
