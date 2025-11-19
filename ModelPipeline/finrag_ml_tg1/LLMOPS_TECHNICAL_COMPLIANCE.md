@@ -4,26 +4,26 @@
 - Brief overview: LLM/RAG vs traditional ML work, model and validation concepts.
 - RAG validation requires retrieval-specific metrics (Hit@k, MRR) distinct from traditional supervised ML validation (accuracy/F1).
 
-### 2. RAG System Architecture (Requirement 8.1)
+### 2. RAG System Architecture 
 - Infrastructure: AWS S3 (storage), S3 Vectors (retrieval), Bedrock (LLM inference).
 - Modular design: `rag_modules_src/` contains isolated components with dataclass-based contracts, detailed in [ARCHITECTURE.md](ARCHITECTURE.md).
 - Platform core notebooks handle one-time embedding setup, incremental merges, S3 Vector ingestion, Table updates, Re-cache strategies, and API-PutVector operations.
 - Config-driven parameterization: 200+ settings via MLConfig service + YAML templates.
 
-### 3. Data Pipeline Integration (Requirement 8.2)
+### 3. Data Pipeline Integration 
 - Three-stage loading: Raw SEC filings → Stage 1 sentence extraction → Stage 2 metadata enrichment → Stage 3 embedding generation.
 - Cloud-native storage: All artifacts versioned in S3 with deterministic paths, loaded via Polars/DuckDB.
 - Smart caching: Local `.parquet` mirrors for development, **S3 authoritative source for production**.
 - Evidence: Notebooks 01-04 demonstrate complete data loading, validation, and S3 synchronization.
 
-### 4. Validation Framework & Infrastructure Testing (Requirement 8.4)
+### 4. Validation Framework & Infrastructure Testing
 1. Three-tier validation: Infrastructure tests → Gold P1/P2 → Business P3 warehouses.
 2. Retrieval metrics (Self@1, Hit@k, MRR, distance) replace accuracy/F1 scores.
 3. Five-phase S3 Vectors test suite validates index population, ID mapping, filters.
 4. Component isolation and chained-integration tests in `01_Isolation_Test_NBS/` validate modules.
 5. Vector-metadata parity audits: 0 orphaned vectors, 0 missing embeddings, 100% bijection.
 
-### 5. Sensitivity Analysis (Requirement 5 - Hyperparameter/Feature Sensitivity)
+### 5. Sensitivity Analysis (Hyperparameter/Feature Sensitivity)
 1. **Window size sensitivity (W=2, 3, 5 vs 7)**: Comparative anchor tests show Hit@5 stability (65.0%→60.0%, -5% expected variance from broader sampling)—validates ±3 sentence expansion as best default without over-tuning. Large windows cause immediate noise and dilution of core context.
 2. **Regime sensitivity (filtered vs open hits)**: Filtered queries achieve 82% Hit@5 vs 61% open regime, but open regime captures diverse context.
    - Core insight here: **Global hit discovery**: Despite low aggregate Hit@k (0.5-1% of union), global hits provide irreplaceable cross-document diversity— we did manual analysis of 34-hit union bundles. Here, approximately global-only hits surfaced 12-23% novel contextual evidence absent from entity-filtered results. 
@@ -31,7 +31,7 @@
 4. **TopK sensitivity (20 vs 30)**: MRR@20 (0.292) vs MRR@30 (0.275) shows diminishing returns beyond k=20 for filtered regimes.
 - **Evidence**: Notebooks - HLD has records, screenshots of W=3/W=5 experiments
   
-### 6. Bias Detection, Mitigation, Slice-Based Bias (Requirement 5-6):
+### 6. Bias Detection, Mitigation, Slice-Based Bias
 #### Keywords: (deterministic gold sets, multi-tier testing, slice-based bias detection) 
 1. FinRAG implements bias detection across multiple architectural layers. More than traditional demographic slicing.
 2. We address retrieval-specific bias patterns. Bias mitigation strategy operates at three levels: **embedding space calibration, retrieval architecture design, and evaluation framework construction.** 
@@ -63,14 +63,15 @@
   
 ### 9. Other Considerations from Guidelines document
 - Training/ReTraining concepts: Not really applicable, this is a RAG system using served LLMs and vector stores.
-- Artifact Registry: Translates for us as S3 Vectors - our place for production vector bucket, data tables, access. 
+- Artifact Registry: Translates for us as S3 Vectors - our place for production vector bucket, data tables, access.
 
 
-#### Compliance Author:
+#### Compliance Write-up Author
 Joel Markapudi - ( markapudi.j@northeastern.edu )
+- Please contact for any questions.
 
-#### Retrospection:
-- Building FinRAG ModelPipeline required 10-12K+ lines of code across data engineering, embedding infrastructure, retrieval architecture, and validation frameworks.
-- I hope this work exceeds traditional requirements or expectations; especially through deterministic gold set generation, multi-dimensional bias detection, and business-realistic evaluation frameworks, and— achievements that emerged from months of experimentation, curation, and algorithmic refinement.
+#### Author's Retrospection:
+- Building FinRAG ModelPipeline required 11-13K+ lines of code across data engineering, embedding infrastructure, retrieval architecture, and validation frameworks. And countless adhoc analysis queries.
+- I hope this work exceeds traditional requirements or expectations; especially through these aspects of deterministic gold set generation, multi-dimensional bias detection, business-realistic evaluation frameworks, and— achievements that emerged from months of experimentation, curation, and algorithmic refinement.
 
 ---
