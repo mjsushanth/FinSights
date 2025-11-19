@@ -25,54 +25,78 @@
 
 ## Project Structure:
 ```
-    ROOT FOLDER OF PROJECT/
-    │
-    ├── design_docs/                    # Architecture & planning documents
+📦 FinSights-MLOps/
+ ┣ 📂 DataPipeline/                          # SEC data ingestion & ETL orchestration
+ ┃ ┣ 📂 dag/                                 # Airflow DAGs for workflow automation
+ ┃ ┣ 📂 src/                                 # SEC Edgar SDK ingestion + financial metrics extraction
+ ┃ ┣ 📂 src_aws_etl/                         # S3 merge strategies (incremental + historical), archival, logging
+ ┃ ┣ 📂 data_auto_stats/                     # Great Expectations validation, anomaly detection
+ ┃ ┣ 📂 data_engineering_research/           # DuckDB analytics, Polars EDA, SQL exploration
+ ┃ ┣ 📜 docker-compose.yaml                  # Container orchestration
+ ┃ ┗ 📜 environment.yml                      # Conda environment spec
+ ┃
+ ┣ 📂 ModelPipeline/                         # LLM/RAG infrastructure & validation (finrag_ml_tg1/)
+ ┃ ┣ 📂 platform_core_notebooks/             # Embedding generation, S3 Vectors provisioning, Gold test curation
+ ┃ ┃ ┣ 📜 01_Stage2_EmbeddingGen.ipynb       # Stage 2 meta table + embedding pipeline
+ ┃ ┃ ┣ 📜 02_EmbeddingAnalytics.ipynb        # Vector-metadata parity, staleness audits
+ ┃ ┃ ┣ 📜 03_S3Vector_TableProvisioning.ipynb
+ ┃ ┃ ┣ 📜 04_S3Vector_BulkIngestion.ipynb
+ ┃ ┃ ┣ 📜 05_GoldP1P2_TestSuite.ipynb        # Anchor-based validation tests
+ ┃ ┃ ┣ 📜 06_GoldP3_HeuristicEng_Curation.ipynb
+ ┃ ┃ ┗ 📜 07-09 (Cost, Architecture, Tests)
+ ┃ ┃
+ ┃ ┣ 📂 rag_modules_src/                     # Production RAG components (query-time execution)
+ ┃ ┃ ┣ 📂 entity_adapter/                    # Entity extraction, fuzzy matching, metric mapping
+ ┃ ┃ ┣ 📂 metric_pipeline/                   # Structured KPI extraction
+ ┃ ┃ ┣ 📂 rag_pipeline/                      # Retrieval, context assembly, provenance tracking
+ ┃ ┃ ┣ 📂 synthesis_pipeline/                # LLM response generation, citation validation
+ ┃ ┃ ┣ 📂 prompts/                           # YAML prompt templates
+ ┃ ┃ ┗ 📂 utilities/                         # Logging, error handling, shared helpers
+ ┃ ┃
+ ┃ ┣ 📂 loaders/                             # MLConfig service, data loading utilities
+ ┃ ┣ 📂 data_cache/                          # Local Parquet mirrors, analysis exports
+ ┃ ┣ 📂 .aws_config/                         # AWS service configurations
+ ┃ ┣ 📂 .aws_secrets/                        # Credentials (gitignored)
+ ┃ ┗ 📜 ml_config.yaml                       # 200+ model/retrieval parameters
+ ┃
+ ┣ 📂 design_docs/                           # Architecture diagrams, flow charts
+ ┃
+ ┣ 📜 README.md                              # Project overview & navigation
+ ┣ 📜 ARCHITECTURE.md                        # Directory structure + pipeline flows
+ ┣ 📜 IMPLEMENTATION_GUIDE.md                # Parts 1-10 technical deep-dive
+ ┗ 📜 LLMOPS_TECHNICAL_COMPLIANCE.md         # MLOps requirement mapping
 
-    ├── DataPipeline/                   # SEC data ingestion & orchestration
-        │
-        ├── dag/                         # Airflow DAGs for orchestration
-        ├── src/                         # SEC data ingestion source code
-        │
-        ├── data_auto_stats/           # Data quality & validation framework ( Great Expectations, Anamoly )
-        │
-        ├── src_aws_etl/                    # AWS S3 ETL operations ( Merge Incr + Historical, Archive, Log Management )
-        │
-        ├── src_metrics/                    # SEC data ingestion using Edgar SDK for Financial Metrics
-        │                           
-        │
-        ├── data_engineering_research/            # DuckDB data engineering workspace
-        │  ├── duckdb_data_engineering/     
-        │  │   ├── sql/                           # SQL scripts
-        │  │
-        │  ├── exploratory_research/              # Core Data Study, Polars EDA, OpenAI, LLM/LLama-cpp/ML experiments
-        │  
-        │
-        ├── docker-compose.yaml             # Container orchestration
-        ├── Dockerfile                      # Application container
-        ├── environment.yml                 # Conda environment specification
 ```
+
+
 ## DVC : 
 Data version Control has been implemented in this Repo, and the data is stored on an s3 Bucket managed by our team. The metadata is stored in the .dvc folder.
 The DVC is to control the versions of the data used in the ingestion pipeline ,so if any data is lost / manipulated with , we can retreive the version needed.
 
 ## High level Conceptual Flow:
 ```
-    ┌─────────────────────────────────────────────────────────────┐
-    │ DATA ENGINEERING LAYER                                      │
-    │ Extract → Transform → Load                                  │
-    └─────────────────────────────────────────────────────────────┘
-                                ↓
-    ┌─────────────────────────────────────────────────────────────┐
-    │ ML FEATURE ENGINEERING LAYER                                │
-    └─────────────────────────────────────────────────────────────┘
-                                ↓
-    ┌─────────────────────────────────────────────────────────────┐
-    │ SERVING LAYER                                               │
-    │ Vector Store → Retrieval → Generation                       │
-    └─────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────┐
+│ DATA ENGINEERING LAYER                                          │
+│ SEC Edgar API → Sentence Extraction → S3 Storage (1M samples)  │
+└─────────────────────────────────────────────────────────────────┘
+                              ↓
+┌─────────────────────────────────────────────────────────────────┐
+│ EMBEDDING & INDEXING LAYER                                      │
+│ Cohere Embed v4 → S3 Vectors (200K+ 1024-d) → Metadata Filters │
+└─────────────────────────────────────────────────────────────────┘
+                              ↓
+┌─────────────────────────────────────────────────────────────────┐
+│ RAG ORCHESTRATION LAYER                                         │
+│ Entity Extraction → Query Variants → Triple Retrieval Paths    │
+│ (Filtered + Global + Variants) → Context Assembly              │
+└─────────────────────────────────────────────────────────────────┘
+                              ↓
+┌─────────────────────────────────────────────────────────────────┐
+│ SYNTHESIS & SERVING LAYER                                       │
+│ Dual Supply Lines (KPI + Semantic) → LLM (Claude Bedrock)      │
+│ → Citation Headers → Structured Response                        │
+└─────────────────────────────────────────────────────────────────┘
 ```
-
 
 - Data Pipeline Setup: https://github.com/Finsights-MLOps/FinSights/blob/main/DataPipeline/SETUP_README.md
 - Data Pipeline Documentation: https://github.com/Finsights-MLOps/FinSights/blob/main/DataPipeline/README.md

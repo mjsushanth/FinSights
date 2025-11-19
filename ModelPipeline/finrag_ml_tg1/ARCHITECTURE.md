@@ -1,13 +1,13 @@
 # FinRAG System Architecture
 
-This document provides structural overviews of the codebase organization and data flow patterns. Later in the code files, please do pay attention to multiple `_contract.py` files which have excellent architectural flow diagrams, Data-Entity flows, Data-Responsibility understanding and more. \
+This document provides structural overviews of the codebase organization and data flow patterns. Later in the code files, please do pay attention to multiple `_contract.py` files which have excellent architectural flow diagrams, Data-Entity flows, Data-Responsibility understanding and more. 
 
-Example: `ModelPipeline\finrag_ml_tg1\rag_modules_src\synthesis_pipeline\models.py`
-
+Example: `ModelPipeline\finrag_ml_tg1\rag_modules_src\synthesis_pipeline\models.py`, `ModelPipeline\finrag_ml_tg1\rag_modules_src\rag_pipeline\models.py` etc.
 
 ## Project Directory Structure
 ### Parent Directory Structure Overview:
 
+```
 📦 finrag_ml_tg1/
  ┣ 📂 __pycache__/                              # Python bytecode cache (auto-generated)
  ┣ 📂 .aws_config/                              # AWS service configuration files
@@ -23,13 +23,15 @@ Example: `ModelPipeline\finrag_ml_tg1\rag_modules_src\synthesis_pipeline\models.
  ┣ 📜 ML_Modelling_README.md                    # Main project documentation and architecture overview
  ┗ 📜 S3Vect_QueryCost.md                       # S3 Vector store cost analysis and projections
 
-
 📦 finrag_ml_tg2/                               # [Secondary project workspace or experimental branch]
 
 📜 .dvcignore                                   # DVC ignore patterns for data version control
 📜 .gitignore                                   # Git ignore patterns for version control
+```
 
 ### Embedding-Infra and Spines Overview:
+
+```
 📦 platform_core_notebooks/
  ┣ 📜 01_Stage2_EmbeddingGen.ipynb              # Stage 2 meta table creation + embedding generation pipeline
  ┣ 📜 02_EmbeddingAnalytics.ipynb               # Vector-metadata parity, staleness checks, integration audits
@@ -40,9 +42,10 @@ Example: `ModelPipeline\finrag_ml_tg1\rag_modules_src\synthesis_pipeline\models.
  ┣ 📜 07_S3_CostProjections.ipynb               # Query cost modeling and operational expense analysis
  ┣ 📜 08_RAGArch_DesignNotes.ipynb              # RAG architecture decisions, technical rationale, design patterns
  ┣ 📜 09_RAG_Comp_ITests_01.ipynb               # Component-level tests for entity adapter and early integration
-
+```
 
 ### RAG Modules Source Code Overview:
+```
 📦 rag_modules_src/
  ┣ 📂 01_Isolation_Test_NBS/                    # Isolated unit tests and component validation notebooks
  ┣ 📂 constants/                                # Project-wide constants, configurations, and static definitions
@@ -55,7 +58,7 @@ Example: `ModelPipeline\finrag_ml_tg1\rag_modules_src\synthesis_pipeline\models.
  ┣ 📂 test_outputs/                             # Test results, validation artifacts, and debugging outputs
  ┣ 📂 utilities/                                # Shared helper functions, logging, error handling, common tools
  ┗ 📜 __init__.py                               # Python package initialization for rag_modules_src
-
+```
 
 ### Summary of Entity-Chaining and Flows:
 **(Semantic Search + Context Assembly)**
@@ -98,7 +101,6 @@ User Raw Query
 
 ## Next Steps
 → See [IMPLEMENTATION_GUIDE.md](IMPLEMENTATION_GUIDE.md) for detailed technical implementation across 10 major development phases.
-
 
 
 ### Architecture Author:
