@@ -61,15 +61,20 @@ FinRAG is out attempt at a production-grade financial intelligence platform that
 ## Quick Screenshots/Demo:
 1. As a short example, we have the following screenshots or attachments below. One would display a custom rendering of DOM object inside JupyterServe so that you have a very well formatted, pretty display. We currently have a notebook where we serve display tables of a couple of gold test queries. 
 2. Secondly, we have two further screenshots: that would be query wise token cost analytics table and model wise token cost analytics table. 
-
-ModelPipeline\finrag_ml_tg1\demo_images_export\G1PQ002_JCell.png
+3. If vector data embedding, or sentence-data are missing from dataset, we setup proper guardrails to acknowledge missing data and not hallucinate! 
+  
 <p align="center">
   <img src="finrag_ml_tg1\demo_images_export\G1PQ002_JCell.png" width="700" alt="Gold Test Query Serve Example">
 </p>
 <p align="center"><em>Gold Test Query Serve Example</em></p>
 
 
-ModelPipeline\finrag_ml_tg1\demo_images_export\ModelWise_TokenCostAnalytics.png
+<p align="center">
+  <img src="finfrag_ml_tg1\demo_images_export\MissingVectData_Ack.png" width="700" alt="Missing Vector Data Acknowledgement">
+</p>
+<p align="center"><em>Missing Vector Data Acknowledgement</em></p>
+
+
 <p align="center">
   <img src="finrag_ml_tg1\demo_images_export\QueryWise_TokenCostAnalytics.png" width="700" alt="Query Wise Token Cost Analytics">
 </p>
