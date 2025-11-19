@@ -57,6 +57,29 @@ FinRAG is out attempt at a production-grade financial intelligence platform that
 1. Our current quick demo is by viewing the exports, and the final-serve notebook: `ModelPipeline\finrag_ml_tg1\rag_modules_src\01_Isolation_Test_NBS\08_ITest_Start_To_LLM_Serve.ipynb`
 2. We plan on clean integration with a front-end soon.
 
+
+## Quick Screenshots/Demo:
+1. As a short example, we have the following screenshots or attachments below. One would display a custom rendering of DOM object inside JupyterServe so that you have a very well formatted, pretty display. We currently have a notebook where we serve display tables of a couple of gold test queries. 
+2. Secondly, we have two further screenshots: that would be query wise token cost analytics table and model wise token cost analytics table. 
+
+ModelPipeline\finrag_ml_tg1\demo_images_export\G1PQ002_JCell.png
+<p align="center">
+  <img src="finrag_ml_tg1\demo_images_export\G1PQ002_JCell.png" width="700" alt="Gold Test Query Serve Example">
+</p>
+<p align="center"><em>Gold Test Query Serve Example</em></p>
+
+
+ModelPipeline\finrag_ml_tg1\demo_images_export\ModelWise_TokenCostAnalytics.png
+<p align="center">
+  <img src="finrag_ml_tg1\demo_images_export\QueryWise_TokenCostAnalytics.png" width="700" alt="Query Wise Token Cost Analytics">
+</p>
+<p align="center"><em>Query Wise Token Cost Analytics</em></p>
+
+
+<p align="center">
+  <img src="finrag_ml_tg1\demo_images_export\ModelWise_TokenCostAnalytics.png" width="700" alt="Model Wise Token Cost Analytics">
+</p>
+<p align="center"><em>Model Wise Token Cost Analytics</em></p>
 ---
 
 ## Contact 
