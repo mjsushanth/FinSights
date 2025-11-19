@@ -40,7 +40,7 @@ class EmbeddingRuntimeConfig:
     model_id: str
     dimensions: int
     input_type: str
-    max_query_chars: int = 1500
+    max_query_chars: int = 3000
 
     @classmethod
     def from_ml_config(cls, embedding_cfg_dict: dict):

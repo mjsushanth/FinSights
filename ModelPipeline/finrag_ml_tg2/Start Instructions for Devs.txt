@@ -1,0 +1,5 @@
+Workspace 1 is meant for sibling model / non-colliding or merging architecture pipes if someone wants to develop them
+
+For import guidance:
+- Please resolve 3/4 levels of root and set highest parent root, access workspace 1 properly and use absolute imports.
+- Do not edit workspace1 code. 

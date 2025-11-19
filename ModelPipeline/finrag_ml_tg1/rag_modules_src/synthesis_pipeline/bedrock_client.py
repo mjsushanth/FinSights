@@ -1,145 +1,287 @@
 # ModelPipeline\finrag_ml_tg1\rag_modules_src\synthesis_pipeline\bedrock_client.py
 
+"""
+BedrockClient - AWS Bedrock API wrapper for Claude models.
+
+Design: External service pattern - all dependencies injected.
+Responsibility: AWS API calls, response parsing, cost tracking.
+Does NOT: Build prompts, format context, manage configuration.
+"""
+
 import boto3
 import json
-from typing import Dict, List, Optional
+from typing import Dict
 import logging
 
 logger = logging.getLogger(__name__)
 
 
 class BedrockClient:
-    """Handles interaction with AWS Bedrock Claude API."""
+    """
+    Thin wrapper around AWS Bedrock Runtime API.
     
-    def __init__(self, region: str, model_id: str, 
-                 max_tokens: int = 4096, temperature: float = 0.7):
+    Follows external service pattern - receives all dependencies
+    from caller rather than creating them internally.
+    
+    Example:
+        >>> config = MLConfig()
+        >>> model = config.get_default_serving_model()
+        >>> client = BedrockClient(
+        ...     region=config.region,
+        ...     model_id=model['model_id'],
+        ...     max_tokens=model['max_tokens'],
+        ...     temperature=model['temperature'],
+        ...     cost_per_1k_input=model['cost_per_1k_input'],
+        ...     cost_per_1k_output=model['cost_per_1k_output']
+        ... )
+        >>> response = client.invoke(system="You are helpful.", user="Hello!")
+    """
+    
+    def __init__(
+        self,
+        region: str,
+        model_id: str,
+        max_tokens: int,
+        temperature: float,
+        cost_per_1k_input: float,
+        cost_per_1k_output: float
+    ):
         """
-        Initialize Bedrock client.
+        Initialize Bedrock client with explicit dependencies.
+        
+        All configuration comes from caller - no internal config loading.
         
         Args:
-            region: AWS region
-            model_id: Bedrock model identifier
-            max_tokens: Maximum tokens in response
-            temperature: Sampling temperature
+            region: AWS region (e.g., 'us-east-1')
+            model_id: Bedrock model identifier 
+                     (e.g., 'anthropic.claude-3-5-sonnet-20241022-v2:0')
+            max_tokens: Maximum tokens in model response
+            temperature: Sampling temperature (0.0 = deterministic, 1.0 = creative)
+            cost_per_1k_input: Cost per 1,000 input tokens in USD
+            cost_per_1k_output: Cost per 1,000 output tokens in USD
+            
+        Example:
+            >>> client = BedrockClient(
+            ...     region='us-east-1',
+            ...     model_id='anthropic.claude-3-5-sonnet-20241022-v2:0',
+            ...     max_tokens=8192,
+            ...     temperature=0.1,
+            ...     cost_per_1k_input=0.003,
+            ...     cost_per_1k_output=0.015
+            ... )
         """
-        self.client = boto3.client('bedrock-runtime', region_name=region)
+        # Store configuration
+        self.region = region
         self.model_id = model_id
         self.max_tokens = max_tokens
         self.temperature = temperature
-        logger.info(f"Initialized Bedrock client with model: {model_id}")
+        self.cost_per_1k_input = cost_per_1k_input
+        self.cost_per_1k_output = cost_per_1k_output
+        
+        # Initialize boto3 client
+        self.client = boto3.client('bedrock-runtime', region_name=region)
+        
+        logger.info(
+            f"BedrockClient initialized: model={model_id}, "
+            f"region={region}, max_tokens={max_tokens}"
+        )
     
-    def generate_response(self, 
-                         user_query: str,
-                         analytical_results: Optional[Dict],
-                         rag_context: List[Dict]) -> str:
+    def invoke(self, system: str, user: str) -> Dict:
         """
-        Generate final response using analytical data and RAG context.
+        Invoke Claude model with system + user prompts.
+        
+        Uses Claude's Messages API format with separate system prompt.
+        Automatically tracks usage and calculates cost.
         
         Args:
-            user_query: Original user question
-            analytical_results: Compact output from metric pipeline (can be None)
-            rag_context: Relevant chunks from vector search
+            system: System prompt (instructions, role definition)
+            user: User prompt (assembled context + query)
             
         Returns:
-            Generated response text
+            Dictionary with structure:
+            {
+                'content': str,              # Model's response text
+                'usage': {
+                    'input_tokens': int,     # Tokens in prompt
+                    'output_tokens': int     # Tokens in response
+                },
+                'cost': float,               # Total cost in USD
+                'model_id': str,             # Model identifier
+                'stop_reason': str           # Why generation stopped
+            }
+            
+        Raises:
+            Exception: On AWS API errors (caller should handle)
+            
+        Example:
+            >>> response = client.invoke(
+            ...     system="You are a financial analyst.",
+            ...     user="What is EBITDA?"
+            ... )
+            >>> print(response['content'])
+            >>> print(f"Cost: ${response['cost']:.4f}")
         """
-        prompt = self._build_prompt(user_query, analytical_results, rag_context)
-        
+        # Construct request body (Claude Messages API format)
         body = {
             "anthropic_version": "bedrock-2023-05-31",
             "max_tokens": self.max_tokens,
             "temperature": self.temperature,
+            "system": system,           # Separate system context
             "messages": [
                 {
                     "role": "user",
-                    "content": prompt
+                    "content": user
                 }
             ]
         }
         
         try:
+            # Call AWS Bedrock API
             response = self.client.invoke_model(
                 modelId=self.model_id,
                 body=json.dumps(body)
             )
             
+            # Parse response body
             response_body = json.loads(response['body'].read())
-            answer = response_body['content'][0]['text']
             
-            logger.info("Generated response from Bedrock")
-            return answer
-        
+            # Extract response content
+            content = response_body['content'][0]['text']
+            
+            # Extract usage statistics
+            usage = response_body['usage']
+            input_tokens = usage['input_tokens']
+            output_tokens = usage['output_tokens']
+            
+            # Extract stop reason
+            stop_reason = response_body.get('stop_reason', 'unknown')
+            
+            # Calculate cost
+            cost = self._calculate_cost(input_tokens, output_tokens)
+            
+            # Log success
+            logger.info(
+                f"Bedrock invoke success: "
+                f"input={input_tokens} tokens, "
+                f"output={output_tokens} tokens, "
+                f"cost=${cost:.4f}, "
+                f"stop_reason={stop_reason}"
+            )
+            
+            # Return structured response
+            return {
+                'content': content,
+                'usage': {
+                    'input_tokens': input_tokens,
+                    'output_tokens': output_tokens
+                },
+                'cost': cost,
+                'model_id': self.model_id,
+                'stop_reason': stop_reason
+            }
+            
         except Exception as e:
-            logger.error(f"Error calling Bedrock: {str(e)}")
+            # Log error and re-raise for caller to handle
+            logger.error(f"Bedrock API error: {e}", exc_info=True)
             raise
     
-    def _build_prompt(self, 
-                 user_query: str,
-                 analytical_results: Optional[str],
-                 rag_context: List[Dict]) -> str:
+    def _calculate_cost(self, input_tokens: int, output_tokens: int) -> float:
         """
-        Construct the prompt for Claude - PURE STRING FORMAT.
+        Calculate total cost from token usage.
+        
+        Uses cost rates provided at initialization.
         
         Args:
-            user_query: User's question
-            analytical_results: Ultra-compact string format
-            rag_context: Text chunks from SEC filings
+            input_tokens: Number of tokens in prompt
+            output_tokens: Number of tokens in response
             
         Returns:
-            Formatted prompt string (token-optimized)
+            Total cost in USD
+            
+        Example:
+            >>> client._calculate_cost(12000, 500)
+            0.0435  # (12000/1000 * 0.003) + (500/1000 * 0.015)
         """
-        prompt_parts = []
+        input_cost = (input_tokens / 1000) * self.cost_per_1k_input
+        output_cost = (output_tokens / 1000) * self.cost_per_1k_output
+        total_cost = input_cost + output_cost
         
-        # System context (minimal)
-        prompt_parts.append(
-            "Financial assistant with KPI data and SEC excerpts. Answer accurately.\n"
-        )
-        
-        # Add analytical data if available (PURE STRING)
-        if analytical_results:
-            prompt_parts.append("FINANCIALS:")
-            prompt_parts.append(analytical_results)
-            prompt_parts.append("")
-        
-        # Add RAG context (COMPACT)
-        if rag_context:
-            prompt_parts.append("CONTEXT:")
-            for i, chunk in enumerate(rag_context, 1):
-                co = chunk.get('company', '?')
-                yr = chunk.get('year', '?')
-                sec = chunk.get('section', '?').replace('ITEM_', '')
-                text = chunk.get('text', '')[:350]
-                
-                prompt_parts.append(f"[{i}] {co} {yr} {sec}: {text}")
-            prompt_parts.append("")
-        
-        # User query
-        prompt_parts.append("Q: " + user_query)
-        prompt_parts.append("A:")
-        
-        final_prompt = "\n".join(prompt_parts)
-        
-        # Log token estimate
-        token_estimate = len(final_prompt) // 4
-        logger.info(f"Prompt: ~{token_estimate} tokens")
-        
-        return final_prompt
+        return total_cost
     
-    def _format_value_compact(self, value: float) -> str:
+    def estimate_cost(self, input_tokens: int, output_tokens: int) -> Dict:
         """
-        Format financial values ultra-compactly.
+        Estimate cost before making API call.
+        
+        Useful for cost-conscious batch processing or user warnings.
         
         Args:
-            value: Raw financial value
+            input_tokens: Expected input token count
+            output_tokens: Expected output token count
             
         Returns:
-            Compact string representation (e.g., "$27.0B", "$3.5M", "$1.2K")
+            Dictionary with cost breakdown:
+            {
+                'input_cost': float,
+                'output_cost': float,
+                'total_cost': float
+            }
+            
+        Example:
+            >>> estimate = client.estimate_cost(10000, 1000)
+            >>> print(f"This query will cost ~${estimate['total_cost']:.4f}")
         """
-        if abs(value) >= 1_000_000_000:
-            return f"${value/1_000_000_000:.1f}B"
-        elif abs(value) >= 1_000_000:
-            return f"${value/1_000_000:.1f}M"
-        elif abs(value) >= 1_000:
-            return f"${value/1_000:.0f}K"
-        else:
-            return f"${value:.0f}"
+        input_cost = (input_tokens / 1000) * self.cost_per_1k_input
+        output_cost = (output_tokens / 1000) * self.cost_per_1k_output
+        
+        return {
+            'input_cost': input_cost,
+            'output_cost': output_cost,
+            'total_cost': input_cost + output_cost
+        }
+    
+    def __repr__(self) -> str:
+        """String representation for debugging."""
+        return (
+            f"BedrockClient(model_id='{self.model_id}', "
+            f"region='{self.region}', "
+            f"max_tokens={self.max_tokens})"
+        )
+
+
+# Utility function for easy client creation from MLConfig
+def create_bedrock_client_from_config(
+    config,
+    model_key: str = None
+) -> BedrockClient:
+    """
+    Factory function to create BedrockClient from MLConfig.
+    
+    Convenience wrapper that handles config extraction.
+    
+    Args:
+        config: MLConfig instance
+        model_key: Optional model key (uses default if None)
+        
+    Returns:
+        Initialized BedrockClient
+        
+    Example:
+        >>> from finrag_ml_tg1.loaders.ml_config_loader import MLConfig
+        >>> config = MLConfig()
+        >>> client = create_bedrock_client_from_config(config)
+    """
+    # Get model configuration
+    if model_key:
+        model = config.get_serving_model(model_key)
+    else:
+        model = config.get_default_serving_model()
+    
+    # Create client with extracted values
+    return BedrockClient(
+        region=config.region,
+        model_id=model['model_id'],
+        max_tokens=model['max_tokens'],
+        temperature=model['temperature'],
+        cost_per_1k_input=model['cost_per_1k_input'],
+        cost_per_1k_output=model['cost_per_1k_output']
+    )

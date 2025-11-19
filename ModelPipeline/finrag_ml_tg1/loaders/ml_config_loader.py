@@ -10,7 +10,7 @@ import os
 import yaml
 from pathlib import Path
 from dotenv import load_dotenv
-
+from typing import Dict, Any
 
 class MLConfig:
     """
@@ -24,9 +24,14 @@ class MLConfig:
         # Load ML path config
         if config_path is None:
             config_path = Path(__file__).parent.parent / '.aws_config' / 'ml_config.yaml'
+
+        # Experimenting: system default encoding - fails on Windows ??        
+        # with open(config_path) as f:
+        #     self.cfg = yaml.safe_load(f)
         
-        with open(config_path) as f:
+        with open(config_path, encoding='utf-8') as f:
             self.cfg = yaml.safe_load(f)
+
         
         # Load credentials (AWS + ML APIs)
         self._load_aws_credentials()
@@ -424,32 +429,166 @@ class MLConfig:
         return cache_path
 
 
+    # ========= Semantic Variants & Retrieval Config ==========
+
+    def get_variant_config(self) -> Dict[str, Any]:
+        """
+        Get semantic variants configuration from YAML.
+        
+        Returns:
+            Dict with keys: enabled, model_id, max_tokens, temperature, count, prompt_template
+        
+        Raises:
+            KeyError: If 'semantic_variants' section missing from config
+        """
+        if "semantic_variants" not in self.cfg:
+            raise KeyError("'semantic_variants' section not found in ml_config.yaml")
+        
+        return self.cfg["semantic_variants"]
+
+
+    def get_retrieval_config(self) -> Dict[str, Any]:
+        """
+        Get retrieval pipeline configuration from YAML.
+        
+        Returns:
+            Dict with keys: top_k_filtered, top_k_global, enable_global, 
+                        enable_variants, recent_year_threshold, min_similarity,
+                        vector_bucket, index_name, dimensions
+        
+        Raises:
+            KeyError: If 'retrieval' section missing from config
+        """
+        if "retrieval" not in self.cfg:
+            raise KeyError("'retrieval' section not found in ml_config.yaml")
+        
+        return self.cfg["retrieval"]
+
+
+
+    # ========= Serving Models Configuration ==========
+
+    def get_serving_models_config(self) -> Dict[str, Any]:
+        """
+        Get serving models configuration for LLM synthesis.
+        
+        Returns:
+            Dict with keys: development, production_balanced, production_budget, 
+                        openai_compatible, default_serving_model
+        
+        Raises:
+            KeyError: If 'serving_models' section missing from config
+        """
+        if "serving_models" not in self.cfg:
+            raise KeyError("'serving_models' section not found")
+        
+        serving = self.cfg["serving_models"]
+        
+        # print(f"\n[DEBUG] Keys in serving_models: {list(serving.keys())}")
+        # print(f"[DEBUG] 'default_serving_model' in serving_models? {'default_serving_model' in serving}")
+        
+        return serving
+
+    def get_serving_model(self, model_key: str = None) -> Dict[str, Any]:
+        """
+        Get specific serving model configuration.
+        
+        Args:
+            model_key: Model key (e.g., 'development', 'production_balanced')
+                    If None, uses default_serving_model from config
+        
+        Returns:
+            Dict with model configuration (model_id, max_tokens, etc.)
+        
+        Raises:
+            KeyError: If model_key not found in serving_models config
+        """
+        serving_config = self.get_serving_models_config()
+        
+        if model_key is None:
+            model_key = serving_config.get('default_serving_model', 'production_balanced')
+        
+        if model_key not in serving_config:
+            available = [k for k in serving_config.keys() if k != 'default_serving_model']
+            raise KeyError(
+                f"Model '{model_key}' not found in serving_models config.\n"
+                f"Available models: {available}"
+            )
+        
+        return serving_config[model_key]
+
+
+    def get_default_serving_model(self) -> Dict[str, Any]:
+            """
+            Get default serving model configuration.
+            
+            Returns:
+                Dict with model configuration for default model
+                
+            Raises:
+                KeyError: If default_serving_model not configured or points to invalid model
+            """
+            serving_config = self.get_serving_models_config()
+            
+            # No hardcoded fallback - trust YAML config
+            if 'default_serving_model' not in serving_config:
+                raise KeyError(
+                    "'default_serving_model' key missing in ml_config.yaml.\n"
+                    "Add this key inside the serving_models section:\n"
+                    "  serving_models:\n"
+                    "    development: {...}\n"
+                    "    default_serving_model: 'development'  # At this level"
+                )
+            
+            default_key = serving_config['default_serving_model']
+            
+            # Validate that the default key points to an actual model
+            if default_key not in serving_config:
+                available = [k for k in serving_config.keys() if k != 'default_serving_model']
+                raise KeyError(
+                    f"Default model '{default_key}' not found in serving_models.\n"
+                    f"Available models: {available}\n"
+                    f"Update default_serving_model in ml_config.yaml"
+                )
+            
+            return serving_config[default_key]
 
 # ============================================================================
 # TEST / DEMO
 # ============================================================================
 
+
 if __name__ == "__main__":
     try:
         config = MLConfig()
         
-        print("=" * 70)
-        print("ML PIPELINE CONFIGURATION TEST")
-        print("=" * 70)
+        print("=" * 80)
+        print("ML PIPELINE CONFIGURATION - COMPREHENSIVE TEST")
+        print("=" * 80)
         
+        # ====================================================================
+        # AWS CONFIGURATION
+        # ====================================================================
         print(f"\n[AWS Configuration]")
-        print(f"  Credentials: {config._aws_creds_source}")
+        print(f"  Credentials Source: {config._aws_creds_source}")
         print(f"  Bucket: {config.bucket}")
         print(f"  Region: {config.region}")
-        print(f"  Access Key: {config.aws_access_key[:8]}..." if config.aws_access_key else "  ✗ Missing")
+        print(f"  Access Key: {config.aws_access_key[:12]}..." if config.aws_access_key else "  ERROR: Missing")
+        print(f"  Secret Key: {'*' * 40}... (hidden)")
         
-        print(f"\n[Data Paths - Input]")
-        print(f"  Input: {config.s3_uri(config.input_sentences_path)}")
+        # ====================================================================
+        # DATA PATHS
+        # ====================================================================
+        print(f"\n[Data Paths - Input (ETL)]")
+        print(f"  Stage 1: {config.s3_uri(config.input_sentences_path)}")
         
-        print(f"\n[Data Paths - Output]")
-        print(f"  Meta Embeds: {config.s3_uri(config.meta_embeds_path)}")
+        print(f"\n[Data Paths - Output (ML)]")
+        print(f"  Stage 2 Meta: {config.s3_uri(config.meta_embeds_path)}")
         print(f"  Embeddings: {config.s3_uri(config.embeddings_path())}")
         
+        # ====================================================================
+        # EMBEDDING CONFIGURATION
+        # ====================================================================
         print(f"\n[Embedding Config - Bedrock]")
         print(f"  Provider: {config.embedding_provider}")
         print(f"  Default Model Key: {config.bedrock_default_model_key}")
@@ -460,30 +599,124 @@ if __name__ == "__main__":
         print(f"  Region: {config.bedrock_region}")
         
         print(f"\n[Filtering]")
-        print(f"  Char Length: {config.min_char_length}-{config.max_char_length}")
+        print(f"  Char Length: {config.min_char_length} - {config.max_char_length}")
         print(f"  Max Tokens: {config.max_token_count}")
-        print(f"  Exclude: {', '.join(config.exclude_sections)}")
+        print(f"  Exclude Sections: {', '.join(config.exclude_sections)}")
         
-        print(f"\n[Retrieval]")
-        print(f"  Top K: {config.retrieval_top_k}")
-        print(f"  Context Window: ±{config.context_window}")
-        print(f"  Priority Sections: {', '.join(config.priority_sections)}")
+        # ====================================================================
+        # RETRIEVAL CONFIGURATION
+        # ====================================================================
+        print(f"\n[Retrieval Config]")
+        retrieval = config.get_retrieval_config()
+        print(f"  Top K Filtered: {retrieval['top_k_filtered']}")
+        print(f"  Top K Global: {retrieval['top_k_global']}")
+        print(f"  Enable Global: {retrieval['enable_global']}")
+        print(f"  Enable Variants: {retrieval['enable_variants']}")
+        print(f"  Window Size: {retrieval['window_size']}")
+        print(f"  Index Name: {retrieval['index_name']}")
+        print(f"  Vector Bucket: {retrieval['vector_bucket']}")
         
-        print(f"\n[Cost]")
-        print(f"  Budget: ${config.embedding_budget:.2f}")
-        print(f"  Rate: ${config.get_cost_per_1k():.5f}/1K tokens")
-
+        # ====================================================================
+        # SERVING MODELS CONFIGURATION (CRITICAL SECTION)
+        # ====================================================================
+        print(f"\n[Serving Models Config]")
+        print("-" * 80)
+        
+        serving_config = config.get_serving_models_config()
+        
+        # Check if default_serving_model is nested correctly
+        print(f"\nKeys in serving_models section:")
+        for key in serving_config.keys():
+            if key == 'default_serving_model':
+                print(f"  {key}: '{serving_config[key]}' <- DEFAULT KEY")
+            else:
+                model = serving_config[key]
+                print(f"  {key}: {model.get('display_name', 'N/A')}")
+        
+        print(f"\nDefault Key Location Check:")
+        if 'default_serving_model' in serving_config:
+            print(f"  STATUS: INSIDE serving_models (CORRECT)")
+            print(f"  Value: '{serving_config['default_serving_model']}'")
+        else:
+            print(f"  STATUS: MISSING or OUTSIDE serving_models (ERROR)")
+            print(f"  Check YAML indentation!")
+        
+        # Test default model retrieval
+        print(f"\nDefault Model Retrieval Test:")
+        try:
+            default_model = config.get_default_serving_model()
+            print(f"  Default Key: {serving_config.get('default_serving_model', 'NOT FOUND')}")
+            print(f"  Model ID: {default_model['model_id']}")
+            print(f"  Display Name: {default_model['display_name']}")
+            print(f"  Max Tokens: {default_model['max_tokens']}")
+            print(f"  Input Cost: ${default_model['cost_per_1k_input']}/1K tokens")
+            print(f"  Output Cost: ${default_model['cost_per_1k_output']}/1K tokens")
+            print(f"  STATUS: SUCCESS")
+        except Exception as e:
+            print(f"  STATUS: FAILED")
+            print(f"  Error: {e}")
+        
+        # List all available models
+        print(f"\nAll Available Serving Models:")
+        print("-" * 80)
+        model_keys = [k for k in serving_config.keys() if k != 'default_serving_model']
+        for i, key in enumerate(model_keys, 1):
+            model = serving_config[key]
+            is_default = (key == serving_config.get('default_serving_model'))
+            marker = " [DEFAULT]" if is_default else ""
+            
+            print(f"\n  {i}. {key}{marker}")
+            print(f"     Model ID: {model['model_id']}")
+            print(f"     Display: {model['display_name']}")
+            print(f"     Cost: ${model['cost_per_1k_input']}/1K in, ${model['cost_per_1k_output']}/1K out")
+            print(f"     Context: {model['context_window']:,} tokens")
+            print(f"     Use Case: {model.get('use_case', 'N/A')}")
+            
+            # Check for CRIS prefix
+            if model['model_id'].startswith('us.') or model['model_id'].startswith('eu.'):
+                print(f"     CRIS: YES (cross-region inference)")
+            else:
+                print(f"     CRIS: NO (single region)")
+        
+        # ====================================================================
+        # SEMANTIC VARIANTS CONFIGURATION
+        # ====================================================================
+        print(f"\n[Semantic Variants Config]")
+        variants = config.get_variant_config()
+        print(f"  Enabled: {variants['enabled']}")
+        print(f"  Model ID: {variants['model_id']}")
+        print(f"  Count: {variants['count']} variants per query")
+        print(f"  Max Tokens: {variants['max_tokens']}")
+        
+        # ====================================================================
+        # COST TRACKING
+        # ====================================================================
+        print(f"\n[Cost Tracking]")
+        print(f"  Embedding Budget: ${config.embedding_budget:.2f}")
+        print(f"  Alert Threshold: {config.alert_threshold}%")
+        print(f"  Cohere 768d Rate: ${config.get_cost_per_1k('cohere_768d'):.5f}/1K tokens")
+        
+        # ====================================================================
+        # EMBEDDING EXECUTION PARAMETERS
+        # ====================================================================
         print(f"\n[Embedding Execution]")
         print(f"  Mode: {config.embedding_mode}")
-        print(f"  Filter CIK: {config.filter_cik}")
-        print(f"  Filter Year: {config.filter_year}")
+        print(f"  Filter CIKs: {config.filter_cik}")
+        print(f"  Filter Years: {config.filter_year}")
         print(f"  Filter Sections: {config.filter_sections}")
         
-        print(f"\n" + "=" * 70)
-        print("✓ Configuration loaded successfully!")
-        print("=" * 70)
+        # ====================================================================
+        # FINAL STATUS
+        # ====================================================================
+        print("\n" + "=" * 80)
+        print("CONFIGURATION LOAD: SUCCESS")
+        print("=" * 80)
         
     except Exception as e:
-        print(f"\n❌ Configuration Error: {e}")
+        print("\n" + "=" * 80)
+        print("CONFIGURATION ERROR")
+        print("=" * 80)
+        print(f"\nError: {e}")
         import traceback
         traceback.print_exc()
+        print("\n" + "=" * 80)

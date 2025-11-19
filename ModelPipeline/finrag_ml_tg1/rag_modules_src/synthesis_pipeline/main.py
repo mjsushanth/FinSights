@@ -1,130 +1,243 @@
 # ModelPipeline\finrag_ml_tg1\rag_modules_src\synthesis_pipeline\main.py
 
-import logging
-import json
+"""
+FinRAG CLI Demo - End-to-end query answering.
 
-from .orchestrator import create_orchestrator
+Usage:
+    python -m finrag_ml_tg1.rag_modules_src.synthesis_pipeline.main
+    python -m finrag_ml_tg1.rag_modules_src.synthesis_pipeline.main --query "Your question"
+    python -m finrag_ml_tg1.rag_modules_src.synthesis_pipeline.main --model development
+    python -m finrag_ml_tg1.rag_modules_src.synthesis_pipeline.main --export-response
 
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+Philosophy:
+    - Minimal console output (not a log dumper)
+    - Points to export files (don't print 40K char contexts)
+    - Shows preview of answer (first 500 chars)
+    - Clean success/error handling
+    - No emojis, no clutter
+"""
+
+import argparse
+import sys
+from pathlib import Path
+from typing import Optional
+
+from finrag_ml_tg1.rag_modules_src.synthesis_pipeline.orchestrator import answer_query
+from finrag_ml_tg1.rag_modules_src.synthesis_pipeline.models import is_error_response
+
+
+# ============================================================================
+# DEFAULT QUERY
+# ============================================================================
+
+DEFAULT_QUERY = (
+    "For NVIDIA and Microsoft, what were revenue, operating income, and total assets "
+    "in each year from 2018 to 2020, and how did management in the MD&A and Risk Factors "
+    "sections explain these trends in terms of their AI strategy, competitive positioning, "
+    "and supply chain risks?"
 )
-logger = logging.getLogger(__name__)
 
 
+# ============================================================================
+# UTILITY FUNCTIONS
+# ============================================================================
+
+def find_model_root() -> Path:
+    """
+    Walk up directory tree to find ModelPipeline root.
+    
+    Returns:
+        Path to ModelPipeline directory
+        
+    Raises:
+        RuntimeError: If ModelPipeline not found
+    """
+    current = Path.cwd()
+    
+    for parent in [current] + list(current.parents):
+        if parent.name == "ModelPipeline":
+            return parent
+    
+    raise RuntimeError(
+        "Cannot find 'ModelPipeline' root directory.\n"
+        "Ensure you're running from within the project tree."
+    )
+
+
+def print_separator(char: str = "=", width: int = 70):
+    """Print separator line."""
+    print(char * width)
+
+
+def print_result(result: dict):
+    """
+    Print query result with minimal, clean output.
+    
+    Args:
+        result: Dictionary from answer_query()
+    """
+    print_separator()
+    print("FINRAG QUERY RESULT")
+    print_separator()
+    
+    # Check if error
+    if is_error_response(result):
+        print(f"\nERROR: {result['error']}")
+        print(f"Type: {result['error_type']}")
+        print(f"Stage: {result['stage']}")
+        print(f"Query: {result['query'][:80]}...")
+        
+        # Export info
+        exports = result.get('exports', {})
+        if exports.get('log_file'):
+            print(f"\nLogged to: {exports['log_file']}")
+        
+        print_separator()
+        return
+    
+    # Success case
+    query = result['query']
+    answer = result['answer']
+    metadata = result['metadata']
+    exports = result.get('exports', {})
+    
+    # Query info
+    print(f"\nQuery: {query[:100]}{'...' if len(query) > 100 else ''}")
+    
+    # Answer preview (first 500 chars)
+    print(f"\nAnswer Preview:")
+    print_separator("-")
+    answer_preview = answer[:500] + ("..." if len(answer) > 500 else "")
+    print(answer_preview)
+    print_separator("-")
+    
+    # Metadata summary (one line)
+    llm = metadata['llm']
+    ctx = metadata['context']
+    
+    print(f"\nMetrics:")
+    print(f"  Model: {llm['model_id'].split('.')[-1]}")  # Just model name
+    print(f"  Tokens: {llm['input_tokens']:,} in / {llm['output_tokens']:,} out")
+    print(f"  Cost: ${llm['cost']:.4f}")
+    print(f"  Context: {ctx['context_length']:,} chars")
+    
+    # Export files (where to find full data)
+    print(f"\nExports:")
+    if exports.get('context_file'):
+        print(f"  Context: {exports['context_file']}")
+    if exports.get('response_file'):
+        print(f"  Response: {exports['response_file']}")
+    if exports.get('log_file'):
+        print(f"  Logs: {exports['log_file']}")
+    
+    print_separator()
+    
+    # Helpful tip
+    print("\nTip: Full answer saved in exports. Context and logs available above.")
+
+
+# ============================================================================
+# MAIN ENTRY POINT
+# ============================================================================
 
 def main():
-    """Main entry point with test queries."""
-    orchestrator = create_orchestrator()
+    """Main CLI entry point."""
     
-    # Health check
-    print("\n" + "="*60)
-    print("HEALTH CHECK")
-    print("="*60)
-    health = orchestrator.health_check()
-    for component, status in health.items():
-        status_icon = "✓" if status else "✗"
-        print(f"  {status_icon} {component}: {'OK' if status else 'FAILED'}")
+    # Parse arguments
+    parser = argparse.ArgumentParser(
+        description="FinRAG - Query financial 10-K filings with AI",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+Examples:
+  # Use default query and model (Claude 4.5 Haiku from ml_config.yaml)
+  python -m finrag_ml_tg1.rag_modules_src.synthesis_pipeline.main
+  
+  # Custom query
+  python -m finrag_ml_tg1.rag_modules_src.synthesis_pipeline.main --query "What were NVIDIA's 2020 revenues?"
+  
+  # Use different model
+  python -m finrag_ml_tg1.rag_modules_src.synthesis_pipeline.main --model development
+  python -m finrag_ml_tg1.rag_modules_src.synthesis_pipeline.main --model production_budget
+  
+  # Export full response to JSON
+  python -m finrag_ml_tg1.rag_modules_src.synthesis_pipeline.main --export-response
+  
+  # Skip context export (save disk space)
+  python -m finrag_ml_tg1.rag_modules_src.synthesis_pipeline.main --no-export-context
+        """
+    )
+    
+    parser.add_argument(
+        '--query', '-q',
+        type=str,
+        default=DEFAULT_QUERY,
+        help='User question (default: production test query)'
+    )
+    
+    parser.add_argument(
+        '--model', '-m',
+        type=str,
+        default=None,
+        help='Model key from ml_config.yaml (default: uses default_serving_model)'
+    )
+    
+    parser.add_argument(
+        '--no-export-context',
+        action='store_true',
+        help='Skip exporting context to file (saves disk space)'
+    )
+    
+    parser.add_argument(
+        '--export-response',
+        action='store_true', default=True,  
+        help='Export full response to JSON file (for debugging)'
+    )
+    
+    args = parser.parse_args()
+    
+    # Find project root
+    try:
+        model_root = find_model_root()
+        print(f"ModelPipeline root: {model_root}")
+    except RuntimeError as e:
+        print(f"ERROR: {e}")
+        sys.exit(1)
+    
+    # Display query info
+    print(f"\nProcessing query...")
+    if args.model:
+        print(f"  Model: {args.model}")
+    else:
+        print(f"  Model: default (development_CH45 - Claude 4.5 Haiku)")
     print()
     
-    # Test queries
-    test_queries = [
-        "What were Microsoft's and NVIDIA's total assets and revenue from 2021 to 2023?",
-    ]
-    
-    for i, query in enumerate(test_queries, 1):
-        print("\n" + "="*70)
-        print(f"QUERY {i}: {query}")
-        print("="*70)
+    # Process query
+    try:
+        result = answer_query(
+            query=args.query,
+            model_root=model_root,
+            include_kpi=True,                          
+            include_rag=True,                          
+            model_key=args.model,
+            export_context=not args.no_export_context,
+            export_response=args.export_response
+        )
         
-        try:
-            result = orchestrator.process_query(query)
-            
-            # Show what metric pipeline sent to LLM (string format)
-            if result['metadata'].get('analytical_results'):
-                print("\n--- METRIC PIPELINE → LLM ---")
-                analytical = result['metadata']['analytical_results']
-                print(analytical)
-                
-                # Calculate token usage
-                tokens = len(analytical) // 4
-                print(f"\nToken estimate: ~{tokens} tokens")
-            
-            # Show S3 filters that were extracted
-            if result['metadata'].get('s3_filters'):
-                print("\n--- S3 METADATA FILTERS ---")
-                filters = result['metadata']['s3_filters']
-                print(f"Tickers: {filters.get('tickers', [])}")
-                print(f"Years: {filters.get('year', [])}")
-                if filters.get('sec_item_canonical'):
-                    print(f"Sections: {filters.get('sec_item_canonical', [])}")
-            
-            # Show final LLM response
-            print("\n--- FINAL LLM RESPONSE ---")
-            print(result['response'])
-            
-            # Show metadata summary
-            print("\n--- METADATA SUMMARY ---")
-            metadata = result['metadata']
-            print(f"  Has Analytical Data: {metadata['has_analytical_data']}")
-            
-            if metadata.get('analytical_results'):
-                # Count data points (lines in the string)
-                data_points = len(metadata['analytical_results'].strip().split('\n'))
-                print(f"  Data Points: {data_points}")
-            else:
-                print(f"  Data Points: 0")
-            
-            print(f"  Has RAG Context: {metadata['has_rag_context']}")
-            print(f"  Context Chunks: {metadata['num_context_chunks']}")
-            
-            if metadata.get('top_sources'):
-                print(f"\n  Top Sources:")
-                for idx, source in enumerate(metadata['top_sources'], 1):
-                    print(f"    {idx}. {source['company']} {source['year']} "
-                          f"{source['section']} (score: {source['similarity_score']:.2f})")
+        # Display result
+        print_result(result)
         
-        except Exception as e:
-            logger.error(f"Query failed: {e}", exc_info=True)
-            print(f"\n❌ Error: {str(e)}")
-    
-    # Interactive mode
-    print("\n" + "="*70)
-    print("INTERACTIVE MODE")
-    print("="*70)
-    print("Enter queries (or 'quit' to exit):\n")
-    
-    while True:
-        try:
-            query = input("Query: ").strip()
-            
-            if query.lower() in ['quit', 'exit', 'q']:
-                print("\n👋 Goodbye!")
-                break
-            
-            if not query:
-                continue
-            
-            print("\nProcessing...\n")
-            result = orchestrator.process_query(query)
-            
-            # Show metric pipeline output if available
-            if result['metadata'].get('analytical_results'):
-                print("--- METRIC DATA ---")
-                print(result['metadata']['analytical_results'])
-                print()
-            
-            # Show response
-            print("--- RESPONSE ---")
-            print(result['response'])
-            print()
+        # Exit code
+        sys.exit(0 if not is_error_response(result) else 1)
         
-        except KeyboardInterrupt:
-            print("\n\n👋 Goodbye!")
-            break
-        except Exception as e:
-            logger.error(f"Query failed: {e}", exc_info=True)
-            print(f"\n❌ Error: {str(e)}\n")
+    except KeyboardInterrupt:
+        print("\n\nInterrupted by user")
+        sys.exit(130)
+    
+    except Exception as e:
+        print(f"\nUnexpected error: {e}")
+        import traceback
+        traceback.print_exc()
+        sys.exit(1)
 
 
 if __name__ == "__main__":

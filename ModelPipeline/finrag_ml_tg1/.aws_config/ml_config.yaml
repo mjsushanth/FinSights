@@ -151,21 +151,6 @@ embedding:
 
       
 
-# ============================================================================
-# RETRIEVAL CONFIGURATION
-# ============================================================================
-retrieval:
-  top_k: 10
-  similarity_metric: cosine
-  context_window: 2
-  
-  priority_sections:
-    - ITEM_1A
-    - ITEM_7
-    - ITEM_8
-    - ITEM_1
-  
-  recent_years_threshold: 2018
 
 # ============================================================================
 # COST TRACKING
@@ -195,6 +180,7 @@ metadata:
   last_updated: "2024-11-07"
   owner: "Joel Markapudi"
   project: "FinRAG IE7374 MLOps"
+
 
 
 
@@ -252,3 +238,176 @@ rag_orchestrator:
     include_sources: true
     max_context_chunks: 5
     include_analytical_data: true
+
+
+# # ======================= Replaced. ══════════════════════════════════════
+# # RETRIEVAL CONFIGURATION
+# retrieval:
+#   top_k: 10
+#   similarity_metric: cosine
+#   context_window: 2
+  
+#   priority_sections:
+#     - ITEM_1A
+#     - ITEM_7
+#     - ITEM_8
+#     - ITEM_1
+  
+#   recent_years_threshold: 2018
+
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# SEMANTIC VARIANTS CONFIG
+# ═══════════════════════════════════════════════════════════════════════════
+semantic_variants:
+  enabled: true                                         # Toggle on/off
+  model_id: "us.anthropic.claude-haiku-4-5-20251001-v1:0"
+  max_tokens: 150                                       # Very short responses
+  temperature: 0.7                                      # Some creativity for rephrasing
+  count: 3                                              # Number of variants to generate
+
+  ## model_id: "anthropic.claude-3-haiku-20240307-v1:0"  # Cheap model (~$0.00025 per call)
+  ## model_id: "anthropic.claude-haiku-4-5-20251001-v1:0"
+
+  # Prompt template (user can modify without touching code)
+  prompt_template: |
+    Rephrase this financial query {count} different ways while preserving the exact intent and entities.
+    Keep the same companies, years, and sections mentioned.
+    Return ONLY the {count} rephrased queries, one per line, with no numbering or extra text.
+    
+    Original query: "{query}"
+    
+    Rephrased versions:
+
+# ═══════════════════════════════════════════════════════════════════════════
+# RETRIEVAL PIPELINE CONFIG
+# ═══════════════════════════════════════════════════════════════════════════
+retrieval:
+  # S3 Vectors query parameters
+  top_k_filtered: 30  # Max results per filtered call
+  top_k_global: 15    # Max results per global call
+  top_k_filtered_variants: 15
+  top_k_for_expansion: 20 
+  
+  window_size: 3
+  max_context_blocks: 10
+  
+  # Retrieval strategy toggles
+  enable_global: true       # Run global (time-relaxed) calls alongside filtered
+  enable_variants: true     # Generate semantic query variants (requires Bedrock LLM)
+  
+  # Filter thresholds
+  recent_year_threshold: 2015  # For "company-global" time relaxation (report_year >= this)
+  min_similarity: 0.3          # Filter very weak hits (1 - distance/2 < this threshold)
+  
+  # S3 Vectors index configuration
+  vector_bucket: "finrag-embeddings-s3vectors"
+  index_name: "finrag-sentence-fact-embed-1024d"
+  dimensions: 1024
+
+  max_hits_before_expansion: 30     # Total hit limit before windowing
+  filtered_proportion: 0.70         
+  global_proportion: 0.30           
+
+  # Similarity threshold - RESEARCH FINDING: Set very low
+  # S3 Vectors' ANN already filters effectively. Threshold only useful for:
+    # - Blocking truly off-topic queries (similarity < 0.4)
+    # - Preventing accidental broad retrieval in edge cases
+    # For normal queries, threshold=0.3 rejects nothing useful. !!!
+
+  ## Filtered is precision layer - should still dominate
+  ## 30% global is substantial - 9 hits can add real temporal diversity
+ 
+
+# ============================================================================
+# SERVING MODELS CONFIGURATION
+# ============================================================================
+# 
+# CRITICAL: Cross-Region Inference (CRIS) Prefixes
+# ─────────────────────────────────────────────────
+# Newer Anthropic models REQUIRE regional prefixes (us./eu./apac.)
+# These are "inference profiles" that route across multiple regions.
+# 
+# Benefits:
+#   - 2x throughput (doubles quotas)
+#   - Better availability (auto-failover)
+#   - Required for latest models
+# 
+# Prefixes:
+#   us.*   → Routes across US regions (us-east-1, us-west-2)
+#   eu.*   → Routes across EU regions (eu-central-1, eu-west-1, eu-west-3)
+#   apac.* → Routes across APAC regions
+# 
+# Without prefix: Single region only (may not be available in us-east-1)
+# ============================================================================
+
+serving_models:
+  
+  # ──────────────────────────────────────────────────────────────────────────
+  # DEVELOPMENT MODELS (Fast iteration, lower cost)
+  # ──────────────────────────────────────────────────────────────────────────
+  
+  development:
+    model_id: "us.anthropic.claude-3-5-haiku-20241022-v1:0"  # CRIS prefix
+    display_name: "Claude 3.5 Haiku (CRIS)"
+    max_tokens: 4096
+    temperature: 0.1
+    top_p: 0.9
+    cost_per_1k_input: 0.001   # $1 per 1M tokens
+    cost_per_1k_output: 0.005  # $5 per 1M tokens
+    context_window: 200000
+    use_case: "Development, testing, iteration"
+    notes: "Uses Cross-Region Inference - doubles throughput, better availability"
+  
+  development_CH45:
+    model_id: "us.anthropic.claude-haiku-4-5-20251001-v1:0"  # CRIS prefix (Haiku 4.5)
+    display_name: "Claude 4.5 Haiku (CRIS)"
+    max_tokens: 8192
+    temperature: 0.1
+    top_p: 0.9
+    cost_per_1k_input: 0.001   # $1 per 1M tokens (same as 3.5 Haiku)
+    cost_per_1k_output: 0.005  # $5 per 1M tokens
+    context_window: 200000
+    use_case: "Latest Haiku features, fast development"
+    notes: "Newest Haiku - REQUIRES CRIS prefix for availability"
+  
+  
+  production_balanced:
+    model_id: "us.anthropic.claude-3-5-sonnet-20241022-v2:0"  # 
+    display_name: "Claude 3.5 Sonnet v2 (CRIS)"
+    max_tokens: 8192
+    temperature: 0.1
+    top_p: 0.9
+    cost_per_1k_input: 0.003   # $3 per 1M tokens
+    cost_per_1k_output: 0.015  # $15 per 1M tokens
+    context_window: 200000
+    use_case: "Production queries, evaluation gold set"
+    notes: "CRITICAL: v2 model ONLY works with us. prefix in us-east-1"
+  
+  
+  production_budget:
+    model_id: "amazon.nova-micro-v1:0"  # 
+    display_name: "Amazon Nova Micro"
+    max_tokens: 5000
+    temperature: 0.1
+    top_p: 0.9
+    cost_per_1k_input: 0.000035   # $0.035 per 1M tokens
+    cost_per_1k_output: 0.00014   # $0.14 per 1M tokens
+    context_window: 128000
+    use_case: "High-volume testing, cost-sensitive scenarios"
+    notes: "30x cheaper than Haiku - no CRIS prefix needed for Nova models"
+  
+  openai_compatible:
+    model_id: "meta.llama3-1-70b-instruct-v1:0"  
+    display_name: "Llama 3.1 70B"
+    max_tokens: 4096
+    temperature: 0.1
+    top_p: 0.9
+    cost_per_1k_input: 0.00099
+    cost_per_1k_output: 0.00099
+    context_window: 128000
+    use_case: "Open source alternative for testing"
+    notes: "No CRIS prefix needed for Meta models"
+
+  default_serving_model: "development_CH45"  

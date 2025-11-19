@@ -31,9 +31,9 @@ class MetricLookup:
             raise FileNotFoundError(f"Data file not found: {self.data_path}")
         
         self.df = pd.read_json(self.data_path)
-        print(f"✓ Loaded {len(self.df)} metric records")
-        print(f"✓ Unique tickers: {self.df['ticker'].nunique()}")
-        print(f"✓ Year range: {self.df['year'].min()}-{self.df['year'].max()}")
+        print(f"✓ KPI-JSON: Loaded {len(self.df)} metric records")
+        print(f"✓ KPI-JSON: Unique tickers: {self.df['ticker'].nunique()}")
+        print(f"✓ KPI-JSON: Year range: {self.df['year'].min()}-{self.df['year'].max()}")
     
     def query(self, ticker: str, year: int, metric: str) -> Optional[Dict[str, any]]:
         """

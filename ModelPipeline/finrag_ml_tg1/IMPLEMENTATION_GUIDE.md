@@ -1,7 +1,9 @@
+# FinRAG Implementation Guide
 
-### Work AUTHOR: Joel Markapudi.
+This document chronicles the entire development journey of FinRAG, emphasizing production-grade patterns, operational rigor, and business-realistic evaluation methodologies. 
+
+
 ## Part 1: ML Modelling - Prep Module + Sentence Embedding Pipeline
-
 **Preparation Stage:**
 - Env isolation (venv_ml_rag), uv+pip for new slim ML environment, API, model - provider decisions.
 - Config, Pathing, Secrets, Caching design structure for ML Modelling pipeline.
@@ -28,8 +30,6 @@
 </div>
 
 
-
-
 ## Part 2: S3 Vector API Modules (Notebook 3-4)
 - **Schema & Table Preparation (Notebook 3):**
 - The vector storage design was rebuilt around deterministic identifiers and structured metadata to make retrieval, audit, and re-embedding entirely reproducible.
@@ -49,10 +49,7 @@
 **S3 Vectors Index Configuration:**
 - 1 Index present.
 
-
-
 ---
-
 
 ## Part 3: Post-Embedding, Post-S3Vector Analysis & Tests
 **Execution Audit Report:**
@@ -71,14 +68,12 @@
 
 
 
-
 ### Part 3.1: S3 Vector Cost Analysis 
 - Reference - [Full Details](ModelPipeline\finrag_ml_tg1\notebooks-experiments\S3Vect_QueryCost.md)
 - Ingestion Costs: 200K vectors (1024-d) storage = $0.40/month ($0.002 per 1K vectors). One-time PutVectors API calls negligible at $0.01 per 10K requests.
 - Query Economics: Open queries (no filters) cost $0.10 per 10K queries. Filtered queries (metadata pushdown) cost $0.05 per 10K queries — 50% cheaper due to reduced search space.
 - Production Projections: Academic workload (1M queries/month mixed regime) = ~$7-10/month total. Scales linearly; 10M queries = $70-100/month, making S3 Vectors 99% cheaper than managed vector DBs (Pinecone $70/month baseline for 200K vectors alone).
 - Cost Optimization Strategy: Parquet files as cold storage ($0.023/GB), S3 Vectors as hot query layer. Enables sub-$15/month academic project budget while maintaining production-grade semantic search.
-Retry
 
 ---
 
@@ -114,8 +109,9 @@ Retry
 anchor ≡ (cik, year, section, sentenceID, pos)
 G(anchor) = {sentences from same (cik, year, section) 
              where |sentence_pos - pos| ≤ W and pos ≠ anchor.pos}
+
+- Window size W=5-N captures immediate discourse neighbors !
 ```
-Window size W=5-N captures immediate discourse neighbors without requiring manual labeling.
 
 **Evaluation Metrics**:
 - **Self@1**: Does querying an anchor's embedding return itself at rank 1?  
@@ -171,15 +167,12 @@ Window size W=5-N captures immediate discourse neighbors without requiring manua
    *"Can we explain **why** debt changed over 3 years, **compare** risk framings across 4 companies, or **verify** causal attributions?"*
 
 **Warehouse Architecture**:
-
 - **View1 / View2** (`view1_kpi_scan.json`, `view2_risk_atlas.json`)  
   Sentence-level KPI and risk atlases serving as initial candidate pools.
-   
 - **P3 Candidates** (`p3_candidates_kpi.json`, `p3_candidates_risk.json`)  
   High-quality single-sentence pools filtered by:
   - KPI: revenue/debt/net_income sentences with numeric anchors
   - Risk: regulatory/liquidity/cybersecurity sentences with ≥3 risk cue words
-
 - **V3/V4/V5 Bundles** (multi-sentence structured warehouses):
   - **`goldp3_v3_trend_bundles.json`** (224 bundles) → Cross-year KPI/risk evolution per company  
     *Structure*: `{cik, name, years[], topic_label, sentences[]}` where sentences span 2-8 fiscal years
@@ -214,10 +207,81 @@ Window size W=5-N captures immediate discourse neighbors without requiring manua
   - Semantic scope guardrail → uses EntityExtractionResult to detect whether the query contains any financial/SEC-relevant signal (companies, metrics, years, sections, or risk topics).
   - Irrelevant queries raise QueryOutOfScopeError exceptions.
 - Embedder handles both Cohere v3 ({"embeddings":[…]}) and v4 ({"embeddings":{"float":[…]}}) formats.
-- (Note: QueryEmbedderV2 accepts a Bedrock client created by the MLConfig service object, which loads .aws_secrets/aws_credentials.env + ml_config.yaml)
+- (Note: `QueryEmbedderV2` accepts a Bedrock client created by the `MLConfig` service object, which loads `.aws_secrets/aws_credentials.env + ml_config.yaml`).
+
 
 ### Part 7.1 - Important.
 - Supply Line 1 and Line 2.
 - `Query → EntityAdapter.extract() → MetricPipeline.process() → format_analytical_compact()`
 - `Query → EntityAdapter.extract() → QueryEmbedderV2.embed_query() → 1024-d Cohere v4 embedding`
 - Cleansed over 30 py files, sys.path adjustments, hacks, path corruption issues with resolver.
+
+### Part 7.1: Supply Line Integration & Codebase Refactoring
+- Objective: Establish dual query processing pathways and resolve systemic import/path corruption issues across 30+ Python modules.
+- Dual Supply Lines:
+``` 
+    Supply Line 1 (Structured KPI): Query → EntityAdapter.extract() → MetricPipeline.process() 
+        → format_analytical_compact() — Produces formatted numerical KPIs with entity-enhanced headers for direct analytical consumption.
+    
+    Supply Line 2 (Semantic Retrieval): Query → EntityAdapter.extract() → QueryEmbedderV2.embed_query() → 1024-d Cohere v4 embedding — Generates query vector with extracted entity metadata for filtered S3 Vectors retrieval.
+```
+- Codebase Hygiene: Eliminated 30+ files with sys.path manipulation, hardcoded path hacks, and circular import anti-patterns.
+- Unified import resolution strategy: package-relative imports (from rag_modules_src.entity_adapter import ...) replacing fragile ../../../ traversals.
+- Established clean module boundaries: entity_adapter/ outputs consumed by both metric_pipeline/ and rag_pipeline/ without cross-contamination.
+
+
+
+
+### Part 8: RAG Pipeline Phase 1
+#### Dynamic Metadata Filtering, Model Declarations, Variant Generation & Retrieval Architecture
+
+- Conditional filter assembly: EntityAdapter output drives S3 Vectors JSON filter construction (`$and`, `$or`, `$in` operators) when entities present; global corpus fallback when extraction returns empty.
+- Filter precedence: CIK+year applied first for selectivity, section/risk_topic layered conditionally; range queries normalized to `$gte/$lte`, single years to `$eq` for clean API contracts.
+- Dataclass models (`FilterConfig`, `VariantResult`, `S3RetrievalBundle`) enforce typed contracts, replacing dict-passing patterns; each hit carries `parent_hit_distance`, `source`, `variant_id` for provenance tracking.
+- Claude Haiku (configurable) generates 2-4 semantic query rephrasings (~$0.0001/query), each independently embedded via QueryEmbedderV2 into 1024-d vectors with unique `variant_id` for parallel S3 retrieval.
+- Triple retrieval regime: `filtered_hits` use metadata pushdown (50% cost savings), `global_hits` provide no-filter fallback, `union_hits` merge both pools post-deduplication by `sentenceID`. (RetrieverBundling). 
+- Per-source stratified top percentile selection applies distance cutoff (≤0.35) within each retrieval pool before merging to avoid cross-pool normalization artifacts from different distance distributions.
+- S3 Retriever handles batch retry with exponential backoff (3 attempts) on API throttling, logs failed batches for deterministic replay without blocking pipeline execution.
+- Union deduplication: when same `sentenceID` appears across filtered/global results, keeps lowest-distance version while aggregating `sources` and `variant_ids` metadata arrays.
+- Five-phase isolation testing validates filter syntax, single-variant retrieval, multi-variant deduplication, filtered-vs-global reconciliation, and stratified selection before full integration.
+
+
+### Part 9: RAG Pipeline Phase 2
+#### Sentence Expansion, Provenance Tracking & Context Assembly
+
+- Edge-safe window expansion retrieves ±3 sentences around each S3 hit via `sentenceID` join, adapting boundaries for near-start/near-end positions to avoid index errors with 1-indexed extraction schema.
+- Overlap deduplication (D2) uses composite key `(sentenceID, cik, year, section)` after window expansion, resolving conflicts by keeping version with lowest `parent_hit_distance` for relevance prioritization.
+- Core hit provenance tracking via `is_core_hit` boolean distinguishes direct S3 retrieval results (True) from context neighbors added via expansion (False) for downstream citation weighting.
+- Multi-source provenance aggregation merges `sources` and `variant_ids` arrays when same sentence appears as both core hit and neighbor from different retrieval paths.
+- Malformed `sentenceID` fallback detects `pos=-1` sentinel values from corrupted extraction artifacts, skips window expansion to prevent index errors while logging to audit trail.
+- Enhanced citation headers prefix each context chunk with structured metadata: company, fiscal year, document ID, section name, and sentence ID range for transparent attribution.
+```python
+=== [MSFT] MICROSOFT CORP | FY 2016 | Doc: 0000789019_10-K_2016 | Item 7: Management Discussion & Analysis (MD&A) | Sentences: 0000789019_10-K_2016_section_7_42 - 0000789019_10-K_2016_section_7_68 ===
+```
+- True Bijection guarantee ensures each `sentenceID` maps to exactly one grain (company-year-section-position tuple) with no ambiguous attributions in assembled context.
+- Chronological + logical grouping sorts chunks by `(year ASC, section_order, sentence_pos)` for natural temporal progression, groups same-document sentences under shared headers.
+- Token budget awareness pre-calculates chunk sizes, truncates lowest-distance content first if LLM context limit approached to preserve highest-relevance material.
+
+
+### Part 10: RAG Pipeline Phase 3
+#### Prompt Engineering, LLM Orchestration & Synthesis
+- YAML prompt templates (`system_prompt.yaml`, `query_template.yaml`) separate prompts from code for A/B testing.
+- PromptLoader injects `{context}`, `{query}`, `{kpi_data}` into templates without string concatenation risks.
+- RAGOrchestrator initializes components with dependency injection, routes KPI/semantic/hybrid queries to appropriate pipelines.
+- Bedrock client pooling reuses boto3 sessions across calls, avoiding per-query authentication overhead.
+- Dataclass models (`SynthesisResponse`) enforce typed schemas: `{answer, citations, confidence, token_usage}` with validation.
+- LLM response parsing via `json.loads()` with regex fallback, cross-references citations against ContextAssembler inventory.
+- Artifact exports separated: `logs/`, `contexts/`, `responses/`, `metadata/` tagged with query UUID for replay.
+- Cost ledger tracks tokens, Bedrock costs, S3 expenses per query with monthly projections.
+
+
+
+---
+
+
+## Author, License & Acknowledgments
+The implementation author/dev all of the above modules is - Joel Markapudi (mjsushanth@gmail.com). The implementation author/dev for modules mentioned: `metric_pipeline module, KPI/filter/risk cue pattern analysis, parallelized orchestratorV1` is -  Vishak Nair (nair.visha@northeastern.edu)..
+
+Please contact before making any changes to finrag_ml_tg1/ subdirectory.
+- Joel Markapudi (mjsushanth@gmail.com).
+- Vishak Nair (nair.visha@northeastern.edu).

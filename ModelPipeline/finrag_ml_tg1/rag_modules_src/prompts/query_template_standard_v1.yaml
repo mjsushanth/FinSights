@@ -1,0 +1,34 @@
+# prompts/query_template_standard_v1.yaml
+
+version: "1.0"
+created: "2024-11-18"
+description: "Standard query template for financial RAG synthesis"
+
+template: |
+  {combined_context}
+
+variables:
+  combined_context:
+    description: "Pre-assembled context from build_combined_context() including KPI snapshot, narrative context, and user question footer"
+    required: true
+    format: "Complete formatted string with all sections assembled"
+    notes: "Assembly handled by supply_lines.build_combined_context() - template is pass-through wrapper"
+
+metadata:
+  use_cases:
+    - "Factoid queries (specific metric values)"
+    - "Trend analysis (changes over time)"
+    - "Comparative analysis (multiple companies)"
+    - "Narrative explanation queries (why/how questions)"
+  
+  context_structure:
+    - "KPI Snapshot section (box-formatted metrics)"
+    - "Narrative Context section (SEC filing excerpts with citation headers)"
+    - "User Question footer (query at end for LLM attention)"
+  
+  average_context_size: "15,000-30,000 tokens"
+  estimated_response_size: "500-1,000 tokens"
+  
+  design_notes: "Simple pass-through template. All formatting and assembly logic lives in Python (supply_lines.py). This keeps template simple and flexible."
+  
+  last_updated: "2024-11-18"

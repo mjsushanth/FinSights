@@ -1,0 +1,453 @@
+
+═══════════════════════════════════════════════════════════════════════════════
+FINRAG ASSEMBLED CONTEXT - RETRIEVAL PIPELINE OUTPUT
+═══════════════════════════════════════════════════════════════════════════════
+
+Query: In the MD&A and Risk Factors sections, how did NVIDIA and Microsoft discuss their AI strategy, competitive positioning, and supply chain risks between 2017 and 2020?
+
+Pipeline Execution:
+  Date: 2025-11-18 03:37:21
+
+Entities Extracted:
+  Companies: MSFT, NVDA
+  Years: 2017, 2018, 2019, 2020
+  Sections: ITEM_7, ITEM_1A
+
+Retrieval Stats:
+  S3 Hits Retrieved: 30
+  Variants Generated: 3
+  Unique Sentences After Expansion: 188
+
+Context Stats:
+  Characters: 39,315
+  Estimated Tokens: 9,828
+  Headers: 30
+
+═══════════════════════════════════════════════════════════════════════════════
+ASSEMBLED CONTEXT (Ready for LLM)
+═══════════════════════════════════════════════════════════════════════════════
+
+=== MICROSOFT CORP | 2016 | ITEM_7 ===
+
+Many of these revenue and expenses are denominated in currencies other than the U.S. dollar.
+
+As a result, changes in foreign exchange rates may significantly affect revenue and expenses.
+
+The strengthening of the U.S. dollar relative to certain foreign currencies throughout fiscal year 2015, and continuing into fiscal year 2016, negatively impacted reported revenue and reduced reported expenses from our international operations.
+
+See a discussion of these factors and other risks under Risk Factors (Part I, Item 1A of this Form 10-K).
+
+Seasonality Our revenue historically has fluctuated quarterly and has generally been highest in the second quarter of our fiscal year due to corporate calendar year-end spending trends in our major markets and holiday season spending by consumers.
+
+Unearned Revenue Quarterly and annual revenue is impacted by the deferral of revenue, primarily including: • Revenue deferred on Windows 10 licenses to reflect ratable recognition over the life of the device.
+
+• Revenue deferred on bundled products and services (“Bundled Offerings”).
+
+
+=== MICROSOFT CORP | 2017 | ITEM_1A ===
+
+These outcomes may cause operating margins to decline.
+
+Besides money damages, in some jurisdictions plaintiffs can seek injunctive relief that may limit or prevent importing, marketing, and selling our products or services that have infringing technologies.
+
+In some countries, such as Germany, an injunction can be issued before the parties have fully litigated the validity of the underlying patents.
+
+We have paid significant amounts to settle claims related to the use of technology and intellectual property rights and to procure intellectual property rights as part of our strategy to manage this risk, and may continue to do so.
+
+We may not be able to protect our source code from copying if there is an unauthorized disclosure of source code.
+
+Source code, the detailed program commands for our operating systems and other software programs, is critical to our business.
+
+Although we license portions of our application and operating system source code to several licensees, we take significant measures to protect the secrecy of large portions of our source code.
+
+The remaining obligations may limit our ability to innovate in Windows or other products in the future, diminish the developer appeal of the Windows platform, and increase our product development costs.
+
+The availability of licenses related to protocols and file formats may enable competitors to develop software products that better mimic the functionality of our products, which could hamper sales of our products.
+
+Our portfolio of first-party devices continues to grow; at the same time our OEM partners offer a large variety of devices on our platforms.
+
+As a result, increasingly we both cooperate and compete with our OEM partners, creating a risk that we fail to do so in compliance with competition rules.
+
+Regulatory scrutiny in this area may increase.
+
+Certain foreign governments, particularly in China and other countries in Asia, have advanced arguments under their competition laws that exert downward pressure on royalties for our intellectual property.
+
+Because these jurisdictions only recently implemented competition laws, their enforcement activities are unpredictable.
+
+
+=== MICROSOFT CORP | 2017 | ITEM_7 ===
+
+Many of these revenue and expenses are denominated in currencies other than the U.S. dollar.
+
+As a result, changes in foreign exchange rates may significantly affect revenue and expenses.
+
+The strengthening of the U.S. dollar relative to certain foreign currencies throughout fiscal year 2015, 2016, and 2017, negatively impacted reported revenue and reduced reported expenses from our international operations.
+
+See a discussion of these factors and other risks under Risk Factors (Part I, Item 1A of this Form 10-K).
+
+Seasonality Our revenue historically has fluctuated quarterly and has generally been highest in the second quarter of our fiscal year due to corporate calendar year-end spending trends in our major markets and holiday season spending by consumers.
+
+Reportable Segments We report our financial performance based on the following segments: Productivity and Business Processes, Intelligent Cloud, and More Personal Computing.
+
+The segment amounts included in MD&A are presented on a basis consistent with our internal management reporting.
+
+
+=== MICROSOFT CORP | 2018 | ITEM_1A ===
+
+These outcomes may cause operating margins to decline.
+
+Besides money damages, in some jurisdictions plaintiffs can seek injunctive relief that may limit or prevent importing, marketing, and selling our products or services that have infringing technologies.
+
+In some countries, such as Germany, an injunction can be issued before the parties have fully litigated the validity of the underlying patents.
+
+We have paid significant amounts to settle claims related to the use of technology and intellectual property rights and to procure intellectual property rights as part of our strategy to manage this risk, and may continue to do so.
+
+We may not be able to protect our source code from copying if there is an unauthorized disclosure.
+
+Source code, the detailed program commands for our operating systems and other software programs, is critical to our business.
+
+Although we license portions of our application and operating system source code to several licensees, we take significant measures to protect the secrecy of large portions of our source code.
+
+The remaining obligations may limit our ability to innovate in Windows or other products in the future, diminish the developer appeal of the Windows platform, and increase our product development costs.
+
+The availability of licenses related to protocols and file formats may enable competitors to develop software products that better mimic the functionality of our products, which could hamper sales of our products.
+
+Our portfolio of first-party devices continues to grow; at the same time our OEM partners offer a large variety of devices on our platforms.
+
+As a result, increasingly we both cooperate and compete with our OEM partners, creating a risk that we fail to do so in compliance with competition rules.
+
+Regulatory scrutiny in this area may increase.
+
+Certain foreign governments, particularly in China and other countries in Asia, have advanced arguments under their competition laws that exert downward pressure on royalties for our intellectual property.
+
+Government regulatory actions and court decisions such as these may result in fines, or hinder our ability to provide the benefits of our software to consumers and businesses, reducing the attractiveness of our products and the revenue that come from them.
+
+For example, regulators may take the position that our offerings such as Skype are covered by existing laws regulating telecommunications services and new laws may define more of our services as regulated telecommunications services.
+
+Data protection authorities may assert that our collection, use, and management of customer data is inconsistent with their laws and regulations.
+
+Legislative or regulatory action relating cybersecurity requirements may increase the costs to develop, implement, or secure our products and services.
+
+Legislative or regulatory action could also emerge in the area of AI, increasing costs or restricting opportunity.
+
+Applying these laws and regulations to our business is often unclear, subject to change over time, and sometimes may conflict from jurisdiction to jurisdiction.
+
+Additionally, these laws and governments’ approach to their enforcement, and our products and services, are continuing to evolve.
+
+Compliance with these types of regulation may involve significant costs or require changes in products or business practices that result in reduced revenue.
+
+PART I Item 1A Issues in the use of artificial intelligence in our offerings may result in reputational harm or liability.
+
+We are building AI into many of our offerings and we expect this element of our business to grow.
+
+We envision a future in which AI operating in our devices, applications, and the cloud helps our customers be more productive in their work and personal lives.
+
+As with many disruptive innovations, AI presents risks and challenges that could affect its adoption, and therefore our business.
+
+AI algorithms may be flawed.
+
+Datasets may be insufficient or contain biased information.
+
+Inappropriate or controversial data practices by Microsoft or others could impair the acceptance of AI solutions.
+
+These deficiencies could undermine the decisions, predictions, or analysis AI applications produce, subjecting us to competitive harm, legal liability, and brand or reputational harm.
+
+Some AI scenarios present ethical issues.
+
+If we enable or offer AI solutions that are controversial because of their impact on human rights, privacy, employment, or other social issues, we may experience brand or reputational harm.
+
+
+=== MICROSOFT CORP | 2018 | ITEM_7 ===
+
+Strengthening of the U.S. dollar relative to certain foreign currencies throughout fiscal year 2017 negatively impacted reported revenue and reduced reported expenses from our international operations.
+
+This trend reversed in fiscal year 2018.
+
+Strengthening of foreign currencies relative to the U.S. dollar positively impacted reported revenue and increased reported expenses from our international operations.
+
+Refer to Risk Factors (Part I, Item 1A of this Form 10-K) for a discussion of these factors and other risks.
+
+Seasonality We expect our revenue to fluctuate quarterly and to be higher in the second and fourth quarters of our fiscal year.
+
+Second quarter revenue is driven by corporate year-end spending trends in our major markets and holiday season spending by consumers, and fourth quarter revenue is driven by the volume of multi-year on-premises contracts executed during the period.
+
+Reportable Segments We report our financial performance based on the following segments: Productivity and Business Processes, Intelligent Cloud, and More Personal Computing.
+
+
+=== MICROSOFT CORP | 2019 | ITEM_1A ===
+
+Issues in the use of AI in our offerings may result in reputational harm or liability.
+
+We are building AI into many of our offerings and we expect this element of our business to grow.
+
+We envision a future in which AI operating in our devices, applications, and the cloud helps our customers be more productive in their work and personal lives.
+
+As with many disruptive innovations, AI presents risks and challenges that could affect its adoption, and therefore our business.
+
+AI algorithms may be flawed.
+
+Datasets may be insufficient or contain biased information.
+
+Inappropriate or controversial data practices by Microsoft or others could impair the acceptance of AI solutions.
+
+These deficiencies could undermine the decisions, predictions, or analysis AI applications produce, subjecting us to competitive harm, legal liability, and brand or reputational harm.
+
+Some AI scenarios present ethical issues.
+
+If we enable or offer AI solutions that are controversial because of their impact on human rights, privacy, employment, or other social issues, we may experience brand or reputational harm.
+
+These outcomes may cause operating margins to decline.
+
+Besides money damages, in some jurisdictions plaintiffs can seek injunctive relief that may limit or prevent importing, marketing, and selling our products or services that have infringing technologies.
+
+In some countries, such as Germany, an injunction can be issued before the parties have fully litigated the validity of the underlying patents.
+
+We have paid significant amounts to settle claims related to the use of technology and intellectual property rights and to procure intellectual property rights as part of our strategy to manage this risk, and may continue to do so.
+
+We have claims and lawsuits against us that may result in adverse outcomes.
+
+We are subject to a variety of claims and lawsuits.
+
+These claims may arise from a wide variety of business practices and initiatives, including major new product releases such as Windows 10, significant business transactions, warranty or product claims, and employment practices.
+
+The remaining obligations may limit our ability to innovate in Windows or other products in the future, diminish the developer appeal of the Windows platform, and increase our product development costs.
+
+The availability of licenses related to protocols and file formats may enable competitors to develop software products that better mimic the functionality of our products, which could hamper sales of our products.
+
+Our portfolio of first-party devices continues to grow; at the same time our OEM partners offer a large variety of devices for our platforms.
+
+As a result, increasingly we both cooperate and compete with our OEM partners, creating a risk that we fail to do so in compliance with competition rules.
+
+Regulatory scrutiny in this area may increase.
+
+Certain foreign governments, particularly in China and other countries in Asia, have advanced arguments under their competition laws that exert downward pressure on royalties for our intellectual property.
+
+Government regulatory actions and court decisions such as these may result in fines, or hinder our ability to provide the benefits of our software to consumers and businesses, reducing the attractiveness of our products and the revenue that come from them.
+
+
+=== MICROSOFT CORP | 2019 | ITEM_7 ===
+
+As a result, changes in foreign exchange rates may significantly affect revenue and expenses.
+
+Strengthening of foreign currencies relative to the U.S. dollar throughout fiscal year 2018 positively impacted reported revenue and increased reported expenses from our international operations.
+
+Strengthening of the U.S. dollar relative to certain foreign currencies did not significantly impact reported revenue or expenses from our international operations in the first and second quarters of fiscal year 2019, and reduced reported revenue and expenses from our international operations in the third and fourth quarters of fiscal year 2019.
+
+Refer to Risk Factors (Part I, Item 1A of this Form 10-K) for a discussion of these factors and other risks.
+
+Seasonality Our revenue fluctuates quarterly and is generally higher in the second and fourth quarters of our fiscal year.
+
+Second quarter revenue is driven by corporate year-end spending trends in our major markets and holiday season spending by consumers, and fourth quarter revenue is driven by the volume of multi-year on-premises contracts executed during the period.
+
+Reportable Segments We report our financial performance based on the following segments: Productivity and Business Processes, Intelligent Cloud, and More Personal Computing.
+
+
+=== MICROSOFT CORP | 2020 | ITEM_1A ===
+
+Issues in the use of AI in our offerings may result in reputational harm or liability.
+
+We are building AI into many of our offerings and we expect this element of our business to grow.
+
+We envision a future in which AI operating in our devices, applications, and the cloud helps our customers be more productive in their work and personal lives.
+
+As with many disruptive innovations, AI presents risks and challenges that could affect its adoption, and therefore our business.
+
+AI algorithms may be flawed.
+
+Datasets may be insufficient or contain biased information.
+
+Inappropriate or controversial data practices by Microsoft or others could impair the acceptance of AI solutions.
+
+These deficiencies could undermine the decisions, predictions, or analysis AI applications produce, subjecting us to competitive harm, legal liability, and brand or reputational harm.
+
+Some AI scenarios present ethical issues.
+
+If we enable or offer AI solutions that are controversial because of their impact on human rights, privacy, employment, or other social issues, we may experience brand or reputational harm.
+
+These outcomes may cause operating margins to decline.
+
+Besides money damages, in some jurisdictions plaintiffs can seek injunctive relief that may limit or prevent importing, marketing, and selling our products or services that have infringing technologies.
+
+In some countries, such as Germany, an injunction can be issued before the parties have fully litigated the validity of the underlying patents.
+
+We have paid significant amounts to settle claims related to the use of technology and intellectual property rights and to procure intellectual property rights as part of our strategy to manage this risk, and may continue to do so.
+
+We have claims and lawsuits against us that may result in adverse outcomes.
+
+We are subject to a variety of claims and lawsuits.
+
+These claims may arise from a wide variety of business practices and initiatives, including major new product releases such as Windows 10, significant business transactions, warranty or product claims, and employment practices.
+
+The remaining obligations may limit our ability to innovate in Windows or other products in the future, diminish the developer appeal of the Windows platform, and increase our product development costs.
+
+The availability of licenses related to protocols and file formats may enable competitors to develop software products that better mimic the functionality of our products, which could hamper sales of our products.
+
+Our portfolio of first-party devices continues to grow; at the same time our OEM partners offer a large variety of devices for our platforms.
+
+As a result, increasingly we both cooperate and compete with our OEM partners, creating a risk that we fail to do so in compliance with competition rules.
+
+Regulatory scrutiny in this area may increase.
+
+Certain foreign governments, particularly in China and other countries in Asia, have advanced arguments under their competition laws that exert downward pressure on royalties for our intellectual property.
+
+Government regulatory actions and court decisions such as these may result in fines, or hinder our ability to provide the benefits of our software to consumers and businesses, reducing the attractiveness of our products and the revenue that come from them.
+
+
+=== MICROSOFT CORP | 2020 | ITEM_7 ===
+
+As a result, changes in foreign exchange rates may significantly affect revenue and expenses.
+
+Strengthening of the U.S. dollar relative to certain foreign currencies did not significantly impact reported revenue or expenses from our international operations in the first and second quarters of fiscal year 2019, and reduced reported revenue and expenses from our international operations in the third and fourth quarters of fiscal year 2019.
+
+Strengthening of the U.S. dollar relative to certain foreign currencies reduced reported revenue and expenses from our international operations in fiscal year 2020.
+
+Refer to Risk Factors (Part I, Item 1A of this Form 10-K) for a discussion of these factors and other risks.
+
+COVID-19 In fiscal year 2020, the COVID-19 pandemic impacted our business operations, including our employees, customers, partners, and communities, and we saw the following trends in our financial operating results.
+
+In the Productivity and Business Processes and Intelligent Cloud segments, cloud usage and demand increased as customers shifted to work and learn from home.
+
+We also experienced a slowdown in transactional licensing, particularly in small and medium businesses, and LinkedIn was negatively impacted by the weak job market and reductions in advertising spend.
+
+The extent to which the COVID-19 pandemic impacts our business going forward will depend on numerous evolving factors we cannot reliably predict, including the duration and scope of the pandemic; governmental, business, and individuals' actions in response to the pandemic; and the impact on economic activity including the possibility of recession or financial market instability.
+
+These factors may adversely impact consumer, business, and government spending on technology as well as customers' ability to pay for our products and services on an ongoing basis.
+
+This uncertainty also affects management’s accounting estimates and assumptions, which could result in greater variability in a variety of areas that depend on these estimates and assumptions, including investments, receivables, and forward-looking guidance.
+
+Refer to Risk Factors (Part I, Item 1A of this Form 10-K) for a discussion of these factors and other risks.
+
+Seasonality Our revenue fluctuates quarterly and is generally higher in the second and fourth quarters of our fiscal year.
+
+Second quarter revenue is driven by corporate year-end spending trends in our major markets and holiday season spending by consumers, and fourth quarter revenue is driven by the volume of multi-year on-premises contracts executed during the period.
+
+PART II Item 7 Reportable Segments We report our financial performance based on the following segments: Productivity and Business Processes, Intelligent Cloud, and More Personal Computing.
+
+
+=== NVIDIA CORP | 2016 | ITEM_1A ===
+
+These provisions include the following: •the ability of our Board of Directors to create and issue preferred stock without prior shareholder approval; •the prohibition of shareholder action by written consent; •advance notice requirements for director nominations and shareholder proposals; •the ability of our Board of Directors to increase or decrease the number of directors without shareholder approval; •a super-majority voting requirement to amend some provisions in our certificate of incorporation and bylaws; •the inability of our shareholders to call special meetings of shareholders; and •the ability of our Board of Directors to make, amend or repeal our bylaws.
+
+On March 5, 2000, we entered into an agreement with Microsoft in which we agreed to develop and sell graphics chips and to license certain technology to Microsoft and its licensees for use in the Xbox.
+
+Under the agreement, if an individual or corporation makes an offer to purchase shares equal to or greater than 30% of the outstanding shares of our common stock, Microsoft may have first and last rights of refusal to purchase the stock.
+
+The Microsoft provision and the other factors listed above could also delay or prevent a change in control of NVIDIA.
+
+These provisions could also discourage proxy contests and make it more difficult for shareholders to elect directors of their choosing and to cause us to take other corporate actions they desire.
+
+
+=== NVIDIA CORP | 2017 | ITEM_1A ===
+
+These provisions include the following: •the ability of our Board of Directors to create and issue preferred stock without prior shareholder approval; •the prohibition of shareholder action by written consent; •advance notice requirements for director nominations and shareholder proposals; •the ability of our Board of Directors to increase or decrease the number of directors without shareholder approval; •a super-majority voting requirement to amend some provisions in our certificate of incorporation and bylaws; •the inability of our shareholders to call special meetings of shareholders; and •the ability of our Board of Directors to make, amend or repeal our bylaws.
+
+On March 5, 2000, we entered into an agreement with Microsoft in which we agreed to develop and sell graphics chips and to license certain technology to Microsoft and its licensees for use in the Xbox.
+
+Under the agreement, if an individual or corporation makes an offer to purchase shares equal to or greater than 30% of the outstanding shares of our common stock, Microsoft may have first and last rights of refusal to purchase the stock.
+
+The Microsoft provision and the other factors listed above could also delay or prevent a change in control of NVIDIA.
+
+These provisions could also discourage proxy contests and make it more difficult for shareholders to elect directors of their choosing and to cause us to take other corporate actions they desire.
+
+
+=== NVIDIA CORP | 2018 | ITEM_1A ===
+
+Our operating results have in the past fluctuated and may in the future fluctuate, and if our operating results are below the expectations of securities analysts or investors, our stock price could decline.
+
+Our operating results have in the past fluctuated and may in the future continue to fluctuate due to numerous factors.
+
+Therefore, investors should not rely on quarterly comparisons of our results of operations as an indication of our future performance.
+
+Factors, other than those described elsewhere in these risk factors, that could affect our results of operations in the future include, but are not limited to: • our ability to achieve volume production of our next-generation products; • our inability to adjust spending to offset revenue shortfalls due to the multi-year development cycle for some of our products and services; • fluctuations in the demand for our products related to cryptocurrencies; • changes in the timing of product orders due to unexpected delays in the introduction of our partners’ products; • our ability to cover the manufacturing and design costs of our products through competitive pricing; • our ability to comply and continue to comply with our customers’ contractual obligations; • product rates of return in excess of that forecasted or expected due to quality issues; • our ability to secure appropriate safety certifications and meet industry safety standards; • supply constraints for and changes in the cost of the other components incorporated into our products • inventory write-downs; • our ability to continue generating revenue from our partner network, including by generating sales within our partner network and ensuring our products are incorporated into our partners product ecosystems, and our partner network’s ability to sell products that incorporate our GPUs and Tegra processors; • the inability of certain of our customers to make required payments to us, and our ability to obtain credit insurance over the purchasing credit extended to these customers; • customer bad debt write-offs; • any unanticipated costs associated with environmental liabilities; • unexpected costs related to our ownership of real property; • changes in financial accounting standards or interpretations of existing standards; and • general macroeconomic or industry events and factors affecting the overall market and our target markets.
+
+Any one or more of the factors discussed above could prevent us from achieving our expected future financial results.
+
+Any such failure to meet our expectations or the expectations of our investors or security analysts could cause our stock price to decline or experience substantial price volatility.
+
+Privacy concerns relating to our products and services could damage our reputation, deter current and potential users from using our products and services, result in liability, or result in legal or regulatory proceedings.
+
+These provisions include the following: • the ability of our Board of Directors to create and issue preferred stock without prior shareholder approval; • the prohibition of shareholder action by written consent; • advance notice requirements for director nominations and shareholder proposals; • the ability of our Board of Directors to increase or decrease the number of directors without shareholder approval; • a super-majority voting requirement to amend some provisions in our certificate of incorporation and bylaws; • the inability of our shareholders to call special meetings of shareholders; and • the ability of our Board of Directors to make, amend or repeal our bylaws.
+
+On March 5, 2000, we entered into an agreement with Microsoft in which we agreed to develop and sell graphics chips and to license certain technology to Microsoft and its licensees for use in the Xbox.
+
+Under the agreement, if an individual or corporation makes an offer to purchase shares equal to or greater than 30% of the outstanding shares of our common stock, Microsoft may have first and last rights of refusal to purchase the stock.
+
+The Microsoft provision and the other factors listed above could also delay or prevent a change in control of NVIDIA.
+
+These provisions could also discourage proxy contests and make it more difficult for shareholders to elect directors of their choosing and to cause us to take other corporate actions they desire.
+
+
+=== NVIDIA CORP | 2019 | ITEM_1A ===
+
+Our operating results have in the past fluctuated and may in the future fluctuate, and if our operating results are below the expectations of securities analysts or investors, our stock price could decline.
+
+Our operating results have in the past fluctuated and may in the future continue to fluctuate due to numerous factors.
+
+Therefore, investors should not rely on quarterly comparisons of our results of operations as an indication of our future performance.
+
+Factors, other than those described elsewhere in these risk factors, that could affect our results of operations in the future include, but are not limited to: • our ability to achieve volume production of our next-generation products; • our inability to adjust spending to offset revenue shortfalls due to the multi-year development cycle for some of our products and services; • fluctuations in the demand for our products related to cryptocurrencies; • changes in the timing of product orders due to unexpected delays in the introduction of our partners’ products; • our ability to cover the manufacturing and design costs of our products through competitive pricing; • our ability to comply and continue to comply with our customers’ contractual obligations; • product rates of return in excess of that forecasted or expected due to quality issues; • our ability to secure appropriate safety certifications and meet industry safety standards; • supply constraints for and changes in the cost of the other components incorporated into our products • inventory write-downs; • our ability to continue generating revenue from our partner network, including by generating sales within our partner network and ensuring our products are incorporated into our partners product ecosystems, and our partner network’s ability to sell products that incorporate our GPUs and Tegra processors; • the inability of certain of our customers to make required payments to us, and our ability to obtain credit insurance over the purchasing credit extended to these customers; • customer bad debt write-offs; • any unanticipated costs associated with environmental liabilities; • unexpected costs related to our ownership of real property; • changes in financial accounting standards or interpretations of existing standards; and • general macroeconomic or industry events and factors affecting the overall market and our target markets.
+
+Any one or more of the factors discussed above could prevent us from achieving our expected future financial results.
+
+Any such failure to meet our expectations or the expectations of our investors or security analysts could cause our stock price to decline or experience substantial price volatility.
+
+Privacy concerns relating to our products and services could damage our reputation, deter current and potential users from using our products and services, result in liability, or result in legal or regulatory proceedings.
+
+These provisions include the following: • the ability of our Board of Directors to create and issue preferred stock without prior shareholder approval; • the prohibition of shareholder action by written consent; • advance notice requirements for director nominations and shareholder proposals; • the ability of our Board of Directors to increase or decrease the number of directors without shareholder approval; • a super-majority voting requirement to amend some provisions in our certificate of incorporation and bylaws; • the inability of our shareholders to call special meetings of shareholders; and • the ability of our Board of Directors to make, amend or repeal our bylaws.
+
+On March 5, 2000, we entered into an agreement with Microsoft in which we agreed to develop and sell graphics chips and to license certain technology to Microsoft and its licensees for use in the Xbox.
+
+Under the agreement, if an individual or corporation makes an offer to purchase shares equal to or greater than 30% of the outstanding shares of our common stock, Microsoft may have first and last rights of refusal to purchase the stock.
+
+The Microsoft provision and the other factors listed above could also delay or prevent a change in control of NVIDIA.
+
+These provisions could also discourage proxy contests and make it more difficult for shareholders to elect directors of their choosing and to cause us to take other corporate actions they desire.
+
+
+=== NVIDIA CORP | 2020 | ITEM_1 ===
+
+We believe that our ability to remain competitive will depend on how well we are able to anticipate the features and functions that customers and partners will demand and whether we are able to deliver consistent volumes of our products at acceptable levels of quality and at competitive prices.
+
+We expect competition to increase from both existing competitors and new market entrants with products that may be lower priced than ours, or may provide better performance or additional features not provided by our products.
+
+In addition, it is possible that new competitors or alliances among competitors could emerge and acquire significant market share.
+
+A significant source of competition comes from companies that provide or intend to provide GPUs, embedded SOCs, and other accelerated and AI computing processor products.
+
+Some of our competitors may have greater marketing, financial, distribution and manufacturing resources than we do and may be more able to adapt to customer or technological changes.
+
+Our current competitors include: • suppliers and licensors designing discrete and integrated GPUs and other accelerated computing solutions, including chipsets that incorporate 3D graphics, or HPC, such as Advanced Micro Devices, or AMD, Intel Corporation, or Intel, and Xilinx, Inc.; • large internet services companies with internal teams designing chips that incorporates HPC or accelerated computing functionality as part of their internal solutions or platforms, such as Alphabet Inc.; and • suppliers of SoC products that are embedded into automobiles, autonomous machines, and gaming devices, such as Ambarella, Inc., AMD, Broadcom Inc., Intel, Qualcomm Incorporated, Renesas Electronics Corporation, Samsung, and Xilinx, Inc. or companies with internal teams designing SoC products for internal use, such as Tesla Motors.
+
+Patents and Proprietary Rights We rely primarily on a combination of patents, trademarks, trade secrets, employee and third-party nondisclosure agreements, and licensing arrangements to protect our intellectual property in the United States and internationally.
+
+
+=== NVIDIA CORP | 2020 | ITEM_1A ===
+
+Our operating results have in the past fluctuated and may in the future fluctuate, and if our operating results are below the expectations of securities analysts or investors, our stock price could decline.
+
+Our operating results have in the past fluctuated and may in the future continue to fluctuate due to numerous factors.
+
+Therefore, investors should not rely on quarterly comparisons of our results of operations as an indication of our future performance.
+
+Factors, other than those described elsewhere in these risk factors, that could affect our results of operations in the future include, but are not limited to: • our ability to achieve volume production of our next-generation products; • our inability to adjust spending to offset revenue shortfalls due to the multi-year development cycle for some of our products and services; • fluctuations in the demand for our products related to cryptocurrencies; • changes in the timing of product orders due to unexpected delays in the introduction of our partners’ products; • our ability to cover the manufacturing and design costs of our products through competitive pricing; • our ability to comply and continue to comply with our customers’ contractual obligations; • product rates of return in excess of that forecasted or expected due to quality issues; • our ability to secure appropriate safety certifications and meet industry safety standards; • supply constraints for and changes in the cost of the other components incorporated into our products • inventory write-downs; • our ability to continue generating revenue from our partner network, including by generating sales within our partner network and ensuring our products are incorporated into our partners product ecosystems, and our partner network’s ability to sell products that incorporate our GPUs and Tegra processors; • the inability of certain of our customers to make required payments to us, and our ability to obtain credit insurance over the purchasing credit extended to these customers; • customer bad debt write-offs; • any unanticipated costs associated with environmental liabilities; • unexpected costs related to our ownership of real property; • changes in financial accounting standards or interpretations of existing standards; and • general macroeconomic or industry events and factors affecting the overall market and our target markets.
+
+Any one or more of the factors discussed above could prevent us from achieving our expected future financial results.
+
+Any such failure to meet our expectations or the expectations of our investors or security analysts could cause our stock price to decline or experience substantial price volatility.
+
+Privacy concerns relating to our products and services could damage our reputation, deter current and potential users from using our products and services, result in liability, or result in legal or regulatory proceedings.
+
+These provisions include the following: • the ability of our Board of Directors to create and issue preferred stock without prior shareholder approval; • the prohibition of shareholder action by written consent; • advance notice requirements for director nominations and shareholder proposals; • the ability of our Board of Directors to increase or decrease the number of directors without shareholder approval; • a super-majority voting requirement to amend some provisions in our certificate of incorporation and bylaws; • the inability of our shareholders to call special meetings of shareholders; and • the ability of our Board of Directors to make, amend or repeal our bylaws.
+
+On March 5, 2000, we entered into an agreement with Microsoft in which we agreed to develop and sell graphics chips and to license certain technology to Microsoft and its licensees for use in the Xbox.
+
+Under the agreement, if an individual or corporation makes an offer to purchase shares equal to or greater than 30% of the outstanding shares of our common stock, Microsoft may have first and last rights of refusal to purchase the stock.
+
+The Microsoft provision and the other factors listed above could also delay or prevent a change in control of NVIDIA.
+
+These provisions could also discourage proxy contests and make it more difficult for shareholders to elect directors of their choosing and to cause us to take other corporate actions they desire.
+
+
+═══════════════════════════════════════════════════════════════════════════════
+END OF CONTEXT
+═══════════════════════════════════════════════════════════════════════════════

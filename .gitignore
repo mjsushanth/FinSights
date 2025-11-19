@@ -179,10 +179,9 @@ cython_debug/
 # ============================================
 
 # Notebooks
-ModelPipeline/finrag_ml_tg1/notebooks-experiments/**/*.ipynb
-ModelPipeline/finrag_ml_tg1/notebooks-experiments/**/*.py
-
-!ModelPipeline/finrag_ml_tg1/notebooks-experiments/README.md
+# ModelPipeline/finrag_ml_tg1/notebooks-experiments/**/*.ipynb
+# ModelPipeline/finrag_ml_tg1/notebooks-experiments/**/*.py
+# !ModelPipeline/finrag_ml_tg1/notebooks-experiments/README.md
 
 # Large Embedding Cache Files
 ModelPipeline/finrag_ml_tg1/data_cache/embeddings/

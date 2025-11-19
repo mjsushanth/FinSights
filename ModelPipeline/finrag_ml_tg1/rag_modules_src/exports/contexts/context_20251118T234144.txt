@@ -1,0 +1,429 @@
+══════════════════════════════════════════════════════════════════════
+KPI SNAPSHOT - METRIC PIPELINE OUTPUT
+══════════════════════════════════════════════════════════════════════
+
+Scope:
+  Companies (entities): MSFT, NVDA
+  Years (entities):     2018, 2019, 2020
+  Sections (entities):  ITEM_1A, ITEM_7
+  Companies (metrics):  MSFT, NVDA
+  Years (metrics):      2018, 2019, 2020
+  Metrics:              Operating Income, Total Assets, Revenue, Net Income
+  Coverage:             13/24 metric combinations with values
+
+DETAILS BY COMPANY AND YEAR
+
+MSFT:
+  2018: Total Assets=$258.8B, Net Income=$8.9B
+  2019: Total Assets=$286.6B, Net Income=$13.2B
+  2020: Total Assets=$301.3B, Net Income=$11.2B
+
+NVDA:
+  2018: Total Assets=$11.2B, Revenue=$2.9B, Net Income=$1.1B
+  2019: Total Assets=$13.3B, Net Income=$567.0M
+  2020: Total Assets=$17.3B, Net Income=$950.0M
+
+
+══════════════════════════════════════════════════════════════════════
+NARRATIVE CONTEXT - SEC FILINGS
+══════════════════════════════════════════════════════════════════════
+=== [MSFT] MICROSOFT CORP | FY 2018 | Doc: 0000789019_10-K_2018 | Item 7: Management Discussion & Analysis (MD&A) | Sentences: 0000789019_10-K_2018_section_7_155 - 0000789019_10-K_2018_section_7_161 ===
+
+Windows OEM non-Pro revenue grew 3%, outperforming the consumer PC market, primarily due to a higher mix of premium devices sold.
+
+• Search advertising revenue increased $791 million or 15%.
+
+Search advertising revenue, excluding traffic acquisition costs, increased 9%, primarily driven by growth in Bing, due to higher revenue per search and search volume.
+
+• Gaming revenue decreased slightly, primarily due to lower Xbox hardware revenue, offset in part by higher revenue from Xbox software and services.
+
+Xbox hardware revenue decreased 21%, mainly due to lower prices of consoles sold and a decline in volume of consoles sold.
+
+Xbox software and services revenue increased 11%, driven by a higher volume of Xbox Live transactions and revenue per transaction.
+
+• Surface revenue decreased $82 million or 2%, primarily due to a reduction in volumes sold, offset in part by a higher mix of premium devices.
+
+
+=== [MSFT] MICROSOFT CORP | FY 2020 | Doc: 0000789019_10-K_2020 | Item 7: Management Discussion & Analysis (MD&A) | Sentences: 0000789019_10-K_2020_section_7_123 - 0000789019_10-K_2020_section_7_129 ===
+
+Windows OEM Pro revenue grew 11%, driven by Windows 7 end of support and healthy Windows 10 demand, offset in part by weakness in small and medium businesses.
+
+Windows OEM non-Pro revenue grew 5%, driven by consumer demand from remote work and learn scenarios.
+
+• Surface revenue increased $457 million or 8%, driven by increased demand from remote work and learn scenarios.
+
+• Gaming revenue increased $189 million or 2%, driven by an increase in Xbox content and services, offset in part by a decrease in Xbox hardware.
+
+Xbox content and services revenue increased $943 million or 11% on a strong prior year comparable, driven by growth in Minecraft, third-party titles, and subscriptions, accelerated by higher engagement during stay-at-home guidelines.
+
+Xbox hardware revenue declined 31%, primarily due to a decrease in volume and price of consoles sold.
+
+• Search advertising revenue increased $112 million or 1%.
+
+
+=== [NVDA] NVIDIA CORP | FY 2016 | Doc: 0001045810_10-K_2016 | Item 1A: Risk Factors | Sentences: 0001045810_10-K_2016_section_1A_176 - 0001045810_10-K_2016_section_1A_180 ===
+
+These provisions include the following: •the ability of our Board of Directors to create and issue preferred stock without prior shareholder approval; •the prohibition of shareholder action by written consent; •advance notice requirements for director nominations and shareholder proposals; •the ability of our Board of Directors to increase or decrease the number of directors without shareholder approval; •a super-majority voting requirement to amend some provisions in our certificate of incorporation and bylaws; •the inability of our shareholders to call special meetings of shareholders; and •the ability of our Board of Directors to make, amend or repeal our bylaws.
+
+On March 5, 2000, we entered into an agreement with Microsoft in which we agreed to develop and sell graphics chips and to license certain technology to Microsoft and its licensees for use in the Xbox.
+
+Under the agreement, if an individual or corporation makes an offer to purchase shares equal to or greater than 30% of the outstanding shares of our common stock, Microsoft may have first and last rights of refusal to purchase the stock.
+
+The Microsoft provision and the other factors listed above could also delay or prevent a change in control of NVIDIA.
+
+These provisions could also discourage proxy contests and make it more difficult for shareholders to elect directors of their choosing and to cause us to take other corporate actions they desire.
+
+
+=== [NVDA] NVIDIA CORP | FY 2017 | Doc: 0001045810_10-K_2017 | Item 1A: Risk Factors | Sentences: 0001045810_10-K_2017_section_1A_179 - 0001045810_10-K_2017_section_1A_183 ===
+
+These provisions include the following: •the ability of our Board of Directors to create and issue preferred stock without prior shareholder approval; •the prohibition of shareholder action by written consent; •advance notice requirements for director nominations and shareholder proposals; •the ability of our Board of Directors to increase or decrease the number of directors without shareholder approval; •a super-majority voting requirement to amend some provisions in our certificate of incorporation and bylaws; •the inability of our shareholders to call special meetings of shareholders; and •the ability of our Board of Directors to make, amend or repeal our bylaws.
+
+On March 5, 2000, we entered into an agreement with Microsoft in which we agreed to develop and sell graphics chips and to license certain technology to Microsoft and its licensees for use in the Xbox.
+
+Under the agreement, if an individual or corporation makes an offer to purchase shares equal to or greater than 30% of the outstanding shares of our common stock, Microsoft may have first and last rights of refusal to purchase the stock.
+
+The Microsoft provision and the other factors listed above could also delay or prevent a change in control of NVIDIA.
+
+These provisions could also discourage proxy contests and make it more difficult for shareholders to elect directors of their choosing and to cause us to take other corporate actions they desire.
+
+
+=== [NVDA] NVIDIA CORP | FY 2018 | Doc: 0001045810_10-K_2018 | Item 1A: Risk Factors | Sentences: 0001045810_10-K_2018_section_1A_141 - 0001045810_10-K_2018_section_1A_180 ===
+
+Our operating results have in the past fluctuated and may in the future fluctuate, and if our operating results are below the expectations of securities analysts or investors, our stock price could decline.
+
+Our operating results have in the past fluctuated and may in the future continue to fluctuate due to numerous factors.
+
+Therefore, investors should not rely on quarterly comparisons of our results of operations as an indication of our future performance.
+
+Factors, other than those described elsewhere in these risk factors, that could affect our results of operations in the future include, but are not limited to: • our ability to achieve volume production of our next-generation products; • our inability to adjust spending to offset revenue shortfalls due to the multi-year development cycle for some of our products and services; • fluctuations in the demand for our products related to cryptocurrencies; • changes in the timing of product orders due to unexpected delays in the introduction of our partners’ products; • our ability to cover the manufacturing and design costs of our products through competitive pricing; • our ability to comply and continue to comply with our customers’ contractual obligations; • product rates of return in excess of that forecasted or expected due to quality issues; • our ability to secure appropriate safety certifications and meet industry safety standards; • supply constraints for and changes in the cost of the other components incorporated into our products • inventory write-downs; • our ability to continue generating revenue from our partner network, including by generating sales within our partner network and ensuring our products are incorporated into our partners product ecosystems, and our partner network’s ability to sell products that incorporate our GPUs and Tegra processors; • the inability of certain of our customers to make required payments to us, and our ability to obtain credit insurance over the purchasing credit extended to these customers; • customer bad debt write-offs; • any unanticipated costs associated with environmental liabilities; • unexpected costs related to our ownership of real property; • changes in financial accounting standards or interpretations of existing standards; and • general macroeconomic or industry events and factors affecting the overall market and our target markets.
+
+Any one or more of the factors discussed above could prevent us from achieving our expected future financial results.
+
+Any such failure to meet our expectations or the expectations of our investors or security analysts could cause our stock price to decline or experience substantial price volatility.
+
+Privacy concerns relating to our products and services could damage our reputation, deter current and potential users from using our products and services, result in liability, or result in legal or regulatory proceedings.
+
+These provisions include the following: • the ability of our Board of Directors to create and issue preferred stock without prior shareholder approval; • the prohibition of shareholder action by written consent; • advance notice requirements for director nominations and shareholder proposals; • the ability of our Board of Directors to increase or decrease the number of directors without shareholder approval; • a super-majority voting requirement to amend some provisions in our certificate of incorporation and bylaws; • the inability of our shareholders to call special meetings of shareholders; and • the ability of our Board of Directors to make, amend or repeal our bylaws.
+
+On March 5, 2000, we entered into an agreement with Microsoft in which we agreed to develop and sell graphics chips and to license certain technology to Microsoft and its licensees for use in the Xbox.
+
+Under the agreement, if an individual or corporation makes an offer to purchase shares equal to or greater than 30% of the outstanding shares of our common stock, Microsoft may have first and last rights of refusal to purchase the stock.
+
+The Microsoft provision and the other factors listed above could also delay or prevent a change in control of NVIDIA.
+
+These provisions could also discourage proxy contests and make it more difficult for shareholders to elect directors of their choosing and to cause us to take other corporate actions they desire.
+
+
+=== [NVDA] NVIDIA CORP | FY 2018 | Doc: 0001045810_10-K_2018 | Item 7: Management Discussion & Analysis (MD&A) | Sentences: 0001045810_10-K_2018_section_7_9 - 0001045810_10-K_2018_section_7_157 ===
+
+While our GPU and CUDA architecture is unified, our GPU product brands are aimed at specialized markets including GeForce for gamers; Quadro for designers; Tesla and DGX for AI data scientists and big data researchers; and GRID for cloud-based visual computing users.
+
+Our Tegra brand integrates an entire computer onto a single chip, and incorporates GPUs and multi-core CPUs to drive supercomputing for autonomous robots, drones, and cars, as well as for consoles and mobile gaming and entertainment devices.
+
+Headquartered in Santa Clara, California, NVIDIA was incorporated in California in April 1993 and reincorporated in Delaware in April 1998.
+
+Recent Developments, Future Objectives and Challenges Fiscal Year 2018 Summary Revenue for fiscal year 2018 grew 41% to $9.71 billion, reflecting broad growth in each of our market platforms - gaming, professional visualization, datacenter, and automotive.
+
+GPU business revenue was $8.14 billion, up 40% from a year earlier, led by growth in gaming, datacenter, and professional visualization.
+
+Strong growth across our Pascal-based GeForce gaming GPUs was driven by growth associated with GPU refreshes/upgrades, new gamers, new games, eSports, and cryptocurrency mining.
+
+Revenue for datacenter, including Tesla, NVIDIA GRID and NVIDIA DGX, was $1.93 billion, up 133% year on year, led by strong sales of our Volta architecture, including V100 GPU accelerators, which began shipping in the first half of fiscal year 2018 and are available through major computer makers and cloud providers, new DGX systems, and design wins in HPC.
+
+Revenue from our patent license agreement with Intel concluded in the first quarter of fiscal year 2018.
+
+Gross margin for fiscal year 2018 was 59.9%, compared with 58.8% a year earlier, reflecting a favorable shift in mix, the growth of our GeForce gaming GPUs, and the growth of our GPU computing platform for cloud, deep learning, AI, and graphics virtualization, partially offset by the conclusion of our patent license agreement with Intel.
+
+Operating expenses for fiscal year 2018 were $2.61 billion, up from $2.13 billion in the previous year.
+
+This reflects growth in employees and related costs, as well as investments in growth initiatives, including gaming, AI, and autonomous driving.
+
+We recorded a U.S. tax reform provisional net tax benefit of $133 million associated with the one-time transition tax on our historical foreign earnings and the adjustment of deferred tax balances to the lower corporate tax rate.
+
+Net income and net income per diluted share for fiscal year 2018 were $3.05 billion and $4.82, respectively, up 83% and 88%, respectively, from a year earlier, fueled by strong revenue growth and improved gross and operating margins.
+
+We returned $1.25 billion to shareholders in fiscal year 2018 through a combination of $909 million in share repurchases and $341 million in quarterly cash dividends.
+
+If information becomes available that causes us to determine that a loss in any of our pending litigation, investigations or settlements is probable, and we can reasonably estimate the loss associated with such events, we will record the loss in accordance with U.S. GAAP.
+
+However, the actual liability in any such litigation or investigation may be materially different from our estimates, which could require us to record additional costs.
+
+Results of Operations The following table sets forth, for the periods indicated, certain items in our Consolidated Statements of Income expressed as a percentage of revenue.
+
+Revenue Revenue by Reportable Segments GPU Business.
+
+GPU business revenue increased by 40% in fiscal year 2018 compared to fiscal year 2017 led by growth in gaming, datacenter and professional visualization.
+
+Revenue from sales of GeForce GPU products for gaming increased over 20%, reflecting continued strong demand for our Pascal-based GPU products.
+
+Datacenter revenue, including Tesla, GRID and DGX, increased 133%, reflecting strong demand from hyperscale and cloud customers for deep learning training and accelerated GPU computing as well as demand for HPC, DGX AI supercomputing and GRID virtualization platforms.
+
+Revenue from Quadro GPUs for professional visualization increased by 12% due primarily to higher sales in both high end desktop and mobile workstation products.
+
+Revenue from GeForce GPU products for mainstream PC OEMs increased by over 90% due primarily to strong demand for GPU products targeted for cryptocurrency mining.
+
+GPU business revenue increased by 39% in fiscal year 2017 compared to fiscal year 2016.
+
+This increase was primarily due to increased revenue from our GeForce GPU gaming and datacenter platforms.
+
+Sales of high-end GeForce GPU products for gaming increased over 40%, reflecting a combination of continued strength in PC gaming and strong demand for our recent Pascal-based GPU products.
+
+Datacenter revenue, including our Tesla, NVIDIA GRID, and DGX-1 brands, increased by 145%, reflecting strong demand for deep learning training for AI, cloud, accelerated, and virtualized computing and initial DGX-1 sales.
+
+Revenue from Quadro GPUs for professional visualization increased 11% due primarily to higher sales in high end desktop and mobile workstation products.
+
+Charges to cost of sales for inventory provisions totaled $48 million, $62 million, and $112 million for fiscal years 2018, 2017, and 2016, respectively.
+
+Sales of inventory that was previously written-off or written-down totaled $35 million, $51 million, and $32 million for fiscal years 2018, 2017, and 2016, respectively.
+
+As a result, the overall net effect on our gross margin from inventory provisions and sales of items previously written down was insignificant for fiscal years 2018 and 2017, and an unfavorable impact of 1.6% for fiscal year 2016.
+
+A discussion of our gross margin results for each of our reportable segments is as follows: GPU Business.
+
+The gross margin of our GPU business increased during fiscal year 2018 when compared to fiscal year 2017, primarily due to strong sales of our GeForce gaming GPU products and revenue growth in datacenter, including Tesla, GRID and DGX, for cloud, deep learning, AI, and graphics virtualization.
+
+The gross margin of our GPU business increased during fiscal year 2017 when compared to fiscal year 2016 primarily due to product mix resulting from increased sales of our gaming, datacenter, and professional visualization GPU products, as well as a continued decrease in sales volumes of lower margin PC OEM products.
+
+Tegra Processor Business.
+
+
+=== [NVDA] NVIDIA CORP | FY 2019 | Doc: 0001045810_10-K_2019 | Item 15: Exhibits and Financial Statement Schedules | Sentences: 0001045810_10-K_2019_section_15_448 - 0001045810_10-K_2019_section_15_454 ===
+
+Long-lived assets consist of property and equipment and deposits and other assets, and exclude goodwill and intangible assets.
+
+No customer represented 10% or more of total revenue for fiscal years 2019 and 2018.
+
+In fiscal year 2017, we had one customer that represented 12% of our total revenue.
+
+The revenue was attributable to the GPU business.
+
+Accounts receivable from significant customers, those representing 10% or more of total accounts receivable, aggregated approximately 19% of our accounts receivable balance from one customer as of January 27, 2019, and approximately 28% of our accounts receivable balance from two customers as of January 28, 2018.
+
+NVIDIA CORPORATION AND SUBSIDIARIES NOTES TO THE CONSOLIDATED FINANCIAL STATEMENTS (Continued) Note 17 - Quarterly Summary (Unaudited) The following table sets forth our unaudited consolidated financial results, for the last eight fiscal quarters: (1) In the third and fourth quarters of fiscal year 2019, we recorded U.S. tax reform benefits of $138 million and $230 million, respectively, associated with the completion of our accounting for the enactment-date income tax effects of the TCJA.
+
+Refer to Note 13 of these Notes to the Consolidated Financial Statements for a discussion regarding the U.S. tax reform.
+
+
+=== [NVDA] NVIDIA CORP | FY 2019 | Doc: 0001045810_10-K_2019 | Item 1A: Risk Factors | Sentences: 0001045810_10-K_2019_section_1A_148 - 0001045810_10-K_2019_section_1A_188 ===
+
+Our operating results have in the past fluctuated and may in the future fluctuate, and if our operating results are below the expectations of securities analysts or investors, our stock price could decline.
+
+Our operating results have in the past fluctuated and may in the future continue to fluctuate due to numerous factors.
+
+Therefore, investors should not rely on quarterly comparisons of our results of operations as an indication of our future performance.
+
+Factors, other than those described elsewhere in these risk factors, that could affect our results of operations in the future include, but are not limited to: • our ability to achieve volume production of our next-generation products; • our inability to adjust spending to offset revenue shortfalls due to the multi-year development cycle for some of our products and services; • fluctuations in the demand for our products related to cryptocurrencies; • changes in the timing of product orders due to unexpected delays in the introduction of our partners’ products; • our ability to cover the manufacturing and design costs of our products through competitive pricing; • our ability to comply and continue to comply with our customers’ contractual obligations; • product rates of return in excess of that forecasted or expected due to quality issues; • our ability to secure appropriate safety certifications and meet industry safety standards; • supply constraints for and changes in the cost of the other components incorporated into our products • inventory write-downs; • our ability to continue generating revenue from our partner network, including by generating sales within our partner network and ensuring our products are incorporated into our partners product ecosystems, and our partner network’s ability to sell products that incorporate our GPUs and Tegra processors; • the inability of certain of our customers to make required payments to us, and our ability to obtain credit insurance over the purchasing credit extended to these customers; • customer bad debt write-offs; • any unanticipated costs associated with environmental liabilities; • unexpected costs related to our ownership of real property; • changes in financial accounting standards or interpretations of existing standards; and • general macroeconomic or industry events and factors affecting the overall market and our target markets.
+
+Any one or more of the factors discussed above could prevent us from achieving our expected future financial results.
+
+Any such failure to meet our expectations or the expectations of our investors or security analysts could cause our stock price to decline or experience substantial price volatility.
+
+Privacy concerns relating to our products and services could damage our reputation, deter current and potential users from using our products and services, result in liability, or result in legal or regulatory proceedings.
+
+These provisions include the following: • the ability of our Board of Directors to create and issue preferred stock without prior shareholder approval; • the prohibition of shareholder action by written consent; • advance notice requirements for director nominations and shareholder proposals; • the ability of our Board of Directors to increase or decrease the number of directors without shareholder approval; • a super-majority voting requirement to amend some provisions in our certificate of incorporation and bylaws; • the inability of our shareholders to call special meetings of shareholders; and • the ability of our Board of Directors to make, amend or repeal our bylaws.
+
+On March 5, 2000, we entered into an agreement with Microsoft in which we agreed to develop and sell graphics chips and to license certain technology to Microsoft and its licensees for use in the Xbox.
+
+Under the agreement, if an individual or corporation makes an offer to purchase shares equal to or greater than 30% of the outstanding shares of our common stock, Microsoft may have first and last rights of refusal to purchase the stock.
+
+The Microsoft provision and the other factors listed above could also delay or prevent a change in control of NVIDIA.
+
+These provisions could also discourage proxy contests and make it more difficult for shareholders to elect directors of their choosing and to cause us to take other corporate actions they desire.
+
+
+=== [NVDA] NVIDIA CORP | FY 2019 | Doc: 0001045810_10-K_2019 | Item 7: Management Discussion & Analysis (MD&A) | Sentences: 0001045810_10-K_2019_section_7_10 - 0001045810_10-K_2019_section_7_166 ===
+
+Our Tegra brand integrates an entire computer onto a single chip, and incorporates GPUs and multi-core CPUs to drive supercomputing for autonomous robots, drones, and cars, as well as for game consoles and mobile gaming and entertainment devices.
+
+Headquartered in Santa Clara, California, NVIDIA was incorporated in California in April 1993 and reincorporated in Delaware in April 1998.
+
+Recent Developments, Future Objectives and Challenges Fiscal Year 2019 Summary Revenue for fiscal year 2019 increased 21% year over year, reflecting growth in each of our market platforms - gaming, professional visualization, datacenter, and automotive.
+
+GPU business revenue was $10.17 billion, up 25% from a year earlier.
+
+Tegra Processor business revenue - which includes automotive, SOC modules for gaming platforms, and embedded edge AI platforms - was $1.54 billion, up slightly from a year ago.
+
+Gaming revenue was $6.25 billion, up 13% from a year ago driven by growth in gaming GPUs.
+
+Gaming GPU growth was fueled by Turing-based GPUs for desktops and by gaming notebooks based on our Max-Q technology.
+
+We experienced significant volatility in our Gaming revenue during fiscal year 2019.
+
+We believe demand for our desktop gaming GPU products used by end users for cryptocurrency mining and its after-effects have distorted trends in Gaming revenue.
+
+We also believe that deteriorating macroeconomic conditions, particularly in China have impacted consumer demand for our GeForce gaming GPU products.
+
+In addition, sales of certain high-end GeForce gaming GPUs using our new Turing architecture that we released during fiscal year 2019 were lower than we expected for the launch of a new architecture.
+
+As a result, during a portion of fiscal year 2019, we shipped a higher amount of desktop gaming GPU products relative to where end user demand turned out to be and subsequently compensated by shipping a lower amount of desktop gaming GPU products relative to end user demand to allow the channel to work down that inventory.
+
+For fiscal year 2020, we expect our Gaming revenue to be slightly down compared to fiscal year 2019, with expected growth from sales of Turing-based GPU products and notebook GPU products partially offsetting decreases that we believe were caused by the previously-noted factors.
+
+Professional visualization revenue was $1.13 billion, up 21% from a year earlier driven by strength across both desktop and mobile workstation products.
+
+Datacenter revenue was $2.93 billion, up 52% from a year ago, led by strong sales of our Volta architecture-based products, including NVIDIA Tesla V100 and DGX systems.
+
+Toward the end of fiscal year 2019, we believe that customers across broad-based vertical markets and geographies became increasingly cautious due to economic uncertainty, and a number of Datacenter deals did not close.
+
+If information becomes available that causes us to determine that a loss in any of our pending litigation, investigations or settlements is probable, and we can reasonably estimate the loss associated with such events, we will record the loss in accordance with U.S. GAAP.
+
+However, the actual liability in any such litigation or investigation may be materially different from our estimates, which could require us to record additional costs.
+
+Results of Operations The following table sets forth, for the periods indicated, certain items in our Consolidated Statements of Income expressed as a percentage of revenue.
+
+Revenue Revenue by Reportable Segments GPU Business.
+
+GPU business revenue increased by 25% in fiscal year 2019 compared to fiscal year 2018.
+
+This increase was due primarily to 18% growth in sales of GeForce GPU products for gaming, driven by initial sales of Turing-based GPUs for desktops and by high-performance notebooks based on our Max-Q technology.
+
+Datacenter revenue, including Tesla, GRID and DGX, increased 52%, reflecting strong sales of our Volta architecture products, including NVIDIA Tesla V100 and DGX systems.
+
+Inventory provisions totaled $270 million, $48 million, and $62 million for fiscal years 2019, 2018, and 2017, respectively.
+
+Sales of inventory that was previously written-off or written-down totaled $41 million, $35 million, and $51 million for fiscal years 2019, 2018, and 2017, respectively.
+
+As a result, the overall net effect on our gross margin was an unfavorable impact of 2.0% in fiscal year 2019 and insignificant in fiscal years 2018 and 2017.
+
+A discussion of our gross margin results for each of our reportable segments is as follows: GPU Business.
+
+The gross margin of our GPU business increased during fiscal year 2019 when compared to fiscal year 2018, primarily due to strong sales of high-end GeForce gaming GPUs and revenue growth in Datacenter, including Tesla, GRID and DGX, for cloud, deep learning, AI, and graphics virtualization.
+
+The gross margin of our GPU business increased during fiscal year 2018 when compared to fiscal year 2017 primarily due to strong sales of our GeForce gaming GPU products and revenue growth in datacenter, including Tesla, GRID and DGX, for cloud, deep learning, AI, and graphics virtualization.
+
+Tegra Processor Business.
+
+
+=== [NVDA] NVIDIA CORP | FY 2020 | Doc: 0001045810_10-K_2020 | Item 15: Exhibits and Financial Statement Schedules | Sentences: 0001045810_10-K_2020_section_15_186 - 0001045810_10-K_2020_section_15_192 ===
+
+Short-term and variable lease expenses for fiscal year 2020 were not significant.
+
+Other information related to leases was as follows: As of January 26, 2020, our operating leases had a weighted average remaining lease term of 8.3 years and a weighted average discount rate of 3.45%.
+
+Note 4 - Stock-Based Compensation Our stock-based compensation expense is associated with restricted stock units, or RSUs, performance stock units that are based on our corporate financial performance targets, or PSUs, performance stock units that are based on market conditions, or market-based PSUs, and our ESPP.
+
+NVIDIA CORPORATION AND SUBSIDIARIES NOTES TO THE CONSOLIDATED FINANCIAL STATEMENTS (Continued) Our Consolidated Statements of Income include stock-based compensation expense, net of amounts allocated to inventory, as follows: Stock-based compensation capitalized in inventories was not significant during fiscal years 2020, 2019, and 2018.
+
+The following is a summary of equity awards granted under our equity incentive plans: NVIDIA CORPORATION AND SUBSIDIARIES NOTES TO THE CONSOLIDATED FINANCIAL STATEMENTS (Continued) The fair value of shares issued under our ESPP have been estimated with the following assumptions: For ESPP shares, the expected term represents the average term from the first day of the offering period to the purchase date.
+
+The risk-free interest rate assumption used to value ESPP shares is based upon observed interest rates on Treasury bills appropriate for the expected term.
+
+Our expected stock price volatility assumption for ESPP is estimated using historical volatility.
+
+
+=== [NVDA] NVIDIA CORP | FY 2020 | Doc: 0001045810_10-K_2020 | Item 1A: Risk Factors | Sentences: 0001045810_10-K_2020_section_1A_165 - 0001045810_10-K_2020_section_1A_205 ===
+
+Our operating results have in the past fluctuated and may in the future fluctuate, and if our operating results are below the expectations of securities analysts or investors, our stock price could decline.
+
+Our operating results have in the past fluctuated and may in the future continue to fluctuate due to numerous factors.
+
+Therefore, investors should not rely on quarterly comparisons of our results of operations as an indication of our future performance.
+
+Factors, other than those described elsewhere in these risk factors, that could affect our results of operations in the future include, but are not limited to: • our ability to achieve volume production of our next-generation products; • our inability to adjust spending to offset revenue shortfalls due to the multi-year development cycle for some of our products and services; • fluctuations in the demand for our products related to cryptocurrencies; • changes in the timing of product orders due to unexpected delays in the introduction of our partners’ products; • our ability to cover the manufacturing and design costs of our products through competitive pricing; • our ability to comply and continue to comply with our customers’ contractual obligations; • product rates of return in excess of that forecasted or expected due to quality issues; • our ability to secure appropriate safety certifications and meet industry safety standards; • supply constraints for and changes in the cost of the other components incorporated into our products • inventory write-downs; • our ability to continue generating revenue from our partner network, including by generating sales within our partner network and ensuring our products are incorporated into our partners product ecosystems, and our partner network’s ability to sell products that incorporate our GPUs and Tegra processors; • the inability of certain of our customers to make required payments to us, and our ability to obtain credit insurance over the purchasing credit extended to these customers; • customer bad debt write-offs; • any unanticipated costs associated with environmental liabilities; • unexpected costs related to our ownership of real property; • changes in financial accounting standards or interpretations of existing standards; and • general macroeconomic or industry events and factors affecting the overall market and our target markets.
+
+Any one or more of the factors discussed above could prevent us from achieving our expected future financial results.
+
+Any such failure to meet our expectations or the expectations of our investors or security analysts could cause our stock price to decline or experience substantial price volatility.
+
+Privacy concerns relating to our products and services could damage our reputation, deter current and potential users from using our products and services, result in liability, or result in legal or regulatory proceedings.
+
+These provisions include the following: • the ability of our Board of Directors to create and issue preferred stock without prior shareholder approval; • the prohibition of shareholder action by written consent; • advance notice requirements for director nominations and shareholder proposals; • the ability of our Board of Directors to increase or decrease the number of directors without shareholder approval; • a super-majority voting requirement to amend some provisions in our certificate of incorporation and bylaws; • the inability of our shareholders to call special meetings of shareholders; and • the ability of our Board of Directors to make, amend or repeal our bylaws.
+
+On March 5, 2000, we entered into an agreement with Microsoft in which we agreed to develop and sell graphics chips and to license certain technology to Microsoft and its licensees for use in the Xbox.
+
+Under the agreement, if an individual or corporation makes an offer to purchase shares equal to or greater than 30% of the outstanding shares of our common stock, Microsoft may have first and last rights of refusal to purchase the stock.
+
+The Microsoft provision and the other factors listed above could also delay or prevent a change in control of NVIDIA.
+
+These provisions could also discourage proxy contests and make it more difficult for shareholders to elect directors of their choosing and to cause us to take other corporate actions they desire.
+
+
+=== [NVDA] NVIDIA CORP | FY 2020 | Doc: 0001045810_10-K_2020 | Item 7: Management Discussion & Analysis (MD&A) | Sentences: 0001045810_10-K_2020_section_7_10 - 0001045810_10-K_2020_section_7_125 ===
+
+Our Tegra brand incorporates GPUs and multi-core CPUs to drive supercomputing for autonomous robots, drones, and cars, as well as for game consoles and mobile gaming and entertainment devices.
+
+Headquartered in Santa Clara, California, NVIDIA was incorporated in California in April 1993 and reincorporated in Delaware in April 1998.
+
+Recent Developments, Future Objectives and Challenges Fiscal Year 2020 Summary Revenue for fiscal year 2020 was $10.92 billion, down 7% from a year earlier.
+
+GPU business revenue was $9.47 billion, down 7% from a year earlier.
+
+Tegra Processor business revenue - which includes Automotive, SoCs for gaming platforms, and embedded edge AI platforms - was $1.45 billion, down 6% from a year earlier.
+
+From a market platform perspective, Gaming revenue was $5.52 billion, down 12% from a year ago, reflecting lower sales of GeForce desktop GPUs and SoCs for gaming platforms, partially offset by growth in GeForce notebook GPUs.
+
+Professional Visualization revenue was $1.21 billion, up 7% from a year ago, reflecting strength in desktop and notebook workstations.
+
+Data Center revenue was $2.98 billion, up 2% from a year ago, driven by vertical industry growth partially offset by lower hyperscale sales.
+
+Automotive revenue was $700 million, up 9% from a year ago, reflecting growth in AI cockpit solutions and development services agreements.
+
+Gross margin for fiscal year 2020 was 62.0%, up 80 basis points from a year ago, primarily driven by reduced inventory provisions and the sale of previously written-off components.
+
+Operating expenses for fiscal year 2020 were $3.92 billion, up 16% from a year ago, reflecting primarily employee additions and increases in employee compensation and other related costs, including stock-based compensation and infrastructure costs.
+
+Income from operations for fiscal year 2020 was $2.85 billion, down 25% from a year earlier.
+
+Net income and net income per diluted share for fiscal year 2020 were $2.80 billion and $4.52, respectively, both down 32% from a year earlier reflecting lower revenue and higher operating expenses.
+
+On March 10, 2019, we entered into an Agreement and Plan of Merger, or the Merger Agreement, with Mellanox Technologies Ltd., or Mellanox, pursuant to which we will acquire all of the issued and outstanding common shares of Mellanox for $125 per share in cash, representing a total enterprise value of approximately $6.9 billion as of the date of the Merger Agreement.
+
+The Merger Agreement contains customary representations, warranties and covenants.
+
+The consummation of the merger is conditioned on the receipt of the approval of Mellanox shareholders, as well as the satisfaction of other customary closing conditions, including domestic and foreign regulatory approvals and performance in all material respects by each party of its obligations under the Merger Agreement.
+
+Results of Operations A discussion regarding our financial condition and results of operations for fiscal year 2020 compared to fiscal year 2019 is presented below.
+
+A discussion regarding our financial condition and results of operations for fiscal year 2019 compared to fiscal year 2018 can be found under Item 7 in our Annual Report on Form 10-K for the fiscal year ended January 27, 2019, filed with the SEC on February 21, 2019, which is available free of charge on the SEC’s website at http://www.sec.gov and at our investor relations website, http://investor.nvidia.com.
+
+The following table sets forth, for the periods indicated, certain items in our Consolidated Statements of Income expressed as a percentage of revenue.
+
+Revenue Revenue by Reportable Segments GPU Business.
+
+GPU business revenue decreased by 7% in fiscal year 2020 compared to fiscal year 2019, which reflects a decline in GPUs sold for gaming.
+
+GeForce GPU product sales for gaming decreased by 10%, reflecting lower sales of GeForce desktop GPUs and SoCs for gaming platforms, partially offset by growth in GeForce notebook GPUs.
+
+Revenue from Quadro GPUs for professional visualization increased by 7%, reflecting strength in desktop and notebook workstations.
+
+This was driven by a decline in revenue from SoCs for gaming platforms, which was partially offset by an increase of 9% in Automotive revenue, reflecting growth in AI cockpit solutions and development services agreements.
+
+Concentration of Revenue Revenue from sales to customers outside of the United States accounted for 92% and 87% of total revenue for fiscal years 2020 and 2019, respectively.
+
+Revenue by geographic region is allocated to individual countries based on the location to which the products are initially billed even if the revenue is attributable to end customers in a different location.
+
+Dell represented approximately 11% of our total revenue for fiscal year 2020 and was attributable to the GPU business.
+
+No customer represented 10% or more of total revenue for fiscal year 2019.
+
+Gross Profit and Gross Margin Gross profit consists of total revenue, net of allowances, less cost of revenue.
+
+Cost of revenue consists primarily of the cost of semiconductors purchased from subcontractors, including wafer fabrication, assembly, testing and packaging, board and device costs, manufacturing support costs, including labor and overhead associated with such purchases, final test yield fallout, inventory and warranty provisions, memory and component costs, and shipping costs.
+
+Cost of revenue also includes development costs for license and service arrangements and stock-based compensation related to personnel associated with manufacturing.
+
+Our overall gross margin was 62.0% and 61.2% for fiscal years 2020 and 2019, respectively.
+
+The increase in fiscal year 2020 was driven by reduced inventory provisions and the sale of previously written-off components.
+
+Inventory provisions totaled $161 million and $270 million for fiscal years 2020 and 2019, respectively.
+
+Sales of inventory that was previously written-off or written-down totaled $145 million and $41 million for fiscal years 2020 and 2019, respectively.
+
+As a result, the overall net effect on our gross margin was insignificant in fiscal year 2020 and an unfavorable impact of 2.0% in fiscal year 2019.
+
+A discussion of our gross margin results for each of our reportable segments is as follows: GPU Business.
+
+The gross margin of our GPU business increased during fiscal year 2020 when compared to fiscal year 2019, primarily driven by reduced inventory provisions and the sale of previously written-off components.
+
+Tegra Processor Business.
+
+The gross margin of our Tegra Processor business was relatively flat during fiscal year 2020 when compared to fiscal year 2019.
+
+
+
+══════════════════════════════════════════════════════════════════════
+USER QUESTION
+══════════════════════════════════════════════════════════════════════
+
+For NVIDIA and Microsoft, what were revenue, operating income, and total assets in each year from 2018 to 2020, and how did management in the MD&A and Risk Factors sections explain these trends in terms of their AI strategy, competitive positioning, and supply chain risks?
