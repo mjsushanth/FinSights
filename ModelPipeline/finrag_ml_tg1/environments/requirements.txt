@@ -100,8 +100,14 @@ regex>=2023.12.0                # Advanced regex (better than stdlib)
 # ============================================================================
 # EVALUATION & METRICS
 # ============================================================================
-# ragas>=0.1.0                  # RAG evaluation framework
-# rouge-score>=0.1.2            # ROUGE metrics for summarization
+
+torch>=2.0.0,<2.5.0             # PyTorch CPU 
+bert-score>=0.3.13              # BERTScore - contextual embedding similarity
+rouge-score>=0.1.2              # ROUGE metrics - lexical overlap
+sentence-transformers>=2.2.0    # Cosine similarity via sentence embeddings ()
+
+
+bleurt @ git+https://github.com/google-research/bleurt.git  # BLEURT - learned metric with human correlation
 
 # ============================================================================
 # CACHING & PERFORMANCE
@@ -138,6 +144,10 @@ seaborn>=0.13.0                 # Statistical plots
 
 mmh3<=4.1.0
 
+
+
+
+
 # ============================================================================
 # TYPING & CODE QUALITY (Development)
 # ============================================================================
@@ -148,7 +158,7 @@ mmh3<=4.1.0
 # NOTES ON PACKAGE SELECTION
 # ============================================================================
 #
-# INCLUDED (Core RAG Stack):
+# INCLUDED (Core RAG Stack): (early version; obvs changed, we dont ever use faiss or sentence-transformers)
 # - polars: Fast data manipulation for 500K+ sentences
 # - scikit-learn: Cosine similarity, basic ML utilities
 # - faiss-cpu: Local vector search (production: use cloud vector DB)
@@ -166,8 +176,4 @@ mmh3<=4.1.0
 # - plotly: Interactive plots, add if making dashboards
 #
 # NOT INCLUDED (Cloud handles it):
-# - torch/pytorch: API-based embeddings, no local models
-# - chromadb: Using FAISS locally, cloud vector DB in production
-# - pinecone-client: Proprietary, prefer open alternatives
-#
 # ============================================================================

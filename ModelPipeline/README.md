@@ -20,7 +20,7 @@ FinRAG is out attempt at a production-grade financial intelligence platform that
 - **Embedding Infrastructure**: 200K+ Cohere v4 1024-d vectors in S3 Vectors, <$0.10/10K queries
 - **Hybrid Retrieval**: Semantic search (query variants + metadata filters) + structured KPI extraction
 - **Context Engineering**: Edge-safe window expansion (±3 sentences), provenance tracking, chronological assembly
-- **Evaluation Framework**: 31-question Gold P3 suite spanning factoid → multi-hop reasoning
+- **Evaluation Framework**: 31-question Gold P3 suite spanning factoid → multi-hop reasoning, Self, Hit@k, MRR, distance metrics; then, LLM-Eval (BERTScore, BLEURT, ROUGE-L, Cosine). 
 - **NLP Front-End**: Fuzzy company resolution, multi-year parsing, risk topic classification, metric canonicalization
 
 ---
