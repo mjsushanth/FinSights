@@ -1,0 +1,222 @@
+══════════════════════════════════════════════════════════════════════
+NARRATIVE CONTEXT - SEC FILINGS
+══════════════════════════════════════════════════════════════════════
+=== [XOM] EXXON MOBIL CORP | FY 2016 | Doc: 0000034088_10-K_2016 | Item 15: Exhibits and Financial Statement Schedules | Sentences: 0000034088_10-K_2016_section_15_23 - 0000034088_10-K_2016_section_15_134 ===
+
+FREQUENTLY USED TERMS Return on Average Capital Employed Return on average capital employed (ROCE) is a performance measure ratio.
+
+From the perspective of the business segments, ROCE is annual business segment earnings divided by average business segment capital employed (average of beginning and end-of-year amounts).
+
+These segment earnings include ExxonMobil’s share of segment earnings of equity companies, consistent with our capital employed definition, and exclude the cost of financing.
+
+The Corporation’s total ROCE is net income attributable to ExxonMobil excluding the after-tax cost of financing, divided by total corporate average capital employed.
+
+The Corporation has consistently applied its ROCE definition for many years and views it as the best measure of historical capital productivity in our capital-intensive, long-term industry, both to evaluate management’s performance and to demonstrate to shareholders that capital has been used wisely over the long term.
+
+Additional measures, which are more cash flow based, are used to make investment decisions.
+
+QUARTERLY INFORMATION (1) Petroleum product and chemical prime product sales data reported net of purchases/sales contracts with the same counterparty.
+
+There were 403,868 registered shareholders of ExxonMobil common stock at December 31, 2016.
+
+At January 31, 2017, the registered shareholders of ExxonMobil common stock numbered 402,598.
+
+On January 25, 2017, the Corporation declared a $0.75 dividend per common share, payable March 10, 2017.
+
+MANAGEMENT’S DISCUSSION AND ANALYSIS OF FINANCIAL CONDITION AND RESULTS OF OPERATIONS References in this discussion to total corporate earnings mean net income attributable to ExxonMobil (U.S. GAAP) from the consolidated income statement.
+
+Unless otherwise indicated, references to earnings, Upstream, Downstream, Chemical and Corporate and Financing segment earnings, and earnings per share are ExxonMobil’s share after excluding amounts attributable to noncontrolling interests.
+
+FORWARD-LOOKING STATEMENTS Statements in this discussion regarding expectations, plans and future events or conditions are forward-looking statements.
+
+Actual future financial and operating results or conditions, including demand growth and energy source mix; government policies relating to climate change; project plans, capacities, schedules and costs; production growth and mix; rates of field decline; asset carrying values; proved reserves; financing sources; the resolution of contingencies and uncertain tax positions; and environmental and capital expenditures; could differ materially depending on a number of factors, such as changes in the supply of and demand for crude oil, natural gas, and petroleum and petrochemical products and resulting price impacts; the outcome of commercial negotiations; the impact of fiscal and commercial terms; political or regulatory events; the outcome of exploration and development projects, and other factors discussed herein and in Item 1A.
+
+The Corporation has a presence in mature markets in North America and Europe, as well as in the growing Asia Pacific region.
+
+ExxonMobil’s fundamental Downstream business strategies competitively position the company across a range of market conditions.
+
+These strategies include targeting best-in-class operations in all aspects of the business, maximizing value from advanced technologies, capitalizing on integration across ExxonMobil businesses, selectively investing for resilient, advantaged returns, operating efficiently and effectively, and providing quality, valued and differentiated products and services to customers.
+
+ExxonMobil’s operating results, as noted in Item 2.
+
+Properties, reflect 22 refineries, located in 14 countries, with distillation capacity of 4.9 million barrels per day and lubricant basestock manufacturing capacity of 126 thousand barrels per day.
+
+ExxonMobil’s fuels and lubes marketing businesses have significant global reach, with multiple channels to market serving a diverse customer base.
+
+Our portfolio of world-renowned brands includes Exxon, Mobil, Esso and Mobil 1.
+
+
+=== [XOM] EXXON MOBIL CORP | FY 2017 | Doc: 0000034088_10-K_2017 | Item 15: Exhibits and Financial Statement Schedules | Sentences: 0000034088_10-K_2017_section_15_26 - 0000034088_10-K_2017_section_15_737 ===
+
+FREQUENTLY USED TERMS Return on Average Capital Employed Return on average capital employed (ROCE) is a performance measure ratio.
+
+From the perspective of the business segments, ROCE is annual business segment earnings divided by average business segment capital employed (average of beginning and end-of-year amounts).
+
+These segment earnings include ExxonMobil’s share of segment earnings of equity companies, consistent with our capital employed definition, and exclude the cost of financing.
+
+The Corporation’s total ROCE is net income attributable to ExxonMobil excluding the after-tax cost of financing, divided by total corporate average capital employed.
+
+The Corporation has consistently applied its ROCE definition for many years and views it as the best measure of historical capital productivity in our capital-intensive, long-term industry, both to evaluate management’s performance and to demonstrate to shareholders that capital has been used wisely over the long term.
+
+Additional measures, which are more cash flow based, are used to make investment decisions.
+
+QUARTERLY INFORMATION (1) Petroleum product and chemical prime product sales data reported net of purchases/sales contracts with the same counterparty.
+
+There were 386,892 registered shareholders of ExxonMobil common stock at December 31, 2017.
+
+At January 31, 2018, the registered shareholders of ExxonMobil common stock numbered 384,745.
+
+On January 31, 2018, the Corporation declared a $0.77 dividend per common share, payable March 9, 2018.
+
+MANAGEMENT’S DISCUSSION AND ANALYSIS OF FINANCIAL CONDITION AND RESULTS OF OPERATIONS References in this discussion to total corporate earnings mean net income attributable to ExxonMobil (U.S. GAAP) from the consolidated income statement.
+
+Unless otherwise indicated, references to earnings, Upstream, Downstream, Chemical and Corporate and financing segment earnings, and earnings per share are ExxonMobil’s share after excluding amounts attributable to noncontrolling interests.
+
+FORWARD-LOOKING STATEMENTS Statements in this discussion regarding expectations, plans and future events or conditions are forward-looking statements.
+
+Actual future financial and operating results or conditions, including demand growth and energy source mix; government policies relating to climate change; project plans, capacities, schedules and costs; production growth and mix; rates of field decline; asset carrying values; proved reserves; financing sources; the resolution of contingencies and uncertain tax positions; and environmental and capital expenditures; could differ materially depending on a number of factors, such as changes in the supply of and demand for crude oil, natural gas, and petroleum and petrochemical products and resulting price impacts; the outcome of commercial negotiations; the impact of fiscal and commercial terms; political or regulatory events; the outcome of exploration and development projects, and other factors discussed herein and in Item 1A.
+
+NOTES TO CONSOLIDATED FINANCIAL STATEMENTS 2.
+
+Accounting Changes Effective December 31, 2017, the Corporation revised its accounting policy election related to the reporting of certain sales and value-added taxes imposed on and concurrent with revenue-producing transactions with customers and collected on behalf of governmental authorities (sales-based taxes).
+
+This changes reporting of sales-based taxes from gross reporting (included in both “Sales and other operating revenue” and “Sales-based taxes”) to the preferable method of net reporting (excluded from both “Sales and other operating revenue” and “Sales-based taxes”) in the Consolidated Statement of Income.
+
+The revised election makes reported revenue more consistent with ExxonMobil’s role as an agent for the government and is more consistent with the reporting practices of other international major oil and gas companies and the largest U.S. companies.
+
+This change in accounting principle was applied retrospectively and does not affect net income attributable to ExxonMobil.
+
+Also effective December 31, 2017, the Corporation reclassified U.S. Federal excise tax from “Sales-based taxes” to “Other taxes and duties”.
+
+For these taxes ExxonMobil is not considered to be an agent for the government and these taxes will continue to be reported gross.
+
+The amount reclassified was $3,110 million in 2016 and $3,044 million in 2015.
+
+This change in classification was applied retrospectively and does not affect net income attributable to ExxonMobil.
+
+Effective January 1, 2018, ExxonMobil adopted the Financial Accounting Standards Board’s standard, Revenue from Contracts with Customers, as amended.
+
+The standard establishes a single revenue recognition model for all contracts with customers, eliminates industry and transaction specific requirements, and expands disclosure requirements.
+
+The standard was adopted using the Modified Retrospective method, under which prior year results are not restated, but supplemental information on the impact of the new standard must be provided for 2018 results, if material.
+
+
+=== [XOM] EXXON MOBIL CORP | FY 2018 | Doc: 0000034088_10-K_2018 | Item 15: Exhibits and Financial Statement Schedules | Sentences: 0000034088_10-K_2018_section_15_24 - 0000034088_10-K_2018_section_15_46 ===
+
+FREQUENTLY USED TERMS Return on Average Capital Employed Return on average capital employed (ROCE) is a performance measure ratio.
+
+From the perspective of the business segments, ROCE is annual business segment earnings divided by average business segment capital employed (average of beginning and end-of-year amounts).
+
+These segment earnings include ExxonMobil’s share of segment earnings of equity companies, consistent with our capital employed definition, and exclude the cost of financing.
+
+The Corporation’s total ROCE is net income attributable to ExxonMobil excluding the after-tax cost of financing, divided by total corporate average capital employed.
+
+The Corporation has consistently applied its ROCE definition for many years and views it as the best measure of historical capital productivity in our capital-intensive, long-term industry, both to evaluate management’s performance and to demonstrate to shareholders that capital has been used wisely over the long term.
+
+Additional measures, which are more cash flow based, are used to make investment decisions.
+
+QUARTERLY INFORMATION (1) Petroleum product and chemical prime product sales data reported net of purchases/sales contracts with the same counterparty.
+
+There were 371,146 registered shareholders of ExxonMobil common stock at December 31, 2018.
+
+At January 31, 2019, the registered shareholders of ExxonMobil common stock numbered 370,064.
+
+On January 30, 2019, the Corporation declared a $0.82 dividend per common share, payable March 11, 2019.
+
+MANAGEMENT’S DISCUSSION AND ANALYSIS OF FINANCIAL CONDITION AND RESULTS OF OPERATIONS References in this discussion to total corporate earnings mean net income attributable to ExxonMobil (U.S. GAAP) from the consolidated income statement.
+
+Unless otherwise indicated, references to earnings, Upstream, Downstream, Chemical and Corporate and financing segment earnings, and earnings per share are ExxonMobil’s share after excluding amounts attributable to noncontrolling interests.
+
+FORWARD-LOOKING STATEMENTS Statements in this discussion regarding expectations, plans and future events or conditions are forward-looking statements.
+
+Actual future financial and operating results or conditions, including demand growth and energy source, supply and mix; government policies relating to climate change, foreign relations and taxation; project plans, capacities, schedules and costs; production growth and mix; rates of field decline; asset carrying values; proved reserves; financing sources; the resolution of contingencies and uncertain tax positions; and environmental and capital expenditures; could differ materially depending on a number of factors, such as changes in the supply of and demand for crude oil, natural gas, and petroleum and petrochemical products and resulting price impacts; the outcome of commercial negotiations; the impact of fiscal and commercial terms; political or regulatory events; the outcome of exploration and development projects; technological developments; and other factors discussed herein and in Item 1A.
+
+
+=== [XOM] EXXON MOBIL CORP | FY 2019 | Doc: 0000034088_10-K_2019 | Item 15: Exhibits and Financial Statement Schedules | Sentences: 0000034088_10-K_2019_section_15_24 - 0000034088_10-K_2019_section_15_144 ===
+
+FREQUENTLY USED TERMS Return on Average Capital Employed Return on average capital employed (ROCE) is a performance measure ratio.
+
+From the perspective of the business segments, ROCE is annual business segment earnings divided by average business segment capital employed (average of beginning and end-of-year amounts).
+
+These segment earnings include ExxonMobil’s share of segment earnings of equity companies, consistent with our capital employed definition, and exclude the cost of financing.
+
+The Corporation’s total ROCE is net income attributable to ExxonMobil excluding the after-tax cost of financing, divided by total corporate average capital employed.
+
+The Corporation has consistently applied its ROCE definition for many years and views it as the best measure of historical capital productivity in our capital-intensive, long-term industry, both to evaluate management’s performance and to demonstrate to shareholders that capital has been used wisely over the long term.
+
+Additional measures, which are more cash flow based, are used to make investment decisions.
+
+QUARTERLY INFORMATION (1)Petroleum product and chemical prime product sales data reported net of purchases/sales contracts with the same counterparty.
+
+There were 354,828 registered shareholders of ExxonMobil common stock at December 31, 2019.
+
+At January 31, 2020, the registered shareholders of ExxonMobil common stock numbered 352,585.
+
+On January 29, 2020, the Corporation declared an $0.87 dividend per common share, payable March 10, 2020.
+
+MANAGEMENT’S DISCUSSION AND ANALYSIS OF FINANCIAL CONDITION AND RESULTS OF OPERATIONS References in this discussion to total corporate earnings mean net income attributable to ExxonMobil (U.S. GAAP) from the consolidated income statement.
+
+Unless otherwise indicated, references to earnings, Upstream, Downstream, Chemical and Corporate and financing segment earnings, and earnings per share are ExxonMobil’s share after excluding amounts attributable to noncontrolling interests.
+
+FORWARD-LOOKING STATEMENTS Statements in this discussion related to outlooks, projections, goals, targets, descriptions of strategic plans and objectives, and other statements of future events or conditions are forward-looking statements.
+
+Actual future results, including business and project plans, capacities, costs, and timing; capital spending; proceeds from asset sales; resource recoveries and production rates; asset carrying values; proved reserves; financing sources; the resolution of contingencies and uncertain tax positions; and the impact of new technologies, including to increase capital efficiency and production and to reduce greenhouse gas emissions, could differ materially due to a number of factors.
+
+The Corporation has a presence with established markets in the Americas and Europe, as well as in the growing Asia Pacific region.
+
+ExxonMobil’s fundamental Downstream business strategies competitively position the company across a range of market conditions.
+
+These strategies include targeting best in class operations in all aspects of the business, maximizing value from advanced technologies, capitalizing on integration across ExxonMobil businesses, selectively investing for resilient, advantaged returns, operating efficiently and effectively, and providing quality, valued and differentiated products and services to customers.
+
+ExxonMobil’s operating results, as noted in Item 2.
+
+Properties, reflect 21 refineries, located in 14 countries, with distillation capacity of 4.7 million barrels per day and lubricant basestock manufacturing capacity of 129 thousand barrels per day.
+
+ExxonMobil’s fuels and lubes value chains have significant global reach, with multiple channels to market serving a diverse customer base.
+
+Our portfolio of world-renowned brands includes Exxon, Mobil, Esso, Synergy, and Mobil 1.
+
+
+=== [XOM] EXXON MOBIL CORP | FY 2020 | Doc: 0000034088_10-K_2020 | Item 15: Exhibits and Financial Statement Schedules | Sentences: 0000034088_10-K_2020_section_15_22 - 0000034088_10-K_2020_section_15_831 ===
+
+FREQUENTLY USED TERMS Return on Average Capital Employed Return on average capital employed (ROCE) is a performance measure ratio.
+
+From the perspective of the business segments, ROCE is annual business segment earnings divided by average business segment capital employed (average of beginning and end-of-year amounts).
+
+These segment earnings include ExxonMobil’s share of segment earnings of equity companies, consistent with our capital employed definition, and exclude the cost of financing.
+
+The Corporation’s total ROCE is net income attributable to ExxonMobil excluding the after-tax cost of financing, divided by total corporate average capital employed.
+
+The Corporation has consistently applied its ROCE definition for many years and views it as the best measure of historical capital productivity in our capital-intensive, long-term industry.
+
+Additional measures, which are more cash flow based, are used to make investment decisions.
+
+MANAGEMENT’S DISCUSSION AND ANALYSIS OF FINANCIAL CONDITION AND RESULTS OF OPERATIONS References in this discussion to total corporate earnings (loss) mean net income (loss) attributable to ExxonMobil (U.S. GAAP) from the consolidated income statement.
+
+Unless otherwise indicated, references to earnings (loss), Upstream, Downstream, Chemical and Corporate and financing segment earnings (loss), and earnings (loss) per share are ExxonMobil’s share after excluding amounts attributable to noncontrolling interests.
+
+FORWARD-LOOKING STATEMENTS Outlooks, projections, goals, targets, descriptions of strategic plans and objectives, and other statements of future events or conditions in this release are forward-looking statements.
+
+Actual future results, including energy demand growth and mix; financial and operating performance; volume growth; project plans, timing, costs, and capacities; capital expenditures including environmental expenditures; cost reductions; emission intensity reductions; the impact of new technologies; capital expenditures and mix; investment returns; accounting and financial reporting effects resulting from market developments and ExxonMobil’s responsive actions, including potential impairment charges; the benefits of business integration; future debt levels and ability to reduce debt; the outcome of litigation and tax contingencies; and the impact of the COVID-19 pandemic on results, could differ materially due to a number of factors.
+
+Equity Company Information The summarized financial information below includes amounts related to certain less-than-majority-owned companies and majority-owned subsidiaries where minority shareholders possess the right to participate in significant management decisions (see Note 1).
+
+These companies are primarily engaged in oil and gas exploration and production, and natural gas marketing in North America; natural gas exploration, production and distribution in Europe; liquefied natural gas (LNG) operations and transportation of crude oil in Africa; and exploration, production, LNG operations, and the manufacture and sale of petroleum and petrochemical products in Asia and the Middle East.
+
+Also included are several refining, petrochemical manufacturing and marketing ventures.
+
+The share of total equity company revenues from sales to ExxonMobil consolidated companies was 11 percent, 13 percent and 14 percent in the years 2020, 2019 and 2018, respectively.
+
+The Corporation’s ownership in these ventures is in the form of shares in corporate joint ventures as well as interests in partnerships.
+
+Differences between the company’s carrying value of an equity investment and its underlying equity in the net assets of the affiliate are assigned to the extent practicable to specific assets and liabilities based on the company’s analysis of the factors giving rise to the difference.
+
+The amortization of this difference, as appropriate, is included in “Income from equity affiliates” on the Consolidated Statement of Income.
+
+
+
+══════════════════════════════════════════════════════════════════════
+USER QUESTION
+══════════════════════════════════════════════════════════════════════
+
+What does EXXON MOBIL CORP report as its total revenue in 2008, and how is this figure described in the filing?

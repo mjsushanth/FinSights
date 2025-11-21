@@ -166,8 +166,12 @@ This framework gives you a stable, quick mental math model to budget and monitor
 | **Infrastructure** | | | |
 | - Vector Storage (S3) | 0.82 GB | $0.05 | Fixed |
 | - Parquet Logs (S3) | ~100MB/month | $0.003 | Fixed |
-| **Per-Query Costs** | | | |
-| - Vector Retrieval | K=30, C≈450 | $0.00045 | Variable |
+| **Per-Query Vector Costs (Scenarios)** | | | |
+| - Conservative | K=30, C≈450 | $0.00045 | Variable |
+| - Typical filtered | K=20, C≈300 | $0.00030 | Variable |
+| - Open search (worst) | K=30, C≈1000 | $0.00100 | Variable |
+| - Multi-index query | K=30, C≈2000 | $0.00200 | Variable |
+| **LLM Synthesis Costs** | | | |
 | - LLM Sonnet (35% of queries) | 6,153 in / 777 out | $0.02782 | Variable |
 | - LLM Haiku (65% of queries) | 6,153 in / 720 out | $0.01044 | Variable |
 | - S3 Egress | 35KB/query | $0.000001 | Variable |
@@ -176,6 +180,44 @@ This framework gives you a stable, quick mental math model to budget and monitor
 | - Gold Test P2 (40 anchors) | 40 × 2 calls × 2 runs | $1.68 | One-time |
 | - Gold Test P2 (60 anchors) | 60 × 2 calls × 3 runs | $3.78 | One-time |
 | - Dev iterations | ~500 test queries | $5.25 | One-time |
+
+
+
+### Vector Retrieval Cost Scenarios
+| N (calls/month) | K  | C     | Cost per call | Total cost/month |
+| --------------- | -- | ----- | ------------- | ---------------- |
+| 1,000           | 30 | 450   | $0.00045      | $0.45            |
+| 1,000           | 30 | 1,000 | $0.00100      | $1.00            |
+| 10,000          | 30 | 450   | $0.00045      | $4.50            |
+| 10,000          | 30 | 1,000 | $0.00100      | $10.00           |
+| 10,000          | 50 | 1,500 | $0.00150      | $15.00           |
+
+
+
+| Queries/Month | Vector Cost* | Sonnet (35%) | Haiku (65%) | Total Monthly |
+|:--------------|-------------:|-------------:|------------:|-------------:|
+| **100** | $0.045 | $0.97 | $0.68 | **$1.70** |
+| **300** | $0.135 | $2.92 | $2.04 | **$5.10** |
+| **500** | $0.225 | $4.87 | $3.39 | **$8.49** |
+| **1,000** | $0.450 | $9.74 | $6.78 | **$17.00** |
+| **1,500** | $0.675 | $14.60 | $10.18 | **$25.50** |
+| **2,000** | $0.900 | $19.47 | $13.57 | **$34.00** |
+| **5,000** | $2.250 | $48.69 | $33.93 | **$85.00** |
+
+*Vector cost assumes C≈450 comparisons per query
+
+Where Vector_Cost ranges:
+- Best case (filtered): $0.0003/query
+- Expected (midpoint): $0.0005/query  
+- Worst case (open): $0.0020/query
+
+1. S3 Vectors charges based on data processed: (vector data + filterable metadata + key) × vectors processed
+2. Query operations typically take 100-300ms for indexes with millions of vectors
+3. In AWS's pricing example with 10M queries, query costs far outweigh storage and upload costs
+4. The actual number of comparisons (C) depends on:
+   - Index size and distribution
+   - Use of metadata filters (reduces search space)
+   - Query complexity (filtered vs open)
 
 **Monthly Cost Calculation**:
 
@@ -209,6 +251,18 @@ This framework gives you a stable, quick mental math model to budget and monitor
    ```
    Monthly = $0.053 + (N_sonnet × $0.0283) + (N_haiku × $0.0109)
    ```
+
+### **Total Cost Formula with Uncertainty Bands**
+```
+Monthly Cost = Fixed + Variable
+Fixed = $0.053 (storage + logging)
+Variable = N × [(% Sonnet × $0.028) + (% Haiku × $0.010) + Vector_Cost]
+
+Where Vector_Cost ranges:
+- Best case (filtered): $0.0003/query
+- Expected (midpoint): $0.0005/query  
+- Worst case (open): $0.0020/query
+- Even in the worst-case scenario with C=2000 comparisons per query, the total cost increase is only ~10%, demonstrating the system's cost stability across different query complexities.Retry
 
 **Result**: FinRAG achieves **60-73% cost reduction** versus the commercial alternatives.
 

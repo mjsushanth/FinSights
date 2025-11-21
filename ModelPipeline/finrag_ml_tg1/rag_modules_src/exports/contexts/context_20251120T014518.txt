@@ -1,0 +1,345 @@
+══════════════════════════════════════════════════════════════════════
+NARRATIVE CONTEXT - SEC FILINGS
+══════════════════════════════════════════════════════════════════════
+=== [MSFT] MICROSOFT CORP | FY 2016 | Doc: 0000789019_10-K_2016 | Item 7: Management Discussion & Analysis (MD&A) | Sentences: 0000789019_10-K_2016_section_7_108 - 0000789019_10-K_2016_section_7_161 ===
+
+Revenue included an unfavorable foreign currency impact of approximately 5%.
+
+• Enterprise Services revenue grew $536 million or 11%, mainly due to growth in Premier Support Services.
+
+Revenue included an unfavorable foreign currency impact of approximately 5%.
+
+Intelligent Cloud operating income decreased $513 million or 5%, primarily due to higher operating expenses, offset in part by higher gross margin.
+
+Operating expenses increased $989 million or 12%, mainly due to higher research and development expenses and sales and marketing expenses.
+
+Research and development expenses increased $567 million or 21% and sales and marketing expenses increased $347 million or 9%, driven by increased strategic investments and acquisitions to drive cloud sales capacity and innovation.
+
+Gross margin increased $476 million or 3%, driven by revenue growth, offset in part by higher cost of revenue.
+
+Operating expenses decreased $224 million or 2%.
+
+Sales and marketing and general and administrative expenses decreased $258 million and $125 million, respectively, mainly due to lower headcount-related expenses.
+
+Research and development expenses increased $159 million or 6%, mainly due to increased investment in new products and services.
+
+Intelligent Cloud Intelligent Cloud revenue increased $2.0 billion or 9%, mainly due to higher server products and services revenue, as well as higher Enterprise Services revenue.
+
+Revenue included an unfavorable foreign currency impact of approximately 2%.
+
+• Server products and cloud services revenue grew $1.6 billion or 9%, primarily driven by higher premium mix of Microsoft SQL Server, Windows Server, and System Center, as well as continued revenue growth from Azure.
+
+• Enterprise Services revenue grew $325 million or 7%, mainly due to growth in Premier Support Services.
+
+
+=== [MSFT] MICROSOFT CORP | FY 2017 | Doc: 0000789019_10-K_2017 | Item 7: Management Discussion & Analysis (MD&A) | Sentences: 0000789019_10-K_2017_section_7_8 - 0000789019_10-K_2017_section_7_310 ===
+
+They also support new startups, improve educational and health outcomes, and empower human ingenuity.
+
+We generate revenue by licensing and supporting an array of software products, by offering a wide range of cloud-based and other services to consumers and businesses, by designing, manufacturing, and selling devices that integrate with our cloud-based services, and by delivering relevant online advertising to a global audience.
+
+Our most significant expenses are related to compensating employees; designing, manufacturing, marketing, and selling our products and services; datacenter costs in support of our cloud-based services; and income taxes.
+
+Highlights* from fiscal year 2017 included: • Commercial cloud annualized revenue run rate** exceeded $18.9 billion.
+
+• Office Commercial revenue grew 6%, driven by Office 365 commercial revenue growth of 46%.
+
+• Office Consumer revenue grew 14%, and Office 365 consumer subscribers increased to 27.0 million.
+
+• Microsoft Dynamics revenue grew 9%, driven by Dynamics 365 revenue growth of 78%.
+
+• LinkedIn contributed revenue of $2.3 billion.
+
+• Server products and cloud services revenue grew 13%, driven by Microsoft Azure revenue growth of 99%.
+
+• Enterprise Services revenue decreased 2%, driven by a decline in revenue from custom support agreements, offset in part by higher revenue from Premier Support Services and Microsoft Consulting Services.
+
+• Windows original equipment manufacturer licensing (“Windows OEM”) revenue increased 3%.
+
+• Windows Commercial revenue grew 5%, driven by multi-year agreement revenue.
+
+• Microsoft Surface revenue decreased 2%, driven by a reduction in volumes sold, offset in part by a higher mix of premium devices.
+
+GAAP”), along with certain corporate-level and other activity, are included in Corporate and Other.
+
+We have recast certain previously reported amounts to conform to the way we internally manage and monitor segment performance.
+
+Additional information on our reportable segments is contained in Note 21 - Segment Information and Geographic Data of the Notes to Financial Statements (Part II, Item 8 of this Form 10-K).
+
+PART II Item 7 SUMMARY RESULTS OF OPERATIONS Fiscal year 2017 compared with fiscal year 2016 Revenue increased $4.6 billion or 5%, driven by growth in Productivity and Business Processes and Intelligent Cloud, offset in part by lower revenue from More Personal Computing.
+
+Productivity and Business Processes revenue increased, driven by the acquisition of LinkedIn and higher revenue from Microsoft Office.
+
+Intelligent Cloud revenue increased, primarily due to higher revenue from server products and cloud services.
+
+More Personal Computing revenue decreased, mainly due to lower revenue from Devices, offset in part by higher revenue from Windows and Search advertising.
+
+Revenue included an unfavorable foreign currency impact of 2%.
+
+Gross margin increased $3.1 billion or 6%, due to growth across each of our segments, including the acquisition of LinkedIn, driven by higher revenue.
+
+Fiscal year 2016 compared with fiscal year 2015 Revenue decreased $8.3 billion or 9%, primarily due to the impact of the net revenue deferral from Windows 10 of $6.6 billion and an unfavorable foreign currency impact of approximately $3.8 billion or 4%.
+
+Windows 10 revenue is primarily recognized at the time of billing in the More Personal Computing segment, and the deferral and subsequent recognition of revenue is reflected in Corporate and Other.
+
+More Personal Computing revenue decreased, mainly due to lower revenue from Devices and Windows, offset in part by higher revenue from Search advertising and Gaming.
+
+Intelligent Cloud revenue increased, primarily due to higher revenue from server products and cloud services and Enterprise Services.
+
+Productivity and Business Processes revenue increased slightly, driven by an increase in Office and Dynamics revenue.
+
+PART II Item 7 Operating income increased $2.0 billion or 11%, primarily due to a decrease in impairment, integration, and restructuring expenses and sales and marketing expenses, offset in part by lower gross margin.
+
+Gross margin decreased $8.0 billion or 13%, driven by the decline in revenue as discussed above, and included an unfavorable foreign currency impact of approximately $3.3 billion or 5%.
+
+Productivity and Business Processes and More Personal Computing gross margin decreased, offset in part by higher gross margin from Intelligent Cloud.
+
+Key changes in expenses were: • Cost of revenue decreased $258 million or 1%, mainly due to a reduction in phone sales, driven by the change in strategy for the phone business, offset in part by growth in commercial cloud and Search advertising.
+
+• Impairment, integration, and restructuring expenses decreased $8.9 billion, primarily driven by prior year goodwill and asset impairment charges related to our phone business and restructuring charges associated with our phone business restructuring plans.
+
+• Sales and marketing expenses decreased $1.0 billion or 6%, driven by a reduction in phone expenses and a favorable foreign currency impact of approximately 2%.
+
+• Gross margin increased $1.8 billion or 9%, primarily due to our acquisition of LinkedIn.
+
+Gross margin percentage decreased due to an increased mix of cloud offerings and amortization of acquired intangible assets related to LinkedIn.
+
+Cost of revenue included $918 million related to our acquisition of LinkedIn, including $507 million of amortization of acquired intangible assets.
+
+Intelligent Cloud Revenue increased $2.4 billion or 10%, primarily due to higher revenue from server products and cloud services.
+
+• Server products and cloud services revenue grew $2.5 billion or 13%, driven by Azure revenue growth of 99% and server products licensed on-premises revenue growth of 4%.
+
+• Enterprise Services revenue decreased 2%, driven by a decline in revenue from custom support agreements, offset in part by higher revenue from Premier Support Services and Microsoft Consulting Services.
+
+Operating income decreased $177 million or 2%, primarily due to higher operating expenses, offset in part by higher gross margin.
+
+Operating income included an unfavorable foreign currency impact of 3%.
+
+• Operating expenses increased $973 million or 11%, driven by investments in sales capacity, cloud engineering, and developer engagement.
+
+Sales and marketing expenses increased $547 million or 13%, research and development expenses increased $468 million or 14%, and general and administrative expenses decreased $42 million or 3%.
+
+• Gross margin increased $796 million or 4%, driven by growth in server products and cloud services revenue and cloud services scale and efficiencies, offset in part by a decline in Enterprise Services gross margin.
+
+Gross margin included an unfavorable foreign currency impact of 2%.
+
+Gross margin percentage decreased due to an increased mix of cloud offerings and lower Enterprise Services gross margin percent, offset by improvement in Azure gross margin percent.
+
+More Personal Computing Revenue decreased $1.7 billion or 4%, mainly due to lower revenue from Devices, offset in part by higher revenue from Windows and Search advertising.
+
+• Windows revenue increased $442 million or 3%, mainly due to higher revenue from Windows OEM and Windows Commercial.
+
+Windows OEM revenue increased 3%.
+
+Cost of revenue increased $985 million or 25%, primarily due to an increased mix of cloud offerings.
+
+Operating expenses decreased $72 million or 1%, driven by lower sales and marketing expenses.
+
+Sales and marketing expenses decreased $82 million or 2%, mainly due to a reduction in headcount-related expenses and lower fees paid to third-party enterprise software advisors.
+
+Intelligent Cloud Intelligent Cloud revenue increased $1.3 billion or 6%, primarily due to higher server products and cloud services revenue and Enterprise Services revenue.
+
+Revenue included an unfavorable foreign currency impact of approximately 5%.
+
+• Server products and cloud services revenue grew $686 million or 4%, driven by revenue growth from Azure of 113%, offset in part by a decline in transactional revenue from our on-premises server products.
+
+Revenue included an unfavorable foreign currency impact of approximately 5%.
+
+• Enterprise Services revenue grew $536 million or 11%, mainly due to growth in Premier Support Services.
+
+Revenue included an unfavorable foreign currency impact of approximately 5%.
+
+Intelligent Cloud operating income decreased $488 million or 5%, primarily due to higher operating expenses, offset in part by higher gross margin.
+
+Operating expenses increased $989 million or 12%, mainly due to higher research and development expenses and sales and marketing expenses.
+
+Research and development expenses increased $567 million or 21% and sales and marketing expenses increased $347 million or 9%, driven by increased strategic investments and acquisitions to drive cloud sales capacity and innovation.
+
+Gross margin increased $501 million or 3%, driven by revenue growth, offset in part by higher cost of revenue.
+
+Gross margin included an unfavorable foreign currency impact of approximately 5%.
+
+Cost of revenue increased $826 million or 14%, primarily driven by an increased mix of cloud services.
+
+PART II Item 7 More Personal Computing More Personal Computing revenue decreased $3.0 billion or 7%, mainly due to lower revenue from Devices and Windows, offset in part by higher revenue from Search advertising and Gaming.
+
+Revenue included an unfavorable foreign currency impact of approximately 2%.
+
+• Devices revenue decreased $4.0 billion or 33%, mainly due to lower revenue from phones, driven by the change in strategy for the phone business, offset in part by higher Surface revenue.
+
+Cost of revenue decreased $2.1 billion or 9%, primarily driven by a reduction in phone sales, offset in part by higher search advertising cost of revenue.
+
+Corporate and Other Corporate and Other revenue is comprised of revenue deferrals related to Windows 10.
+
+Corporate and Other operating income (loss) is comprised of revenue deferrals related to Windows 10 and corporate-level activity not specifically allocated to a segment, including impairment, integration, and restructuring expenses.
+
+Fiscal year 2017 compared with fiscal year 2016 Revenue decreased $64 million, due to an increase in the net revenue deferral from Windows 10.
+
+During fiscal year 2017 and 2016, we deferred net revenue from Windows 10 of $6.7 billion and $6.6 billion, respectively.
+
+Corporate and Other operating loss decreased $740 million, primarily due to an $804 million reduction in impairment, integration, and restructuring expenses, driven by prior year goodwill and asset impairment charges and restructuring charges related to our phone business, offset in part by current year employee severance expenses primarily related to our sales and marketing restructuring plan.
+
+PART II Item 7 Fiscal year 2016 compared with fiscal year 2015 Corporate and Other revenue decreased $6.6 billion, due to the net revenue deferral from Windows 10.
+
+Debt We issued debt to take advantage of favorable pricing and liquidity in the debt markets, reflecting our credit rating and the low interest rate environment.
+
+The proceeds of these issuances were or will be used for general corporate purposes, which may include, among other things, funding for working capital, capital expenditures, repurchases of capital stock, acquisitions, and repayment of existing debt.
+
+See Note 12 - Debt of the Notes to Financial Statements (Part II, Item 8 of this Form 10-K) for further discussion.
+
+Unearned Revenue Unearned revenue as of June 30, 2017 was comprised mainly of unearned revenue from volume licensing programs.
+
+Unearned revenue from volume licensing programs represents customer billings for multi-year licensing arrangements paid for either at inception of the agreement or annually at the beginning of each coverage period and accounted for as subscriptions with revenue recognized ratably over the coverage period.
+
+Unearned revenue as of June 30, 2017 also included payments for: Windows 10 licenses; post-delivery support and consulting services to be performed in the future; Office 365 subscriptions; LinkedIn; Xbox Live subscriptions; Dynamics business solutions products; Skype prepaid credits and subscriptions; and other offerings for which we have been paid in advance and earn the revenue when we provide the service or software, or otherwise meet the revenue recognition criteria.
+
+The following table outlines the expected future recognition of unearned revenue as of June 30, 2017: PART II Item 7 If our customers choose to license cloud-based versions of our products and services rather than licensing transaction-based products and services, the associated revenue will shift from being recognized at the time of the transaction to being recognized over the subscription period or upon consumption, as applicable.
+
+
+=== [MSFT] MICROSOFT CORP | FY 2017 | Doc: 0000789019_10-K_2017 | Item 8: Financial Statements and Supplementary Data | Sentences: 0000789019_10-K_2017_section_8_182 - 0000789019_10-K_2017_section_8_512 ===
+
+For certain multi-year commercial software subscriptions that include both distinct software licenses and Software Assurance, we will recognize license revenue at the time of contract execution rather than over the subscription period.
+
+Due to the complexity of certain of our commercial license subscription contracts, the actual revenue recognition treatment required under the standard will depend on contract-specific terms and in some instances may vary from recognition at the time of billing.
+
+Revenue recognition related to our hardware, cloud offerings such as Office 365, LinkedIn, and professional services will remain substantially unchanged.
+
+Adoption of the standard will result in the recognition of additional revenue of $6.6 billion and $5.8 billion for fiscal year 2017 and 2016, respectively, and an increase in the provision for income taxes of $2.5 billion and $2.1 billion, respectively, primarily due to the net change in Windows 10 revenue recognition.
+
+In addition, adoption of the standard will result in an increase in accounts receivable and other current and long-term assets of $2.7 billion and $4.2 billion, as of June 30, 2017 and 2016, respectively, driven by unbilled receivables from upfront recognition of revenue for certain multi-year commercial software subscriptions that include both distinct software licenses and Software Assurance; a reduction of unearned revenue of $17.8 billion and $11.7 billion as of June 30, 2017 and 2016, respectively, driven by the upfront recognition of license revenue from Windows 10 and certain multi-year commercial software subscriptions; and an increase in deferred income taxes of $5.2 billion and $4.8 billion as of June 30, 2017 and 2016, respectively, driven by the upfront recognition of revenue.
+
+See Expected Impacts to Reported Results below for the impact of adoption of the standard on our consolidated financial statements.
+
+Expected Impacts to Reported Results Adoption of the standards related to revenue recognition and leases is expected to impact our reported results as follows: PART II Item 8 Adoption of the standards related to revenue recognition and leases had no impact to cash from or used in operating, financing, or investing on our consolidated cash flows statements.
+
+NOTE 2 - EARNINGS PER SHARE Basic earnings per share (“EPS”) is computed based on the weighted average number of shares of common stock outstanding during the period.
+
+Revenue, classified by the major geographic areas in which our customers are located, was as follows: (a) Includes billings to OEMs and certain multinational organizations because of the nature of these businesses and the impracticability of determining the geographic source of the revenue.
+
+Revenue from external customers, classified by significant product and service offerings, were as follows: (a) Includes the net revenue deferral from Windows 10.
+
+(b) Includes advertising revenue.
+
+Our total commercial cloud revenue, which primarily comprises Office 365 commercial, Azure, Dynamics 365, and other cloud properties, was $14.9 billion, $9.5 billion, and $5.8 billion in fiscal years 2017, 2016, and 2015, respectively.
+
+These amounts are included in their respective product categories in the table above.
+
+PART II Item 8 Assets are not allocated to segments for internal reporting presentations.
+
+A portion of amortization and depreciation is included with various other costs in an overhead allocation to each segment; it is impracticable for us to separately identify the amount of amortization and depreciation by segment that is included in the measure of segment profit or loss.
+
+
+=== [MSFT] MICROSOFT CORP | FY 2018 | Doc: 0000789019_10-K_2018 | Item 7: Management Discussion & Analysis (MD&A) | Sentences: 0000789019_10-K_2018_section_7_60 - 0000789019_10-K_2018_section_7_145 ===
+
+Refer to the Non-GAAP Financial Measures section below for a reconciliation of our financial results reported in accordance with GAAP to non-GAAP financial results.
+
+Fiscal Year 2018 Compared with Fiscal Year 2017 Revenue increased $13.8 billion or 14%, driven by growth across each of our segments.
+
+Productivity and Business Processes revenue increased, driven by LinkedIn and higher revenue from Office.
+
+Intelligent Cloud revenue increased, primarily due to higher revenue from server products and cloud services.
+
+More Personal Computing revenue increased, driven by higher revenue from Gaming, Windows, Search advertising, and Surface, offset in part by lower revenue from Phone.
+
+Gross margin increased $9.7 billion or 16%, due to growth across each of our segments.
+
+Gross margin percentage increased slightly, driven by favorable segment sales mix and gross margin percentage improvement in More Personal Computing.
+
+LinkedIn cost of revenue increased $818 million to $1.7 billion, including $888 million of amortization for acquired intangible assets.
+
+• Operating expenses increased $2.9 billion or 25%, driven by LinkedIn expenses and investments in commercial sales capacity and cloud engineering.
+
+LinkedIn operating expenses increased $2.2 billion to $4.5 billion, including $617 million of amortization of acquired intangible assets.
+
+Intelligent Cloud Revenue increased $4.8 billion or 18%.
+
+• Server products and cloud services revenue increased $4.5 billion or 21%, driven by Azure and server products licensed on-premises revenue growth.
+
+Azure revenue growth of 91%, due to higher infrastructure-as-a-service and platform-as-a-service consumption-based and per user-based services.
+
+Server products licensed on-premises revenue increased 5%, mainly due to a higher mix of premium licenses for Windows Server and Microsoft SQL Server.
+
+• Gross margin increased $2.0 billion or 9%, primarily due to our acquisition of LinkedIn.
+
+Gross margin percentage decreased, due to an increased mix of cloud offerings and amortization of acquired intangible assets related to LinkedIn.
+
+Cost of revenue included $918 million related to our acquisition of LinkedIn, including $507 million of amortization of acquired intangible assets.
+
+Intelligent Cloud Revenue increased $2.5 billion or 10%.
+
+• Server products and cloud services revenue grew $2.6 billion or 14%, driven by Azure revenue growth of 98% and server products licensed on-premises revenue growth of 5%.
+
+• Enterprise Services revenue decreased 2%, driven by a decline in revenue from custom support agreements, offset in part by higher revenue from Premier Support Services and Microsoft Consulting Services.
+
+PART II Item 7 Operating income decreased $122 million or 1%, including an unfavorable foreign currency impact of 2%.
+
+
+=== [MSFT] MICROSOFT CORP | FY 2019 | Doc: 0000789019_10-K_2019 | Item 7: Management Discussion & Analysis (MD&A) | Sentences: 0000789019_10-K_2019_section_7_55 - 0000789019_10-K_2019_section_7_101 ===
+
+PART II Item 7 SUMMARY RESULTS OF OPERATIONS Non-GAAP operating income, net income, and diluted earnings per share (“EPS”) exclude the net tax impact of transfer of intangible properties, the net tax impact of the TCJA, and restructuring expenses.
+
+Refer to the Non-GAAP Financial Measures section below for a reconciliation of our financial results reported in accordance with GAAP to non-GAAP financial results.
+
+Fiscal Year 2019 Compared with Fiscal Year 2018 Revenue increased $15.5 billion or 14%, driven by growth across each of our segments.
+
+Intelligent Cloud revenue increased, driven by server products and cloud services.
+
+Productivity and Business Processes revenue increased, driven by Office and LinkedIn.
+
+More Personal Computing revenue increased, driven by Surface, Gaming, and Windows.
+
+Gross margin increased $10.9 billion or 15%, driven by growth across each of our segments.
+
+• Gross margin increased $4.1 billion or 15%, driven by growth in Office Commercial and LinkedIn.
+
+Gross margin percentage increased slightly, due to gross margin percentage improvement in LinkedIn and Office 365 Commercial, offset in part by an increased mix of cloud offerings.
+
+• Operating expenses increased $806 million or 6%, driven by investments in LinkedIn and cloud engineering, offset in part by a decrease in marketing.
+
+Intelligent Cloud Revenue increased $6.8 billion or 21%.
+
+• Server products and cloud services revenue, including GitHub, increased $6.5 billion or 25%, driven by Azure.
+
+Azure revenue growth was 72%, due to higher infrastructure-as-a-service and platform-as-a-service consumption-based and per user-based services.
+
+Server products revenue increased 6%, due to continued demand for premium versions and hybrid solutions, GitHub, and demand ahead of end-of-support for SQL Server 2008 and Windows Server 2008.
+
+
+=== [MSFT] MICROSOFT CORP | FY 2020 | Doc: 0000789019_10-K_2020 | Item 7: Management Discussion & Analysis (MD&A) | Sentences: 0000789019_10-K_2020_section_7_106 - 0000789019_10-K_2020_section_7_149 ===
+
+Gross margin percentage was relatively unchanged, due to gross margin percentage improvement in LinkedIn, offset in part by an increased mix of cloud offerings.
+
+• Operating expenses increased $1.6 billion or 11%, driven by investments in LinkedIn and cloud engineering.
+
+Revenue, gross margin, and operating income included an unfavorable foreign currency impact of 2%, 2%, and 4%, respectively.
+
+Intelligent Cloud Revenue increased $9.4 billion or 24%.
+
+• Server products and cloud services revenue increased $8.8 billion or 27%, driven by Azure.
+
+Azure revenue grew 56%, due to growth in our consumption-based services.
+
+Server products revenue increased 8%, due to hybrid and premium solutions, as well as demand related to SQL Server 2008 and Windows Server 2008 end of support.
+
+• Gross margin increased $4.1 billion or 15%, driven by growth in Office Commercial and LinkedIn.
+
+Gross margin percentage increased slightly, due to gross margin percentage improvement in LinkedIn and Office 365 Commercial, offset in part by an increased mix of cloud offerings.
+
+• Operating expenses increased $806 million or 6%, driven by investments in LinkedIn and cloud engineering, offset in part by a decrease in marketing.
+
+Intelligent Cloud Revenue increased $6.8 billion or 21%.
+
+• Server products and cloud services revenue, including GitHub, increased $6.5 billion or 25%, driven by Azure.
+
+Azure revenue growth was 72%, due to higher infrastructure-as-a-service and platform-as-a-service consumption-based and per user-based services.
+
+Server products revenue increased 6%, due to continued demand for premium versions and hybrid solutions, GitHub, and demand ahead of end-of-support for SQL Server 2008 and Windows Server 2008.
+
+
+
+══════════════════════════════════════════════════════════════════════
+USER QUESTION
+══════════════════════════════════════════════════════════════════════
+
+How does MICROSOFT CORP describe the change in its Intelligent Cloud revenue in 2017, including both the direction and magnitude of the change?
