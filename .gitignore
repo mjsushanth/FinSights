@@ -183,6 +183,9 @@ cython_debug/
 # ModelPipeline/finrag_ml_tg1/notebooks-experiments/**/*.py
 # !ModelPipeline/finrag_ml_tg1/notebooks-experiments/README.md
 
+DataPipeline/src_aws_etl/notebooks/01_NB_DataMerge_SDKTest.ipynb
+FinSights/DataPipeline/src_aws_etl/data_exports_testing
+
 # Large Embedding Cache Files
 ModelPipeline/finrag_ml_tg1/data_cache/embeddings/
 ModelPipeline/finrag_ml_tg1/data_cache/stage3_s3vectors/
@@ -196,3 +199,4 @@ ModelPipeline/finrag_ml_tg1/.aws_secrets/aws_credentials.env.txt
 
 ModelPipeline/finrag_ml_tg1/.aws_secrets/aws_credentials_tpad_mjs.env
 ModelPipeline/finrag_ml_tg1/.aws_secrets/aws_credentials.env
+
