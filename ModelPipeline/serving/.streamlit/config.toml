@@ -1,0 +1,57 @@
+# ============================================================================
+# Streamlit Theme Configuration
+# Purpose: Modern dark theme matching  design aesthetic
+# ModelPipeline\serving\.streamlit\config.toml
+# ============================================================================
+
+[theme]
+# Primary brand color (green accent from  design)
+primaryColor = "#22c55e"
+
+# Background colors (dark theme)
+backgroundColor = "#020617"           # Main background (dark slate)
+secondaryBackgroundColor = "#1e293b"  # Cards, containers (lighter slate)
+
+# Text colors
+textColor = "#e5e7eb"                 # Primary text (light gray)
+
+# Font
+font = "sans serif"
+
+[server]
+# Streamlit server settings
+headless = true                       # Run without browser auto-open
+port = 8501
+enableXsrfProtection = true          # CSRF protection
+
+[browser]
+# Browser settings
+gatherUsageStats = false             # Disable telemetry
+
+[runner]
+# Script execution settings
+magicEnabled = false                 # Disable "magic" commands (cleaner)
+fastReruns = true                    # Faster UI updates
+
+# ============================================================================
+# NOTES
+# ============================================================================
+#
+# CUSTOMIZATION:
+#   - primaryColor:  brand accent (buttons, highlights)
+#   - backgroundColor: Main app background
+#   - secondaryBackgroundColor: Cards, sidebars, containers
+#   - textColor: All text elements
+#
+# COLOR PALETTE (from  design):
+#   - Green: #22c55e (primary actions)
+#   - Blue: #0ea5e9 (secondary actions)
+#   - Dark slate: #020617 (background)
+#   - Light slate: #1e293b (containers)
+#   - Gray text: #e5e7eb (readable on dark)
+#
+# ALTERNATIVES:
+#   - Light theme: backgroundColor = "#ffffff"
+#   - Different accent: primaryColor = "#0ea5e9" (blue)
+#
+# ============================================================================

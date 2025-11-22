@@ -25,10 +25,11 @@
 # jupyter kernelspec list
 
 # For updating:
-# 
 # & "venv_ml_rag\Scripts\Activate.ps1"
 # uv pip install --upgrade -r environments/requirements.txt
 
+# For deactivating:
+# deactivate
 # ============================================================================
 
 # ============================================================================
@@ -144,6 +145,27 @@ seaborn>=0.13.0                 # Statistical plots
 
 mmh3<=4.1.0
 
+# ============================================================================
+# WEB FRAMEWORK
+# ============================================================================
+fastapi==0.109.0                # Modern async web framework
+uvicorn[standard]==0.27.0       # ASGI server with performance optimizations
+                                # [standard] includes: uvloop, httptools, websockets
+pydantic==2.5.3                 # Request/response validation (FastAPI dependency)
+pydantic-settings==2.1.0        # Environment-based settings management
+
+loguru==0.7.2                   # Structured logging with rotation
+python-json-logger==2.0.7       # JSON log formatting for production
+
+aiocache==0.12.2                # Async in-memory caching
+                                # Prevents redundant orchestrator calls for identical queries
+
+# ============================================================================
+# OPTIONAL PRODUCTION ENHANCEMENTS
+# ============================================================================
+# prometheus-fastapi-instrumentator==6.1.0  # Metrics (query count, latency, cost)
+# slowapi==0.1.9                            # Rate limiting (prevent abuse)
+# python-multipart==0.0.6                   # File upload support (future)
 
 
 

@@ -1,0 +1,61 @@
+# ============================================================================
+# FinRAG Frontend - Streamlit UI
+# Purpose: User interface for query submission and result display
+# Installation: Separate lightweight environment (venv_frontend)
+# ============================================================================
+
+# ============================================================================
+# UI FRAMEWORK
+# ============================================================================
+streamlit==1.31.0               # Interactive web application framework
+                                # Includes built-in chat components (st.chat_message)
+requests==2.31.0                # Synchronous HTTP client (Streamlit is sync)
+                                # Used to call backend API
+
+# CONFIGURATION
+python-dotenv==1.0.0            # Load environment variables from .env file
+pandas==2.1.4                   # DataFrame display in Streamlit
+                                # Useful for showing query history, metadata tables
+
+plotly==5.18.0                  # Interactive visualizations
+                                # For cost charts, token usage graphs
+
+# ============================================================================
+# OPTIONAL UI ENHANCEMENTS
+# ============================================================================
+# streamlit-extras==0.3.6       # Additional UI components (badges, colored text)
+# streamlit-option-menu==0.3.6  # Better navigation menu
+# streamlit-aggrid==0.3.4       # Advanced data tables
+
+# ============================================================================
+# NOTES
+# ============================================================================
+#
+
+# INSTALLATION COMMAND:
+#   cd ModelPipeline/serving/frontend
+#   uv venv venv_frontend --python 3.11
+#   .\venv_frontend\Scripts\Activate.ps1  # On Windows PowerShell
+#   # venv_frontend\Scripts\activate.bat  # On Windows CMD
+#   # source venv_frontend/bin/activate   # On Mac/Linux
+#   uv pip install -r requirements.txt
+
+# If no UV, with pip - INSTALLATION COMMAND:
+#   cd ModelPipeline/serving/frontend
+#   python -m venv venv_frontend
+#   source venv_frontend/bin/activate  # On Windows: venv_frontend\Scripts\activate
+#   pip install -r requirements.txt
+#
+# WHY SEPARATE ENVIRONMENT:
+#   - Lightweight: ~50MB vs ~3GB (ML environment)
+#   - Fast installs: 30 seconds vs 5+ minutes
+#   - Clean separation: Frontend doesn't need torch, transformers, etc.
+#   - Portable: Can deploy frontend independently (e.g., Streamlit Cloud)
+#
+# STREAMLIT NATIVE FEATURES (No extra packages needed):
+#   - Chat interface: st.chat_message(), st.chat_input()
+#   - Layout: st.columns(), st.container(), st.expander()
+#   - Metrics: st.metric()
+#   - Theming: .streamlit/config.toml
+#
+# ============================================================================
