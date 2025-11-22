@@ -35,6 +35,10 @@ FinRAG is out attempt at a production-grade financial intelligence platform that
 
 ## Repository Navigation
 
+### Start easily here: 
+- **[Quick Start](SETUP_README.md)** → Get up and running quickly
+- Do setup with just click-install, and Run batch/sh files - launches streamlit.
+
 ### **Documentation**
 - **[ARCHITECTURE.md](finrag_ml_tg1/ARCHITECTURE.md)** → Directory structure + pipeline flow diagrams
 - **[IMPLEMENTATION_GUIDE.md](finrag_ml_tg1/IMPLEMENTATION_GUIDE.md)** → Detailed technical implementation (Parts 1-10)

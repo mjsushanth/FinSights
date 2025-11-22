@@ -3,6 +3,67 @@
 #### Course Project (MLOps IE7374) - FINRAG Insights.
 - Building an AI-powered financial analysis pipeline for structured KPI extraction and explainable reporting from 10-K filings SEC(Securities and Exchange Commission).
 
+
+## High level Conceptual Flow:
+```
+┌─────────────────────────────────────────────────────────────────┐
+│ DATA ENGINEERING LAYER                                          │
+│ SEC Edgar API → Sentence Extraction → S3 Storage (1M samples)  │
+└─────────────────────────────────────────────────────────────────┘
+                              ↓
+┌─────────────────────────────────────────────────────────────────┐
+│ EMBEDDING & INDEXING LAYER                                      │
+│ Cohere Embed v4 → S3 Vectors (200K+ 1024-d) → Metadata Filters │
+└─────────────────────────────────────────────────────────────────┘
+                              ↓
+┌─────────────────────────────────────────────────────────────────┐
+│ RAG ORCHESTRATION LAYER                                         │
+│ Entity Extraction → Query Variants → Triple Retrieval Paths    │
+│ (Filtered + Global + Variants) → Context Assembly              │
+└─────────────────────────────────────────────────────────────────┘
+                              ↓
+┌─────────────────────────────────────────────────────────────────┐
+│ SYNTHESIS & SERVING LAYER                                       │
+│ Dual Supply Lines (KPI + Semantic) → LLM (Claude Bedrock)      │
+│ → Citation Headers → Structured Response                        │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### Service Architecture:
+- Three-Tier SOA / Client-Server / MVC / Microservices Lite.
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    PRESENTATION TIER                        │
+│  ┌────────────────────────────────────────────────────┐     │
+│  │  Streamlit Frontend (Port 8501) /                  │     │
+│  │  Entry-HTTP contract, session management, UI comps,│     │  
+│  │  Talk to FastAPI client, display logic, etc.       │     │ 
+└─────────────────────────────────────────────────────────────┘
+                           ↓ HTTP POST /query
+┌─────────────────────────────────────────────────────────────┐
+│                    APPLICATION TIER                         │
+│  │  FastAPI Backend (Port 8000)                       │     │
+└─────────────────────────────────────────────────────────────┘
+                           ↓ Python function call
+┌─────────────────────────────────────────────────────────────┐
+│                    BUSINESS LOGIC TIER                      │
+│  ┌────────────────────────────────────────────────────┐     │
+│  │  Model Pipeline, ML Orchestrator                   │     │
+└─────────────────────────────────────────────────────────────┘
+                           ↓ API calls
+┌─────────────────────────────────────────────────────────────┐
+│                    EXTERNAL SERVICES                        │
+│  ├─ AWS S3, Cohere, Bedrock (Claude models)                 │
+└─────────────────────────────────────────────────────────────┘
+```
+- Data Pipeline Setup: https://github.com/Finsights-MLOps/FinSights/blob/main/DataPipeline/SETUP_README.md
+- Data Pipeline Documentation: https://github.com/Finsights-MLOps/FinSights/blob/main/DataPipeline/README.md
+
+
+### Quick Redirect (Setup):
+- Headover to Setup and Start point here: [Setup Instructions](ModelPipeline/SETUP_README.md)
+
+
 ## Project Overview:
 
 1. For background, and Business HLD (High-Level Design) please feel free to skim through [Scoping](design_docs/Project_Scoping_IE7374_FinSights.pdf) and [Design](design_docs/Finance_RAG_HLD_v1.xlsx)(excel). They explain the business problem, solution approach, and high-level architecture.  
@@ -17,10 +78,18 @@
 4. `src_aws_etl/` has the code, tests, configs, and requirements for the AWS S3 based ETL pipeline (Merge, Archive, Logs). Main code files are in `src_aws_etl/etl/`. 
     - Here is where bulk historical data and live data merge meaningfully and cleanly. Archival of older data and log management is also handled here.
 
-
 5. `src_metrics/` has the code, tests, configs, and requirements for the Data Ingestion pipeline, here we collect and process all the financial metrics(RAW numbers) from the 10-K SEC(Securities and Exchange Commission).
 
 6. Following that, `data_auto_stats/` has a really good collection of modules for schema validation, data quality checks, automated testing and stat-generation using `great_expectations` and `anamoly detection and alerts`.
+
+7. The `ModelPipeline/` contains the complete ML serving infrastructure with production-grade RAG implementation. The core orchestrator (`finrag_ml_tg1/rag_modules_src/synthesis_pipeline/orchestrator.py`) coordinates entity extraction, KPI lookup, semantic retrieval, and LLM synthesis through a clean `answer_query()` interface.
+    - Key modules include EntityAdapter for company/year extraction, MetricPipeline for structured KPI queries, RAGPipeline for vector-based semantic search, and BedrockClient for Claude-powered synthesis. Full implementation details in [ModelPipeline README](ModelPipeline/README.md).
+
+8. The `ModelPipeline/serving/` layer implements a three-tier service architecture separating concerns between presentation (Streamlit frontend), application (FastAPI backend), and business logic (ML orchestrator). Backend wraps the ML pipeline with RESTful HTTP endpoints while frontend provides a stateless chat interface.
+    - Setup is automated via `setup_finrag` scripts with UV package manager for fast dependency resolution. One-click startup through `start_finrag` scripts launches both services with automatic browser opening. See [Setup Instructions](ModelPipeline/SETUP_README.md) for complete deployment guide.
+
+9. System achieves $0.01 per query cost efficiency through Parquet-based vector storage (99% savings vs managed databases), processes complex multi-company queries in 10-15 seconds, and maintains comprehensive logging and audit trails across all tiers for production-grade observability.
+    - Architecture supports independent scaling of frontend and backend services, demonstrates MLOps best practices including dependency injection, contract-driven development with Pydantic validation, and separation of ML inference from HTTP serving logic.
 
 
 ## Project Structure:
@@ -68,38 +137,10 @@
 
 ```
 
-
 ## DVC : 
 Data version Control has been implemented in this Repo, and the data is stored on an s3 Bucket managed by our team. The metadata is stored in the .dvc folder.
 The DVC is to control the versions of the data used in the ingestion pipeline ,so if any data is lost / manipulated with , we can retreive the version needed.
 
-## High level Conceptual Flow:
-```
-┌─────────────────────────────────────────────────────────────────┐
-│ DATA ENGINEERING LAYER                                          │
-│ SEC Edgar API → Sentence Extraction → S3 Storage (1M samples)  │
-└─────────────────────────────────────────────────────────────────┘
-                              ↓
-┌─────────────────────────────────────────────────────────────────┐
-│ EMBEDDING & INDEXING LAYER                                      │
-│ Cohere Embed v4 → S3 Vectors (200K+ 1024-d) → Metadata Filters │
-└─────────────────────────────────────────────────────────────────┘
-                              ↓
-┌─────────────────────────────────────────────────────────────────┐
-│ RAG ORCHESTRATION LAYER                                         │
-│ Entity Extraction → Query Variants → Triple Retrieval Paths    │
-│ (Filtered + Global + Variants) → Context Assembly              │
-└─────────────────────────────────────────────────────────────────┘
-                              ↓
-┌─────────────────────────────────────────────────────────────────┐
-│ SYNTHESIS & SERVING LAYER                                       │
-│ Dual Supply Lines (KPI + Semantic) → LLM (Claude Bedrock)      │
-│ → Citation Headers → Structured Response                        │
-└─────────────────────────────────────────────────────────────────┘
-```
-
-- Data Pipeline Setup: https://github.com/Finsights-MLOps/FinSights/blob/main/DataPipeline/SETUP_README.md
-- Data Pipeline Documentation: https://github.com/Finsights-MLOps/FinSights/blob/main/DataPipeline/README.md
 
 ### Source Dataset Links:
 1. Primary: https://huggingface.co/datasets/khaihernlow/financial-reports-sec
