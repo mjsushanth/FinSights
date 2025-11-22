@@ -82,6 +82,50 @@ Average Cosine: 0.675        ← GOOD
 - Training/ReTraining concepts: Not really applicable, this is a RAG system using served LLMs and vector stores.
 - Artifact Registry: Translates for us as S3 Vectors - our place for production vector bucket, data tables, access.
 
+### Key System Design Concepts matched (with best possible attempts):
+   - Three-tier SOA matches AWS SageMaker, Google Vertex AI production inference patterns.
+   - Pydantic contract: auto-generate API docs; 
+   - HTTP boundary enables N frontends → 1 backend without code coupling.
+   - Stateless backend: can scale horizontally.
+   - FastAPI process independence: frontend crash never kills ML pipeline execution.
+   - Frontend 60x lighter (50MB vs 3GB) - deploys to serverless, backend needs GPU.
+   - Separate environments: frontend updates cost $0 compute; unified reruns 800 packages
+   - Parquet-based tracking: $0.02/month vs MLFlow server $50/month - Savings. 
+   - Test HTTP client independently; monolith requires mocking entire Streamlit runtime.
+   - ( Keywords: Dependency Inversion Principles / Contract-Driven / Solid Patterns )
+
+### 11. Key Decisions for Design-Choices:
+
+1. Monorepo Pattern / Services with Frontend - Backend - ML Code.
+   - Frontend is the ONLY consumer of this specific backend API, monorepo structure.
+   - Serving layer requires access to ModelPipeline/ as the sys.path root for orchestrator imports.
+   - Serving/ outside: breaks structure matches the established import pattern across 40+ files in the codebase.
+   - Prefer avoiding PYTHONPATH, sys.resolve[] based hacks. 
+   - Using fixed root + walk up, absolute imports pattern for all code.
+2. Atomic Deployment Unit:
+   - Usually, the model + serving layer + UI constitute a single deployment artifact.
+   - Followed the similar pattern here.
+   - Google's TensorFlow Serving: Model + API in same repo, Hugging Face Spaces: Model + Gradio UI in same directory.
+   - Orchestrator expects model_root parameter - serving must be relative to it.
+3. Technical Justification for tracking approach:
+   - Embedded Instrumentation > Separate Tracking. 
+   - no discrepancies between 'experiment code' and 'production code'.
+   - MLFlow: persistent infrastructure ($50-100/month for managed hosting). For a system with sub-$0.017 query costs, adding $50/month overhead is economically unjustifiable.
+   - no model training - it's inference serving algorithms and components.
+   - synthesis_pipeline/ logs every query with metadata (tokens, cost, latency) - this IS the tracking, just following serverless patterns.
+4. Environments in Specific Locations:
+   - Each environment lives with its deployment unit.
+   - finrag_ml_tg1/ - one backend environment for all ML code + FastAPI wrapper.
+   - `BACKEND_ENV = "finrag_ml_tg1/venv_ml_rag"  # Must be here for imports to work`
+   - `FRONTEND_ENV = "serving/frontend/venv_frontend"  # Must be here for serving isolation`
+5. Why Multiple Environments:
+   - Boundary Enforcement, Basic Deployment Independence, Dependency Conflict Avoidance, Build Time Efficiency.
+   - Makes no sense for Web-Dev team UI/UX to install Data Engineering team's libraries. Same goes for ML research team.
+   - Example:
+     - `venv_ml_rag:      3GB`   - boto3, transformers, sentence-transformers, polars, duckdb
+     - `venv_frontend:    50MB`  - streamlit, requests, pandas (minimal)
+
+
 
 #### Compliance Write-up Author
 Joel Markapudi - ( markapudi.j@northeastern.edu, mjsushanth@gmail.com )
