@@ -171,8 +171,9 @@ cython_debug/
 #  option (not recommended) you can uncomment the following to ignore the entire idea folder.
 .idea/
 
-
-
+## these were untracked before; so leaving them as is so that gitlens/vscode wont track accidentally.
+config/
+datasets/
 
 
 # ============================================
