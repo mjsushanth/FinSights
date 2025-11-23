@@ -1,12 +1,12 @@
 ## Prerequisites
-- Python 3.11+ installed
+- Python 3.11 installed
 - Git (to clone the repository)
 - Windows: PowerShell | Mac/Linux: Terminal
-
+- Please ensure your respective python (3.11) is cleanly installed, and your PATH variables are set correctly.
 
 ### Clone the Repository
 ```bash
-git clone 
+git clone https://github.com/Finsights-MLOps/FinSights.git
 cd FinSights/ModelPipeline
 ```
 
@@ -19,9 +19,11 @@ AWS_REGION=us-east-1
 ```
 
 ### Make Scripts Executable (Mac/Linux Only)
+- If your MAC command files are not executable in terminal, please run: 
 ```bash
 cd ModelPipeline
-chmod +x start_finrag.sh
+chmod +x start_finrag.command
+chmod +x setup_finrag.command
 ```
 
 ## Quick Setup (Automated)
