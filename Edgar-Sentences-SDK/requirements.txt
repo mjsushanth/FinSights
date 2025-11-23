@@ -1,0 +1,12 @@
+# Core data handling and processing
+pandas
+numpy
+
+# SEC EDGAR access
+python-edgar # This is the library providing 'from edgar import ...'
+
+# Text processing and NLP
+nltk
+beautifulsoup4 # Provides BeautifulSoup
+ftfy         # For fixing mojibake and decoding issues
+unicodedata  # Standard library but good to list if directly used
