@@ -179,6 +179,10 @@ datasets/
 # ============================================
 # ============================================
 
+# Virtual Environments for Frontend Serving
+FinSights/ModelPipeline/serving/frontend/venv_frontend/
+FinSights/ModelPipeline/finrag_ml_tg1/venv_ml_rag/
+
 # Notebooks
 # ModelPipeline/finrag_ml_tg1/notebooks-experiments/**/*.ipynb
 # ModelPipeline/finrag_ml_tg1/notebooks-experiments/**/*.py
