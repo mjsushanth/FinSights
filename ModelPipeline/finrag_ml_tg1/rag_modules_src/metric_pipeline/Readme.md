@@ -15,15 +15,10 @@ Standalone pipeline for extracting quantitative financial data from natural lang
 pip install -r requirements.txt
 
 # Place your data file
-cp /path/to/downloaded_data.json data/
 ```
 
 ## Usage
 
-### Run the pipeline
-```bash
-python main.py
-```
 
 ### Example queries
 - "What is NVIDIA's revenue in the year 2024?"
@@ -32,7 +27,6 @@ python main.py
 
 ## Project Structure
 
-- `config/` - Configuration and mappings
 - `src/` - Core pipeline logic
 - `data/` - Data files
 - `tests/` - Unit tests
