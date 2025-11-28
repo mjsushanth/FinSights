@@ -276,15 +276,17 @@ def build_combined_context(
         "kpi_entities": None,
         "rag_entities": None,
         "retrieval_bundle": None,
+        "metric_result": None, # Updated by SR
     }
 
     pieces: List[str] = []
 
     # KPI side
     if include_kpi:
-        kpi_block, kpi_entities, _ = run_supply_line_1_kpi(query, rag)
+        kpi_block, kpi_entities, metric_result = run_supply_line_1_kpi(query, rag) # Updated by SR
         meta["kpi_block"] = kpi_block
         meta["kpi_entities"] = kpi_entities
+        meta["metric_result"] = metric_result # Updated by SR
         if kpi_block:
             pieces.append(kpi_block)
 
