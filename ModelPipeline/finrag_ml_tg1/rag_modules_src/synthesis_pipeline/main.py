@@ -4,10 +4,20 @@
 FinRAG CLI Demo - End-to-end query answering.
 
 Usage:
+    # Basic usage (MLflow enabled by default)
     python -m finrag_ml_tg1.rag_modules_src.synthesis_pipeline.main
+    # Custom query
     python -m finrag_ml_tg1.rag_modules_src.synthesis_pipeline.main --query "Your question"
+    # Different model
     python -m finrag_ml_tg1.rag_modules_src.synthesis_pipeline.main --model development
+    # Export full response to JSON
     python -m finrag_ml_tg1.rag_modules_src.synthesis_pipeline.main --export-response
+    
+    # Custom experiment name for MLFlow tracking
+    python -m finrag_ml_tg1.rag_modules_src.synthesis_pipeline.main --experiment "FinRAG-Eval-Nov2025"
+    
+    # Disable MLflow tracking
+    python -m finrag_ml_tg1.rag_modules_src.synthesis_pipeline.main --no-tracking
 
 Philosophy:
     - Minimal console output (not a log dumper)
@@ -15,16 +25,28 @@ Philosophy:
     - Shows preview of answer (first 500 chars)
     - Clean success/error handling
     - No emojis, no clutter
+
+MLflow Tracking:
+    - Experiment: Configurable, defaults to "FinRAG-Integration"
+    - Parameters: model, prompt versions, retrieval settings
+    - Metrics: latency, tokens, cost, retrieval counts
+    - Artifacts: prompts, context, full response
 """
 
 import argparse
 import sys
+import time
+import yaml
 from pathlib import Path
-from typing import Optional
+from typing import Dict, Optional, Tuple
 
 from finrag_ml_tg1.rag_modules_src.synthesis_pipeline.orchestrator import answer_query
 from finrag_ml_tg1.rag_modules_src.synthesis_pipeline.models import is_error_response
 
+# MLflow tracker
+from finrag_ml_tg1.rag_modules_src.synthesis_pipeline.mlflow_utils import (
+    run_with_mlflow_tracking
+)
 
 # ============================================================================
 # DEFAULT QUERY
@@ -69,7 +91,7 @@ def print_separator(char: str = "=", width: int = 70):
     print(char * width)
 
 
-def print_result(result: dict):
+def print_result(result: dict, show_mlflow_info: bool = True, run_url: Optional[str] = None):
     """
     Print query result with minimal, clean output.
     
@@ -92,6 +114,10 @@ def print_result(result: dict):
         if exports.get('log_file'):
             print(f"\nLogged to: {exports['log_file']}")
         
+        # MLflow info
+        if show_mlflow_info and run_url:
+            print(f"\nMLflow Run: {run_url}")
+            
         print_separator()
         return
     
@@ -130,15 +156,111 @@ def print_result(result: dict):
     if exports.get('log_file'):
         print(f"  Logs: {exports['log_file']}")
     
+    # Retrieval stats (if available)
+    if 'retrieval' in metadata:
+        ret = metadata['retrieval']
+        print(f"  KPI Matches: {ret.get('kpi_count', 'N/A')}")
+        print(f"  RAG Chunks: {ret.get('rag_count', 'N/A')}")
+    
+    # MLflow info
+    if show_mlflow_info and run_url:
+        print(f"\nMLflow:")
+        print(f"  Run: {run_url}")
+    
     print_separator()
     
     # Helpful tip
     print("\nTip: Full answer saved in exports. Context and logs available above.")
 
-
+# ============================================================================
+# CONFIGURATION LOADER FOR MLFLOW INTEGRATION
+# ============================================================================
+def load_model_config_display(model_root: Path, model_key: Optional[str] = None) -> Tuple[str, str]:
+    """
+    Load model config for display purposes only.
+    
+    Returns:
+        Tuple of (model_key, display_name)
+    """
+    import yaml
+    config_path = model_root / "finrag_ml_tg1" / "config" / "ml_config.yaml"
+    
+    try:
+        with open(config_path, 'r', encoding='utf-8') as f:
+            config = yaml.safe_load(f)
+        
+        serving_models = config.get('serving_models', {})
+        resolved_key = model_key or serving_models.get('default_serving_model', 'development_CH45')
+        
+        if resolved_key in serving_models:
+            display_name = serving_models[resolved_key].get('display_name', resolved_key)
+            return resolved_key, display_name
+    except Exception:
+        pass
+    
+    return model_key or 'default', 'Unknown'
 # ============================================================================
 # MAIN ENTRY POINT
 # ============================================================================
+def run_with_tracking(
+    query: str,
+    model_root: Path,
+    model_key: Optional[str],
+    include_kpi: bool,
+    include_rag: bool,
+    export_context: bool,
+    export_response: bool,
+    experiment_name: str,
+    environment: str
+) -> Tuple[dict, Optional[str]]:
+    """
+    Run query with MLflow tracking.
+    
+    Delegates to mlflow_utils.run_with_mlflow_tracking() which handles
+    all metric extraction and logging.
+    
+    Returns:
+        Tuple of (result_dict, mlflow_run_url)
+    """
+    return run_with_mlflow_tracking(
+        query=query,
+        model_root=model_root,
+        model_key=model_key,
+        include_kpi=include_kpi,
+        include_rag=include_rag,
+        export_context=export_context,
+        export_response=export_response,
+        experiment_name=experiment_name,
+        environment=environment
+    )
+
+
+def run_without_tracking(
+    query: str,
+    model_root: Path,
+    model_key: Optional[str],
+    include_kpi: bool,
+    include_rag: bool,
+    export_context: bool,
+    export_response: bool
+) -> Tuple[dict, None]:
+    """
+    Run query without MLflow tracking.
+    
+    Returns:
+        Tuple of (result_dict, None)
+    """
+    result = answer_query(
+        query=query,
+        model_root=model_root,
+        include_kpi=include_kpi,
+        include_rag=include_rag,
+        model_key=model_key,
+        export_context=export_context,
+        export_response=export_response
+    )
+    
+    return result, None
 
 def main():
     """Main CLI entry point."""
@@ -164,6 +286,15 @@ Examples:
   
   # Skip context export (save disk space)
   python -m finrag_ml_tg1.rag_modules_src.synthesis_pipeline.main --no-export-context
+  
+  # Disable MLflow tracking
+  python -m finrag_ml_tg1.rag_modules_src.synthesis_pipeline.main --no-tracking
+  
+  # Production run
+  python -m finrag_ml_tg1.rag_modules_src.synthesis_pipeline.main --environment production
+  
+  # View MLflow UI
+  cd ModelPipeline && mlflow ui --backend-store-uri mlruns
         """
     )
     
@@ -193,6 +324,28 @@ Examples:
         help='Export full response to JSON file (for debugging)'
     )
     
+    # MLflow options
+    parser.add_argument(
+        '--no-tracking',
+        action='store_true',
+        help='Disable MLflow tracking'
+    )
+    
+    parser.add_argument(
+        '--experiment', '-e',
+        type=str,
+        default="FinRAG-Integration",
+        help='MLflow experiment name (default: FinRAG-Integration)'
+    )
+    
+    parser.add_argument(
+        '--environment',
+        type=str,
+        choices=['development', 'production'],
+        default='development',
+        help='Environment tag for MLflow (default: development)'
+    )
+    
     args = parser.parse_args()
     
     # Find project root
@@ -205,27 +358,72 @@ Examples:
     
     # Display query info
     print(f"\nProcessing query...")
-    if args.model:
-        print(f"  Model: {args.model}")
+    # if args.model:
+    #     print(f"  Model: {args.model}")
+    # else:
+    #     print(f"  Model: default (development_CH45 - Claude 4.5 Haiku)")
+    # print()
+    
+    # Show model info
+    try:
+        resolved_key, model_config = load_model_config_display(model_root, args.model)
+        print(f"  Model: {resolved_key} ({model_config.get('display_name', 'Unknown')})")
+    except Exception as e:
+        print(f"  Model: {args.model or 'default'}")
+    
+    # Show tracking info
+    if not args.no_tracking:
+        print(f"  MLflow: {args.experiment} ({args.environment})")
     else:
-        print(f"  Model: default (development_CH45 - Claude 4.5 Haiku)")
+        print(f"  MLflow: disabled")
+        
     print()
     
     # Process query
+    # try:
+    #     result = answer_query(
+    #         query=args.query,
+    #         model_root=model_root,
+    #         include_kpi=True,                          
+    #         include_rag=True,                          
+    #         model_key=args.model,
+    #         export_context=not args.no_export_context,
+    #         export_response=args.export_response
+    #     )
+        
+    #     # Display result
+    #     print_result(result)
     try:
-        result = answer_query(
-            query=args.query,
-            model_root=model_root,
-            include_kpi=True,                          
-            include_rag=True,                          
-            model_key=args.model,
-            export_context=not args.no_export_context,
-            export_response=args.export_response
-        )
+        if args.no_tracking:
+            result, run_url = run_without_tracking(
+                query=args.query,
+                model_root=model_root,
+                model_key=args.model,
+                include_kpi=True,
+                include_rag=True,
+                export_context=not args.no_export_context,
+                export_response=args.export_response
+            )
+        else:
+            result, run_url = run_with_tracking(
+                query=args.query,
+                model_root=model_root,
+                model_key=args.model,
+                include_kpi=True,
+                include_rag=True,
+                export_context=not args.no_export_context,
+                export_response=args.export_response,
+                experiment_name=args.experiment,
+                environment=args.environment
+            )
         
         # Display result
-        print_result(result)
-        
+        print_result(
+            result,
+            show_mlflow_info=not args.no_tracking,
+            run_url=run_url
+        )
+           
         # Exit code
         sys.exit(0 if not is_error_response(result) else 1)
         
