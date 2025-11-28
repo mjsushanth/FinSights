@@ -1,0 +1,14 @@
+artifact_uri: file:///C:/Users/sridi/Documents/NE/Fall%202025/Project/FinSights/ModelPipeline/mlruns/998778073562412256/068451292e914cfab408a5b3546168aa/artifacts
+end_time: 1764317045033
+entry_point_name: ''
+experiment_id: '998778073562412256'
+lifecycle_stage: active
+run_id: 068451292e914cfab408a5b3546168aa
+run_name: query_20251128_030401_unknown
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1764317042678
+status: 3
+tags: []
+user_id: sridi
