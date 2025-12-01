@@ -11,7 +11,10 @@ import numpy as np
 import pandas as pd
 from edgar import set_identity, Company, MultiFinancials
 
-from .gaap_aliases import GAAP_ALIASES  # your big mapping dict
+try:
+    from .gaap_aliases import GAAP_ALIASES
+except ImportError:
+    from gaap_aliases import GAAP_ALIASES
 
 from typing import Set, Dict, Any
 
