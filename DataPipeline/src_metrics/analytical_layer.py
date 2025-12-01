@@ -344,7 +344,7 @@ def _row_to_year_series(stmt_df: Optional[pd.DataFrame], label_aliases: List[str
     return pd.Series(dtype="float64")
 
 
-def _sum_rows_to_year_series(stmt_df: pd.DataFrame | None, label_aliases: List[str]) -> pd.Series:
+def _sum_rows_to_year_series(stmt_df: Optional[pd.DataFrame], label_aliases: List[str]) -> pd.Series:
     if stmt_df is None or stmt_df.empty:
         return pd.Series(dtype="float64")
 
@@ -372,10 +372,7 @@ def _sum_rows_to_year_series(stmt_df: pd.DataFrame | None, label_aliases: List[s
     return out
 
 
-
-
-
-def _get_stmt_df(mf: MultiFinancials, candidates: List[str]) -> pd.DataFrame | None:
+def _get_stmt_df(mf: MultiFinancials, candidates: List[str]) -> Optional[pd.DataFrame]:
     for name in candidates:
         if hasattr(mf, name):
             stmt = getattr(mf, name)()
@@ -679,7 +676,7 @@ def build_analytical_layer(
 def diagnose_derived_coverage_from_df(
     df: pd.DataFrame,
     cik: str,
-    not_applicable_by_cik: dict | None = None,
+    not_applicable_by_cik: Optional[dict] = None,
     verbose: bool = True,
 ):
     """
