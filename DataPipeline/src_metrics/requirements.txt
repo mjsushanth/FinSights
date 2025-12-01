@@ -2,7 +2,7 @@ pandas
 sec_edgar_api
 yfinance
 numpy
-edgartools
+edgartools==2.2.6
 openai
 requests
 datetime
