@@ -467,7 +467,7 @@ def fetch_10k_facts_for_analytical_layer(cik: str) -> pd.DataFrame:
     cik_raw = _raw_cik(cik)
     co = Company(cik_raw)
     facts = co.get_facts()
-    ticker = co.get_ticker()
+    ticker = co.tickers[0] if co.tickers else "UNKNOWN"
 
     rows = []
 
@@ -545,7 +545,7 @@ def compute_core_kpis_for_company(cik: str, n_years: int = 8) -> pd.DataFrame:
     cik_raw = _raw_cik(cik)
 
     co = Company(cik_raw)
-    ticker = co.get_ticker()
+    ticker = co.tickers[0] if co.tickers else "UNKNOWN"
 
     filings = co.get_filings(form="10-K").head(n_years)
     if filings.empty:
