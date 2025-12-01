@@ -375,7 +375,7 @@ def _sum_rows_to_year_series(stmt_df: Optional[pd.DataFrame], label_aliases: Lis
 def _get_stmt_df(mf: MultiFinancials, candidates: List[str]) -> Optional[pd.DataFrame]:
     for name in candidates:
         if hasattr(mf, name):
-            stmt = getattr(mf, name)()
+            stmt = getattr(mf, name)
             if hasattr(stmt, "to_dataframe"):
                 # No include_dimensions arg to avoid the error you saw
                 return stmt.to_dataframe()
