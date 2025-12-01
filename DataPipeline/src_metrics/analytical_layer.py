@@ -472,7 +472,7 @@ def fetch_10k_facts_for_analytical_layer(cik: str) -> pd.DataFrame:
     rows = []
 
     # Convert to DataFrame first (edgartools v3)
-    facts_df = facts.to_dataframe()
+    facts_df = facts.to_pandas()
     
     for concept in CONCEPTS:
         for year in range(START_YEAR, END_YEAR + 1):
