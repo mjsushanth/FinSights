@@ -53,4 +53,4 @@ jobs:
       # Step 5: Validate pipeline can load
       - name: Validate pipeline
         run: |
-          python pipeline_runner.py --dry-run --env dev
+          python DataPipeline/pipeline_runner.py --dry-run --env dev
