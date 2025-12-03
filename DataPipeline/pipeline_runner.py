@@ -1,9 +1,8 @@
-#!/usr/bin/env python3
 """
 FinSight Pipeline Runner
 
 Standalone pipeline runner that executes the same tasks as the Airflow DAG.
-Designed to run in Docker via GitHub Actions or locally.
+Can be run in Docker via GitHub Actions or locally.
 
 Usage:
     python pipeline_runner.py --full              # Run full pipeline
@@ -120,7 +119,7 @@ def setup_logging(execution_id: str) -> logging.Logger:
 
 
 # ============================================================================
-# Task Definitions (Adapted from your DAG)
+# Task Definitions
 # ============================================================================
 
 def run_module(module: str, args: list[str] | None = None) -> subprocess.CompletedProcess:
