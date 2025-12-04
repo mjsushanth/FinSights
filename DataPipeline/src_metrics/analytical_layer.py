@@ -940,10 +940,22 @@ def load_final_parquet_from_s3():
 
     # Keep the same key as your earlier logs (analytical_layer_metrics_final.parquet)
     parquet_key  = f"{base_prefix}/analytical_layer_metrics_final.parquet"
+    project_root = Path(__file__).parent 
+    
+    # 2. Define File Names and Paths
+    local_filename = "analytical_layer_metrics_final.parquet"
+    # Create the full local path: project_root / local_filename
+    local_path = project_root / local_filename
+    
+    # S3 Details (unchanged from your original function)
+    bucket = os.getenv("FINRAG_S3_BUCKET", "sentence-data-ingestion")
+    base_prefix = "DATA_MERGE_ASSETS/FINRAG_FACT_METRICS"
+    parquet_key  = f"{base_prefix}/{local_filename}"
 
     s3 = boto3.client("s3")
-    s3.download_file(Bucket=bucket, Key=parquet_key, Filename="analytical_layer_metrics_final.parquet")
-    return "analytical_layer_metrics_final.parquet" 
+    s3.download_file(Bucket=bucket, Key=parquet_key, Filename=str(local_path))
+
+    return str(local_path) 
 
 
 
@@ -1216,6 +1228,7 @@ def run_analytical_layer_pipeline(
         "run_timestamp_utc": datetime.utcnow().isoformat(),
     }
 
+    final_parquet_path = load_final_parquet_from_s3()
     # Merge / bootstrap logic
     if not os.path.exists(final_parquet_path):
         print("[analytical_layer] No previous FINAL_PARQUET_PATH found, bootstrapping with NEW.")
@@ -1224,7 +1237,7 @@ def run_analytical_layer_pipeline(
         summary["reason"]      = "Initialized final parquet with new 2-year layer (no previous data)."
         summary["missing_new"] = int(compute_total_missing_derived(df_new, last2_years))
     else:
-        df_prev = pd.read_parquet(load_final_parquet_from_s3())
+        df_prev = pd.read_parquet(final_parquet_path)
         df_prev["year"] = df_prev["year"].astype(int)
         summary["rows_prev"] = int(len(df_prev))
 
