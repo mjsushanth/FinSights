@@ -11,12 +11,9 @@ import numpy as np
 import pandas as pd
 from edgar import set_identity, Company, MultiFinancials
 
-try:
-    from .gaap_aliases import GAAP_ALIASES
-except ImportError:
-    from gaap_aliases import GAAP_ALIASES
+from .gaap_aliases import GAAP_ALIASES  # your big mapping dict
 
-from typing import Set, Dict, Any, Optional
+from typing import Set, Dict, Any
 
 import pandas as pd
 import smtplib
@@ -232,7 +229,7 @@ NOT_APPLICABLE_BY_CIK = {
 # ---------------------------------------------------
 
 def _cols_to_year_index(cols):
-    yrs = pd.to_datetime(cols, errors="coerce", format="mixed").year
+    yrs = pd.to_datetime(cols, errors="coerce").year
     yrs = [
         y if not pd.isna(y)
         else (int(re.search(r"(20\d{2})", str(c)).group(1)) if re.search(r"(20\d{2})", str(c)) else np.nan)
@@ -261,7 +258,7 @@ def _raw_cik(cik) -> str:
     s = "".join(ch for ch in str(cik) if ch.isdigit())
     return s.lstrip("0") or "0"   # "0000200406" -> "200406"
 
-def strip_namespace(metric: str) -> Optional[str]:
+def strip_namespace(metric: str) -> str | None:
     if not isinstance(metric, str):
         return None
     if ":" in metric:
@@ -269,7 +266,7 @@ def strip_namespace(metric: str) -> Optional[str]:
     return metric
 
 
-def normalize_metric_key(raw_metric: str) -> Optional[str]:
+def normalize_metric_key(raw_metric: str) -> str | None:
     """
     raw_metric: us-gaap:NetIncomeLoss → canonical_key via GAAP_ALIASES
     """
@@ -300,14 +297,14 @@ def _avg_series(s: pd.Series) -> pd.Series:
     return (s + s.shift(1)) / 2
 
 
-def _sdiv(a: Optional[pd.Series], b: Optional[pd.Series]) -> pd.Series:
+def _sdiv(a: pd.Series | None, b: pd.Series | None) -> pd.Series:
     if a is None or b is None:
         return pd.Series(dtype="float64")
     out = a.astype("float64") / b.astype("float64")
     return out.replace([np.inf, -np.inf], np.nan)
 
 
-def _normalize_stmt_df(df: Optional[pd.DataFrame]) -> Optional[pd.DataFrame]:
+def _normalize_stmt_df(df: pd.DataFrame | None) -> pd.DataFrame | None:
     if df is None or df.empty:
         return df
     if "label" not in df.columns:
@@ -318,7 +315,7 @@ def _normalize_stmt_df(df: Optional[pd.DataFrame]) -> Optional[pd.DataFrame]:
     return df
 
 
-def _row_to_year_series(stmt_df: Optional[pd.DataFrame], label_aliases: List[str]) -> pd.Series:
+def _row_to_year_series(stmt_df: pd.DataFrame | None, label_aliases: List[str]) -> pd.Series:
     if stmt_df is None or stmt_df.empty:
         return pd.Series(dtype="float64")
 
@@ -344,7 +341,7 @@ def _row_to_year_series(stmt_df: Optional[pd.DataFrame], label_aliases: List[str
     return pd.Series(dtype="float64")
 
 
-def _sum_rows_to_year_series(stmt_df: Optional[pd.DataFrame], label_aliases: List[str]) -> pd.Series:
+def _sum_rows_to_year_series(stmt_df: pd.DataFrame | None, label_aliases: List[str]) -> pd.Series:
     if stmt_df is None or stmt_df.empty:
         return pd.Series(dtype="float64")
 
@@ -372,10 +369,13 @@ def _sum_rows_to_year_series(stmt_df: Optional[pd.DataFrame], label_aliases: Lis
     return out
 
 
-def _get_stmt_df(mf: MultiFinancials, candidates: List[str]) -> Optional[pd.DataFrame]:
+
+
+
+def _get_stmt_df(mf: MultiFinancials, candidates: List[str]) -> pd.DataFrame | None:
     for name in candidates:
         if hasattr(mf, name):
-            stmt = getattr(mf, name)
+            stmt = getattr(mf, name)()
             if hasattr(stmt, "to_dataframe"):
                 # No include_dimensions arg to avoid the error you saw
                 return stmt.to_dataframe()
@@ -466,8 +466,8 @@ def fetch_10k_facts_for_analytical_layer(cik: str) -> pd.DataFrame:
     cik10 = _pad_cik(cik)
     cik_raw = _raw_cik(cik)
     co = Company(cik_raw)
-    facts = co.get_facts()
-    ticker = co.tickers[0] if co.tickers else "UNKNOWN"
+    facts = co.facts
+    ticker = co.get_ticker()
 
     rows = []
 
@@ -489,7 +489,7 @@ def fetch_10k_facts_for_analytical_layer(cik: str) -> pd.DataFrame:
             if dfp is None or dfp.empty:
                 continue
 
-            # ✅ keep ONLY the last-filed metric for that year & concept
+            # ✅ keep ONLY the last-filed metric for that year &  concept
             dfp = dfp.sort_values(["fiscal_year", "filing_date"]).tail(1)
 
             for _, r in dfp.iterrows():
@@ -545,7 +545,7 @@ def compute_core_kpis_for_company(cik: str, n_years: int = 8) -> pd.DataFrame:
     cik_raw = _raw_cik(cik)
 
     co = Company(cik_raw)
-    ticker = co.tickers[0] if co.tickers else "UNKNOWN"
+    ticker = co.get_ticker()
 
     filings = co.get_filings(form="10-K").head(n_years)
     if filings.empty:
@@ -676,7 +676,7 @@ def build_analytical_layer(
 def diagnose_derived_coverage_from_df(
     df: pd.DataFrame,
     cik: str,
-    not_applicable_by_cik: Optional[dict] = None,
+    not_applicable_by_cik: dict | None = None,
     verbose: bool = True,
 ):
     """
@@ -1120,7 +1120,7 @@ def send_failure_email(error_msg: str, run_timestamp: str):
 def run_analytical_layer_pipeline(
     base_dir: str,
     polite_delay: float,
-    run_date: Optional[datetime] = None,
+    run_date: datetime | None = None,
 ) -> Dict[str, Any]:
     """
     Runs the full analytical layer pipeline for the last 2 years:
