@@ -5,6 +5,7 @@ requests
 datetime
 boto3
 hishel==0.0.30
+dotenv
 
 # # Testing dependencies
 # pytest>=7.4.0
