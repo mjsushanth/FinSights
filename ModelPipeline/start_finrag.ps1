@@ -4,10 +4,21 @@
 
 # ==============================================================================
 # CONFIGURATION
+# 1. Config Script Directory, Backend and Frontend Environments, Serving Directory.
+# 2. Define Ports for Backend and Frontend.
+# 3. Start servers in separate PowerShell windows.
 # ==============================================================================
 
 $SCRIPT_DIR = Split-Path -Parent $MyInvocation.MyCommand.Path
-$BACKEND_ENV = Join-Path $SCRIPT_DIR "finrag_ml_tg1\venv_ml_rag\Scripts\Activate.ps1"
+
+# Use serving environment by default - This is minimal, clean, no bulk research packs.
+$BACKEND_ENV = Join-Path $SCRIPT_DIR "finrag_ml_tg1\venv_serving\Scripts\Activate.ps1"
+# Fallback to full environment if serving doesn't exist
+if (-not (Test-Path $BACKEND_ENV)) {
+    Write-Host "[INFO] Serving environment not found, using full ML environment" -ForegroundColor Yellow
+    $BACKEND_ENV = Join-Path $SCRIPT_DIR "finrag_ml_tg1\venv_ml_rag\Scripts\Activate.ps1"
+}
+
 $FRONTEND_ENV = Join-Path $SCRIPT_DIR "serving\frontend\venv_frontend\Scripts\Activate.ps1"
 $SERVING_DIR = Join-Path $SCRIPT_DIR "serving"
 

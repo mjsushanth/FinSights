@@ -4,6 +4,8 @@ finSight - Financial Document Intelligence System
 
 Main Streamlit application that provides a chat interface for querying
 SEC 10-K filings using RAG (Retrieval-Augmented Generation).
+- Client is cached, created once, reused for all queries
+- 
 
 Usage:
     streamlit run frontend/app.py --server.port 8501
@@ -25,6 +27,7 @@ from chat import (
 )
 from metrics import display_sidebar_stats
 
+from config import BACKEND_URL, API_TIMEOUT, SHOW_DEBUG_INFO
 
 # ============================================================================
 # PAGE CONFIGURATION
@@ -46,13 +49,26 @@ st.set_page_config(
 init_session_state()
 
 # Initialize API client (cached so it's only created once)
+"""
+- Single source of truth: Only api_client.py knows about URLs
+Thought p deep about this one, what to do.
+local + cloud without app.py changes, should work. Env awareness solid goes to whom? it goes to- api_client.py
+app.py: doesn't need to understand deployment environments
+"""
+# Initialize API client (cached so it's only created once)
 @st.cache_resource
 def get_api_client():
-    """Get API client instance (singleton)."""
-    return finSightClient(
-        base_url="http://localhost:8000",
-        timeout=120
-    )
+    """
+    Get API client instance (singleton).
+    Backend URL is read from config (environment-aware).
+    Local: http://localhost:8000
+    Cloud: http://backend:8000 (set by Sevalla)
+    """
+    return finSightClient(base_url=BACKEND_URL, timeout=API_TIMEOUT)
+    
+    ## previous: option 1, 2. 
+    ## return finSightClient( base_url="http://localhost:8000", timeout=120)
+    ## return finSightClient()  # ← uses api_client's env logic
 
 client = get_api_client()
 

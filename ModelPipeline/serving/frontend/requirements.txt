@@ -14,11 +14,15 @@ requests==2.31.0                # Synchronous HTTP client (Streamlit is sync)
 
 # CONFIGURATION
 python-dotenv==1.0.0            # Load environment variables from .env file
-pandas==2.1.4                   # DataFrame display in Streamlit
-                                # Useful for showing query history, metadata tables
 
-plotly==5.18.0                  # Interactive visualizations
-                                # For cost charts, token usage graphs
+
+# Streamlit already brings pandas.
+# ============================================================================
+# pandas==2.1.4                   # DataFrame display in Streamlit
+#                                 # Useful for showing query history, metadata tables
+
+# plotly==5.18.0                  # Interactive visualizations
+#                                 # For cost charts, token usage graphs
 
 # ============================================================================
 # OPTIONAL UI ENHANCEMENTS

@@ -240,6 +240,87 @@ if (-not $skipBackend) {
 
 Write-Host ""
 
+
+# ==============================================================================
+# SETUP SERVING ENVIRONMENT (MINIMAL - for deployment testing)
+# Users can skip serving env if they only want analytics, venv_serving as optional step 
+# ==============================================================================
+
+Write-Host ""
+
+Write-Host "============================================================" -ForegroundColor Cyan
+Write-Host "[SERVING] Setting up minimal serving environment" -ForegroundColor White
+Write-Host "============================================================" -ForegroundColor Cyan
+Write-Host ""
+Write-Host "   This environment contains ONLY serving dependencies" -ForegroundColor Yellow
+Write-Host "   Location: $BACKEND_DIR\venv_serving" -ForegroundColor Yellow
+Write-Host "   Purpose: Production deployment testing + Sevalla compatibility" -ForegroundColor Yellow
+Write-Host ""
+
+$SERVING_ENV = Join-Path $BACKEND_DIR "venv_serving"
+$skipServing = $false
+
+# Check if environment already exists
+if (Test-Path $SERVING_ENV) {
+    Write-Host "[WARNING] Serving environment already exists!" -ForegroundColor Yellow
+    $response = Read-Host "   Delete and recreate? (y/n)"
+    if ($response -eq "y") {
+        $deleted = Remove-LockedDirectory -Path $SERVING_ENV -Name "Serving"
+        if (-not $deleted) {
+            Write-Host "[SKIP] Cannot proceed with serving environment setup" -ForegroundColor Cyan
+            $skipServing = $true
+        }
+    } else {
+        Write-Host "[SKIP] Keeping existing serving environment" -ForegroundColor Cyan
+        $skipServing = $true
+    }
+}
+
+if (-not $skipServing) {
+    # Create virtual environment
+    Write-Host ""
+    Write-Host "[*] Creating serving virtual environment..." -ForegroundColor Yellow
+    & $pythonCmd -m venv $SERVING_ENV
+    
+    if (-not (Test-Path $SERVING_ENV)) {
+        Write-Host "[ERROR] Failed to create serving environment!" -ForegroundColor Red
+        Write-Host "[SKIP] Serving environment will not be available" -ForegroundColor Cyan
+    } else {
+        Write-Host "[OK] Virtual environment created" -ForegroundColor Green
+        Write-Host ""
+        
+        # Activate and install minimal dependencies
+        $activateServing = Join-Path $SERVING_ENV "Scripts\Activate.ps1"
+        $servingRequirements = Join-Path $BACKEND_DIR "environments\requirements_sevalla.txt"
+        
+        Write-Host "[*] Installing minimal serving dependencies..." -ForegroundColor Yellow
+        Write-Host "   Requirements: environments\requirements_sevalla.txt" -ForegroundColor Cyan
+        Write-Host "   This should be MUCH faster than full environment (2-3 min)" -ForegroundColor Cyan
+        Write-Host ""
+        
+        if ($uvInstalled) {
+            # Use UV for fast installation
+            Write-Host "[UV] Using fast package installer..." -ForegroundColor Cyan
+            & $activateServing
+            uv pip install -r $servingRequirements
+        } else {
+            # Fallback to pip
+            Write-Host "[PIP] Using standard pip..." -ForegroundColor Yellow
+            & $activateServing
+            python -m pip install --upgrade pip
+            pip install -r $servingRequirements
+        }
+        
+        if ($LASTEXITCODE -eq 0) {
+            Write-Host ""
+            Write-Host "[OK] Serving environment ready! This is your deployment-testing environment." -ForegroundColor Green
+        } else {
+            Write-Host ""
+            Write-Host "[ERROR] Failed to install serving dependencies!" -ForegroundColor Red
+        }
+    }
+}
+
 # ==============================================================================
 # SETUP FRONTEND ENVIRONMENT
 # ==============================================================================

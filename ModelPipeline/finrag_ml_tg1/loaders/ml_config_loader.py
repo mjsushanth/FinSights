@@ -42,31 +42,69 @@ class MLConfig:
     # ========== Credential Loading ==========
     
     def _load_aws_credentials(self):
-        """Load AWS credentials from .aws_secrets/aws_credentials.env"""
+        """
+        Load AWS credentials from file (local) OR environment (cloud).
+        
+        Priority:
+        1. Try loading from .aws_secrets/aws_credentials.env (local development)
+        2. Fall back to os.environ (cloud deployment - Sevalla/Lambda)
+        3. Raise error if neither source has credentials
+        
+        This method works in both local and cloud environments without code changes.
+        """
         aws_creds_path = self.model_root / 'finrag_ml_tg1' / '.aws_secrets' / 'aws_credentials.env'
         
+        # Attempt 1: Load from file (local development)
         if aws_creds_path.exists():
             load_dotenv(aws_creds_path, override=True)
             
+            # Validate credentials were actually loaded
             if os.getenv('AWS_ACCESS_KEY_ID') and os.getenv('AWS_SECRET_ACCESS_KEY'):
                 print(f"[DEBUG] ✓ AWS credentials loaded from {aws_creds_path.name}")
                 self._aws_creds_source = str(aws_creds_path.name)
+                return  # Success - credentials loaded from file
             else:
-                raise ValueError(f"AWS credentials file exists but is empty: {aws_creds_path}")
-        else:
-            raise FileNotFoundError(
-                f"AWS credentials not found!\n"
-                f"  Expected: {aws_creds_path.absolute()}\n"
-                f"  Create file with:\n"
-                f"    AWS_ACCESS_KEY_ID=AKIA...\n"
-                f"    AWS_SECRET_ACCESS_KEY=..."
-            )
-    
+                raise ValueError(
+                    f"AWS credentials file exists but is empty or invalid: {aws_creds_path}\n"
+                    f"  Expected variables: AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY"
+                )
+        
+        # Attempt 2: Check environment variables (cloud deployment)
+        if os.getenv('AWS_ACCESS_KEY_ID') and os.getenv('AWS_SECRET_ACCESS_KEY'):
+            print("[DEBUG] ✓ AWS credentials loaded from environment variables (cloud deployment)")
+            self._aws_creds_source = "environment"
+            return  # Success - credentials already in environment
+        
+        # Attempt 3: Neither source available - raise error with helpful message
+        raise FileNotFoundError(
+            f"AWS credentials not found in file OR environment!\n"
+            f"\n"
+            f"LOCAL DEVELOPMENT:\n"
+            f"  Expected file: {aws_creds_path.absolute()}\n"
+            f"  Create file with:\n"
+            f"    AWS_ACCESS_KEY_ID=AKIA...\n"
+            f"    AWS_SECRET_ACCESS_KEY=...\n"
+            f"    AWS_DEFAULT_REGION=us-east-1\n"
+            f"\n"
+            f"CLOUD DEPLOYMENT (Sevalla/Lambda):\n"
+            f"  Set environment variables in platform dashboard:\n"
+            f"    AWS_ACCESS_KEY_ID\n"
+            f"    AWS_SECRET_ACCESS_KEY\n"
+            f"    AWS_DEFAULT_REGION\n"
+            f"\n"
+            f"Current check status:\n"
+            f"  File exists: {aws_creds_path.exists()}\n"
+            f"  ENV AWS_ACCESS_KEY_ID: {'SET' if os.getenv('AWS_ACCESS_KEY_ID') else 'NOT SET'}\n"
+            f"  ENV AWS_SECRET_ACCESS_KEY: {'SET' if os.getenv('AWS_SECRET_ACCESS_KEY') else 'NOT SET'}"
+        )
+
     def _load_ml_credentials(self):
         """Load ML API keys from .aws_secrets/aws_credentials.env (same file)"""
         # Already loaded in _load_aws_credentials
+        # No additional action needed - credentials are in os.environ
         pass
-    
+
+
     # ========== AWS Configuration ==========
     
     @property
@@ -948,3 +986,38 @@ if __name__ == "__main__":
         import traceback
         traceback.print_exc()
         print("\n" + "=" * 80)
+
+
+
+
+
+
+"""
+Legacy code for AWS credentials loading from .env file
+===========================================================================
+
+    def _load_aws_credentials(self):
+        aws_creds_path = self.model_root / 'finrag_ml_tg1' / '.aws_secrets' / 'aws_credentials.env'
+        
+        if aws_creds_path.exists():
+            load_dotenv(aws_creds_path, override=True)
+            
+            if os.getenv('AWS_ACCESS_KEY_ID') and os.getenv('AWS_SECRET_ACCESS_KEY'):
+                print(f"[DEBUG] ✓ AWS credentials loaded from {aws_creds_path.name}")
+                self._aws_creds_source = str(aws_creds_path.name)
+            else:
+                raise ValueError(f"AWS credentials file exists but is empty: {aws_creds_path}")
+        else:
+            raise FileNotFoundError(
+                f"AWS credentials not found!\n"
+                f"  Expected: {aws_creds_path.absolute()}\n"
+                f"  Create file with:\n"
+                f"    AWS_ACCESS_KEY_ID=AKIA...\n"
+                f"    AWS_SECRET_ACCESS_KEY=..."
+            )
+    
+    def _load_ml_credentials(self):
+        # Already loaded in _load_aws_credentials
+        pass
+===========================================================================
+"""
