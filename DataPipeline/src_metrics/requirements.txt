@@ -4,7 +4,6 @@ edgartools
 requests
 datetime
 boto3
-apache-airflow>=2.7.0
 hishel==0.0.30
 
 # # Testing dependencies
