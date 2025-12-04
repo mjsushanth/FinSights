@@ -2,6 +2,9 @@ import os
 import sys
 from datetime import datetime
 import analytical_layer as al
+from dotenv import load_dotenv
+
+load_dotenv()
 
 def main():
     print("Starting GitHub Actions Metrics Pipeline...")

@@ -1,0 +1,11 @@
+{
+  "start_year": 2024,
+  "end_year": 2025,
+  "merged": true,
+  "reason": "Merged: new 2-year layer has strictly better coverage.",
+  "rows_new": 870,
+  "rows_prev": 6532,
+  "missing_prev": 84,
+  "missing_new": 84,
+  "run_timestamp_utc": "2025-12-04T04:19:40.660594"
+}
