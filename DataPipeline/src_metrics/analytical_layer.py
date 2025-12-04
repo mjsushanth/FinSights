@@ -10,7 +10,7 @@ from typing import List, Dict
 import numpy as np
 import pandas as pd
 from edgar import set_identity, Company, MultiFinancials
-
+from pathlib import Path
 from gaap_aliases import GAAP_ALIASES  
 
 from typing import Set, Dict, Any
