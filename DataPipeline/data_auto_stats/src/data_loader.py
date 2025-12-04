@@ -72,13 +72,13 @@ class SECDataLoader:
     
     def _init_s3(self):
         """Initialize S3 client with credentials"""
-        # Load AWS credentials from .aws_secrets/aws_credentials.env
-        secrets_path = Path(__file__).parent.parent / '.aws_secrets' / 'aws_credentials.env'
-        if secrets_path.exists():
-            load_dotenv(secrets_path)
-            logger.info(f"Loaded AWS credentials from {secrets_path}")
+        # Load AWS credentials from root .env file
+        env_path = Path(__file__).parent.parent.parent / '.env'  # Go up to DataPipeline root
+        if env_path.exists():
+            load_dotenv(env_path)
+            logger.info(f"Loaded AWS credentials from {env_path}")
         else:
-            logger.warning(f"AWS credentials file not found at {secrets_path}, using default credentials")
+            logger.warning(f".env file not found at {env_path}, using default credentials")
         
         # Initialize S3 client
         self.s3 = boto3.client(
