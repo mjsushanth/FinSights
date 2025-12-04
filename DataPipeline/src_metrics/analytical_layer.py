@@ -928,6 +928,28 @@ def compute_total_missing_derived(df: pd.DataFrame, years: set[int]) -> int:
 # Helper: S3 upload
 # ------------------------------------------------------------------------------
 
+
+
+
+
+
+def load_final_parquet_from_s3():
+
+    bucket = os.getenv("FINRAG_S3_BUCKET", "sentence-data-ingestion")
+    base_prefix = "DATA_MERGE_ASSETS/FINRAG_FACT_METRICS"
+
+    # Keep the same key as your earlier logs (analytical_layer_metrics_final.parquet)
+    parquet_key  = f"{base_prefix}/analytical_layer_metrics_final.parquet"
+
+    s3 = boto3.client("s3")
+    s3.download_file(Bucket=bucket, Key=parquet_key, Filename="analytical_layer_metrics_final.parquet")
+    return "analytical_layer_metrics_final.parquet" 
+
+
+
+
+
+
 def upload_results_to_s3(
     final_parquet_path: str,
     metadata_path: str,
@@ -1202,7 +1224,7 @@ def run_analytical_layer_pipeline(
         summary["reason"]      = "Initialized final parquet with new 2-year layer (no previous data)."
         summary["missing_new"] = int(compute_total_missing_derived(df_new, last2_years))
     else:
-        df_prev = pd.read_parquet(final_parquet_path)
+        df_prev = load_final_parquet_from_s3()
         df_prev["year"] = df_prev["year"].astype(int)
         summary["rows_prev"] = int(len(df_prev))
 
