@@ -552,6 +552,31 @@ GAAP_ALIASES = {
         "aliases": [
             "Deferred Tax And Other Liabilities Noncurrent",
         ],
+      "OtherLiabilitiesCurrent": {
+        "canonical_key": "other_liabilities_current",
+        "human_label": "Other Liabilities, Current",
+        "unit": "USD",
+    },
+        "VariableInterestEntityActivityBetweenVIEAndEntityRevenues": {
+        "canonical_key": "vie_activity_between_vie_and_entity_revenues",
+        "human_label": "VIE Activity Between VIE and Entity Revenues",
+        "unit": "USD",
+    },
+ 
+    "EquityMethodInvestmentSummarizedFinancialInformationGrossProfitLoss": {
+        "canonical_key": "equity_method_investment_gross_profit_loss",
+        "human_label": "Equity Method Investment Summarized Gross Profit (Loss)",
+        "unit": "USD",
+    },
+ 
+    "NetIncomeLossPerOutstandingLimitedPartnershipUnitDiluted": {
+        "canonical_key": "net_income_loss_per_lp_unit_diluted",
+        "human_label": (
+            "Net Income (Loss) per Outstanding Limited Partnership Unit, Diluted"
+        ),
+        "unit": "USD_per_unit",  # EPS-style metric
+    },
+    
     }
 }
 
