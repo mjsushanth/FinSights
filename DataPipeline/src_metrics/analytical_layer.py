@@ -1224,7 +1224,7 @@ def run_analytical_layer_pipeline(
         summary["reason"]      = "Initialized final parquet with new 2-year layer (no previous data)."
         summary["missing_new"] = int(compute_total_missing_derived(df_new, last2_years))
     else:
-        df_prev = load_final_parquet_from_s3()
+        df_prev = pd.read_parquet(load_final_parquet_from_s3())
         df_prev["year"] = df_prev["year"].astype(int)
         summary["rows_prev"] = int(len(df_prev))
 
