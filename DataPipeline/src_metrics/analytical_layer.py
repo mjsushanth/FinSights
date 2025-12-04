@@ -456,7 +456,7 @@ def get_total_liabilities_series(bs_df: pd.DataFrame) -> pd.Series:
 
 def fetch_10k_facts_for_analytical_layer(cik: str) -> pd.DataFrame:
     """
-    Uses EntityFacts.query() to build a GAAP facts table:
+    Uses EntityFacts.query() to build a GAAP facts tables:
 
     cik, ticker, year,
     metric_gaap, metric_code, metric_key, metric_label,
