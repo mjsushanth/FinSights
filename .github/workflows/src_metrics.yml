@@ -1,39 +1,38 @@
-name: Src Metrics CI
+name: Src Metrics CI 
 
 on:
   push:
     paths:
       - 'DataPipeline/src_metrics/**'
   workflow_dispatch:
-    
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch'
-    
+
     steps:
-    - uses: actions/checkout@v3
+      - uses: actions/checkout@v3
 
-    - name: Set up Python 3.11
-      uses: actions/setup-python@v4
-      with:
-        python-version: '3.11'
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
 
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        if [ -f DataPipeline/src_metrics/requirements.txt ]; then pip install -r DataPipeline/src_metrics/requirements.txt; fi
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
 
-    - name: Run Metrics Pipeline
-      env:
-        EDGAR_IDENTITY: ${{ secrets.EDGAR_IDENTITY }}
-        AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        AWS_REGION: ${{ secrets.AWS_REGION || 'us-east-1' }}
-        FINRAG_S3_BUCKET: ${{ secrets.FINRAG_S3_BUCKET || 'sentence-data-ingestion' }}
-        ANALYTICAL_LAYER_BASE_DIR: 'metrics_output'
-        PYTHONPATH: ${{ github.workspace }}/DataPipeline/src_metrics
-      run: |
-        cd DataPipeline/src_metrics
-        python run_pipeline_gh.py
+      - name: Build Docker image
+        run: |
+          docker build -t metrics-app DataPipeline/src_metrics
+
+      - name: Run Docker container one time
+        run: |
+          docker run --rm \
+            -e EDGAR_IDENTITY=${{ secrets.EDGAR_IDENTITY }} \
+            -e AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }} \
+            -e AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }} \
+            -e AWS_REGION=${{ secrets.AWS_REGION || 'us-east-1' }} \
+            -e FINRAG_S3_BUCKET=${{ secrets.FINRAG_S3_BUCKET || 'sentence-data-ingestion' }} \
+            -e ANALYTICAL_LAYER_BASE_DIR='metrics_output' \
+            metrics-app
