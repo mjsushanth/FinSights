@@ -471,75 +471,33 @@ def fetch_10k_facts_for_analytical_layer(cik: str) -> pd.DataFrame:
 
     rows = []
 
-    # Convert to DataFrame first (edgartools v3)
-    facts_df = facts.to_pandas()
-    
     for concept in CONCEPTS:
         for year in range(START_YEAR, END_YEAR + 1):
-            # Filter in pandas
-            # We need to handle potential missing columns or empty DataFrame
-            if facts_df.empty:
-                continue
-                
-            # Filter by concept
-            # Note: 'concept' column might be named differently, usually 'concept' or 'tag'
-            # In v3 it is often 'concept'
-            if "concept" not in facts_df.columns:
-                 # Fallback or check if it's 'tag'
-                 col = "tag" if "tag" in facts_df.columns else "concept"
-            else:
-                 col = "concept"
+            q = (
+                facts.query()
+                     .by_concept(concept)           # e.g. "NetIncomeLoss"
+                     .by_form_type(FORMS_10K)       # 10-K / 10-K/A
+                     .by_fiscal_year(year)
+                     .sort_by("filing_date", ascending=True)
+            )
 
-            # Filter by form type (10-K)
-            # Filter by fiscal year
-            # We look for rows where:
-            #  - concept == concept
-            #  - form in FORMS_10K
-            #  - fiscal_year == year
-            
-            # Ensure columns exist (using a more lenient check for core columns)
-            # We need at least: concept/tag, form, fiscal_year, filing_date, value/numeric_value
-            if col not in facts_df.columns or "form" not in facts_df.columns or "fiscal_year" not in facts_df.columns:
-                continue
-
-            q = facts_df[
-                (facts_df[col] == concept) & 
-                (facts_df["form"].isin(FORMS_10K)) & 
-                (facts_df["fiscal_year"] == year)
-            ]
-            
-            if "filing_date" in q.columns:
-                q = q.sort_values("filing_date", ascending=True)
-
-            # Select relevant columns if they exist
-            available_cols = [c for c in [col, "numeric_value", "value", "unit", "fiscal_year", "fiscal_period", "filing_date", "form", "accession_number", "accession"] if c in q.columns]
-            dfp = q[available_cols]
-
+            dfp = q.to_dataframe(
+                "concept", "numeric_value", "unit",
+                "fiscal_year", "fiscal_period",
+                "filing_date", "form_type", "accession"
+            )
             if dfp is None or dfp.empty:
                 continue
 
             # ✅ keep ONLY the last-filed metric for that year & concept
-            sort_cols = []
-            if "fiscal_year" in dfp.columns: sort_cols.append("fiscal_year")
-            if "filing_date" in dfp.columns: sort_cols.append("filing_date")
-            
-            if sort_cols:
-                dfp = dfp.sort_values(sort_cols).tail(1)
-            else:
-                dfp = dfp.tail(1)
+            dfp = dfp.sort_values(["fiscal_year", "filing_date"]).tail(1)
 
             for _, r in dfp.iterrows():
-                val = r.get("numeric_value") if "numeric_value" in r else r.get("value")
+                val = r.get("numeric_value", r.get("value"))
                 if val is None:
                     continue
-                
-                # Normalize column access
-                units = r.get("unit")
-                fd = r.get("filing_date")
-                acc = r.get("accession_number") if "accession_number" in r else r.get("accession")
-                form_val = r.get("form")
 
-                metric_code = r[col]           # ex: "NetIncomeLoss"
+                metric_code = r["concept"]           # ex: "NetIncomeLoss"
                 metric_gaap = metric_code
                 metric_key  = normalize_metric_key(metric_gaap)
                 metric_lbl  = normalize_metric_label(metric_gaap)
