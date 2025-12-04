@@ -23,6 +23,11 @@ Request format: {"question": str, "include_kpi": bool, "include_rag": bool, "mod
 Success response has: query, answer, context, metadata
 Error response has: query, error, error_type, stage, timestamp
 
+Important updates on the flow:
+No BACKEND_URL env var set - finSightClient() called with no arguments, None, 
+                             os.getenv("BACKEND_URL", "http://localhost:8000") returns default
+CLOUD - os.getenv("BACKEND_URL", ...) returns "http://backend:8000" // (K8s service DNS).
+
 -----------------------------------------------------------------------------------------------------------------
 
 Usage:
@@ -49,7 +54,9 @@ Usage:
 import requests
 from typing import Dict, Optional, Any
 from datetime import datetime
-
+import os
+from config import BACKEND_URL, API_TIMEOUT
+## why os?: things are gonna get on cloud soon. we use os.environ. > patterns. 
 
 class finSightClient:
     """
@@ -61,8 +68,10 @@ class finSightClient:
     """
     
     def __init__(
-        self, 
-        base_url: str = "http://localhost:8000",
+        self,
+        ## base_url: str = "http://localhost:8000", 
+        ## hardcoded default - changed now. use None.
+        base_url: Optional[str] = None,
         timeout: int = 120
     ):
         """
@@ -72,7 +81,17 @@ class finSightClient:
             base_url: Backend API URL
             timeout: Request timeout (queries can take 10-15s)
         """
-        self.base_url = base_url.rstrip('/')  # Remove trailing slash
+        
+        # Environment-aware backend URL
+        # Local: Uses default localhost:8000
+        # Cloud: Uses Sevalla's service DNS (http://backend:8000)
+        if base_url is None:
+            base_url = BACKEND_URL  # From config.py
+        
+        if timeout is None:
+            timeout = API_TIMEOUT  # From config.py
+        
+        self.base_url = base_url.rstrip('/')
         self.timeout = timeout
     
     

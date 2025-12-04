@@ -1,0 +1,170 @@
+# ModelPipeline/sevalla_assets/requirements-sevalla.txt
+# Minimal production dependencies for Sevalla deployment
+
+# ============================================================================
+# CORE DATA PROCESSING (MANDATORY)
+# ============================================================================
+polars>=1.0.0
+
+# C code incompatible with Python 3.12's NumPy changes.
+# pandas==2.1.0               # Specific version from your project
+
+pandas>=2.2.0
+
+# now oudated because; disutils based conflict, deprecated package
+# numpy==1.24.3               # Specific version from your project
+numpy>=1.26.0,<2.0
+pyarrow>=14.0.0             # Parquet file reading
+
+# ============================================================================
+# TEXT PROCESSING (MANDATORY - Used in MetricPipeline)
+# ============================================================================
+regex>=2023.12.0            # Used in metric pipeline
+
+# unmaintained, broken on 3.12 // New Levenshtein (capitalized) → actively maintained, supports 3.12
+# rapidfuzz → faster replacement for fuzzywuzzy, includes fuzzy matching.
+# python-Levenshtein==0.21.1  # Fuzzy matching for entity extraction
+# fuzzywuzzy==0.18.0          # Fuzzy string matching
+
+Levenshtein>=0.25.0
+rapidfuzz>=3.0.0
+
+
+# ============================================================================
+# AWS SERVICES (MANDATORY)
+# ============================================================================
+boto3>=1.35.0               # S3, Bedrock API
+botocore>=1.35.0
+
+# ============================================================================
+# CONFIGURATION & SECRETS (MANDATORY)
+# ============================================================================
+pyyaml>=6.0.0               # ml_config.yaml reading
+python-dotenv>=1.0.0        # .env file support (local dev)
+
+# ============================================================================
+# WEB FRAMEWORK - BACKEND (MANDATORY)
+# ============================================================================
+fastapi==0.109.0
+uvicorn[standard]==0.27.0
+pydantic==2.5.3
+pydantic-settings==2.1.0
+
+# ============================================================================
+# WEB FRAMEWORK - FRONTEND
+# ============================================================================
+# streamlit>=1.30.0
+# requests>=2.31.0            # Frontend calls FastAPI backend
+
+# ============================================================================
+# LOGGING (MANDATORY)
+# ============================================================================
+loguru==0.7.2
+
+# ============================================================================
+# EXCLUDED FROM SEVALLA (Evaluation/Development Only)
+# ============================================================================
+# torch                     # NOT NEEDED (no local inference)
+# transformers              # NOT NEEDED (use Bedrock API)
+# bert-score                # EVALUATION ONLY
+# scikit-learn              # NOT NEEDED (check if used)
+# sentence-transformers     # NOT NEEDED (Bedrock generates embeddings)
+# jupyter                   # DEVELOPMENT ONLY
+# notebook                  # DEVELOPMENT ONLY
+# matplotlib                # EVALUATION ONLY
+# seaborn                   # EVALUATION ONLY
+# nltk                      # NOT USED (confirmed)
+
+
+# # ============================================================================
+# # TEST 1: Create Isolated Environment with UV
+# # ============================================================================
+
+# # Install uv if not already installed
+# # curl -LsSf https://astral.sh/uv/install.sh | sh
+
+# # Create fresh virtual environment
+# uv venv venv_sevalla_test --python 3.11
+
+# # Activate environment (Windows)
+# venv_sevalla_test\Scripts\activate
+
+# # Or activate (Linux/Mac)
+# # source venv_sevalla_test/bin/activate
+
+# # ============================================================================
+# # TEST 2: Install Minimal Dependencies with UV (FAST!)
+# # ============================================================================
+
+# # UV installs packages in parallel - 5-10x faster than pip
+# uv pip install -r sevalla_assets/requirements-sevalla.txt
+
+# # Expected time: 2-3 minutes (vs 10-15 min with pip)
+
+# # ============================================================================
+# # TEST 3: Verify Imports Work
+# # ============================================================================
+
+# python -c "from finrag_ml_tg1.rag_modules_src.synthesis_pipeline.orchestrator import answer_query; print('✓ Orchestrator import successful')"
+
+# python -c "from serving.backend.api_service import app; print('✓ FastAPI import successful')"
+
+# python -c "import streamlit; print('✓ Streamlit import successful')"
+
+# # ============================================================================
+# # TEST 4: Test Full Backend Startup
+# # ============================================================================
+
+# # Set environment variables for testing
+# set AWS_ACCESS_KEY_ID=<your-key>
+# set AWS_SECRET_ACCESS_KEY=<your-secret>
+# set AWS_DEFAULT_REGION=us-east-1
+
+# # Start backend (should work with minimal requirements)
+# uvicorn serving.backend.api_service:app --host 0.0.0.0 --port 8000
+
+# # In another terminal, test health endpoint
+# curl http://localhost:8000/health
+
+# # ============================================================================
+# # TEST 5: Test Full Query (Critical!)
+# # ============================================================================
+
+# python -c "
+# from pathlib import Path
+# from finrag_ml_tg1.rag_modules_src.synthesis_pipeline.orchestrator import answer_query
+# import os
+
+# # Verify credentials loaded
+# print(f'AWS_ACCESS_KEY_ID: {os.getenv(\"AWS_ACCESS_KEY_ID\", \"NOT SET\")}')
+
+# result = answer_query(
+#     query='What was Apple revenue in 2020?',
+#     model_root=Path('.'),
+#     include_kpi=True,
+#     include_rag=False
+# )
+
+# if 'error' in result:
+#     print(f'❌ ERROR: {result[\"error\"]}')
+# else:
+#     print(f'✓ Query successful!')
+#     print(f'Answer: {result[\"answer\"][:100]}...')
+# "
+
+# # ============================================================================
+# # TEST 6: If Missing Dependencies Found
+# # ============================================================================
+
+# # Add missing package to requirements-sevalla.txt, then:
+# uv pip install <missing-package>
+
+# # Verify it works, then update requirements file
+# uv pip freeze | grep <missing-package> >> sevalla_assets/requirements-sevalla.txt
+
+# # ============================================================================
+# # CLEANUP: Deactivate and Remove Test Environment
+# # ============================================================================
+
+# deactivate
+# rm -rf venv_sevalla_test  # Or manually delete folder

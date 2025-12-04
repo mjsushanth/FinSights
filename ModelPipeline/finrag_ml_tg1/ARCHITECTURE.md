@@ -105,9 +105,29 @@ User Raw Query
 - Dimension Tables: Companies, Sections (small)
 - Metric Data: downloaded_data.json (KPI lookup)
 
-
 ## Next Steps
 → See [IMPLEMENTATION_GUIDE.md](IMPLEMENTATION_GUIDE.md) for detailed technical implementation across 10 major development phases.
+
+
+### Dual Environment Approach: (Potential)
+
+- ENVIRONMENT 1: venv_ml_rag (FULL - Keep for Analytics)
+```
+  Location: finrag_ml_tg1/venv_ml_rag/
+  Uses: environments/requirements.txt
+  Size: ~2-3GB
+  Purpose: Notebooks, eval metrics, torch, transformers
+  When: Running platform_core_notebooks/, validation work
+```
+
+- ENVIRONMENT 2: venv_serving (MINIMAL - New for Deployment)
+```
+  Location: finrag_ml_tg1/venv_serving/  (NEW!)
+  Uses: environments/requirements-sevalla.txt
+  Size: ~500MB
+  Purpose: Backend + Frontend serving ONLY
+  When: Running start_finrag, testing deployment, Sevalla cloud
+```
 
 
 ### Architecture Author:

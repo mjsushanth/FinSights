@@ -1,8 +1,8 @@
 ## Prerequisites
-- Python 3.11 installed
+- Python 3.12 installed
 - Git (to clone the repository)
 - Windows: PowerShell | Mac/Linux: Terminal
-- Please ensure your respective python (3.11) is cleanly installed, and your PATH variables are set correctly.
+- Please ensure your respective python (3.12) is cleanly installed, and your PATH variables are set correctly.
 
 ### Clone the Repository
 ```bash
