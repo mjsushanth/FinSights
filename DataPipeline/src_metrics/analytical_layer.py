@@ -1158,7 +1158,7 @@ def run_analytical_layer_pipeline(
 
     os.makedirs(base_dir, exist_ok=True)
 
-    # Override global year range used by fetch_10k_facts_for_analytical_layer
+    # Override global year range used by fetch_10k_facts_for_analytical_layers
     global START_YEAR, END_YEAR
     START_YEAR = start_year
     END_YEAR   = end_year
