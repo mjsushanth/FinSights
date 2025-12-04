@@ -19,7 +19,10 @@ from dotenv import load_dotenv
 # Import existing config
 from config import MONITORING_CONFIG
 
-load_dotenv('.env.email')
+# load_dotenv('.env.email')
+# Load environment variables from root .env file
+ROOT_DIR = Path(__file__).parent.parent.parent  # DataPipeline root
+load_dotenv(ROOT_DIR / '.env')
 
 logger = logging.getLogger(__name__)
 

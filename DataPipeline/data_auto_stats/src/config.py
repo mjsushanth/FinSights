@@ -9,7 +9,9 @@ import yaml
 from dotenv import load_dotenv
 
 # Load environment variables
-load_dotenv('.env.email')
+# load_dotenv('.env.email')
+ROOT_DIR = Path(__file__).parent.parent.parent  # DataPipeline root
+load_dotenv(ROOT_DIR / '.env')
 
 # Base paths
 BASE_DIR = Path(__file__).parent.parent.absolute()
