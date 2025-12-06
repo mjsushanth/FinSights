@@ -1,5 +1,7 @@
 # LLMOPS TECHNICAL COMPLIANCE
 
+This document details the technical compliance of the FinRAG ModelPipeline with respect to MLOps/LLMOPS best practices, at our scale, according to the instructor's guidelines documents and guidance from class.
+
 ### 1. Executive Summary
 - Brief overview: LLM/RAG vs traditional ML work, model and validation concepts.
 - RAG validation requires retrieval-specific metrics (Hit@k, MRR) distinct from traditional supervised ML validation (accuracy/F1).
@@ -94,8 +96,9 @@ Average Cosine: 0.675        ← GOOD
    - Test HTTP client independently; monolith requires mocking entire Streamlit runtime.
    - ( Keywords: Dependency Inversion Principles / Contract-Driven / Solid Patterns )
 
-### 11. Key Decisions for Design-Choices:
 
+
+### 11. Key Decisions for Design-Choices:
 1. Monorepo Pattern / Services with Frontend - Backend - ML Code.
    - Frontend is the ONLY consumer of this specific backend API, monorepo structure.
    - Serving layer requires access to ModelPipeline/ as the sys.path root for orchestrator imports.
@@ -122,17 +125,26 @@ Average Cosine: 0.675        ← GOOD
    - Boundary Enforcement, Basic Deployment Independence, Dependency Conflict Avoidance, Build Time Efficiency.
    - Makes no sense for Web-Dev team UI/UX to install Data Engineering team's libraries. Same goes for ML research team.
    - Example:
-     - `venv_ml_rag:      3GB`   - boto3, transformers, sentence-transformers, polars, duckdb
+     - `venv_ml_rag:      3GB`   - boto3, transformers, sentence-transformers, polars, bluert, torch etc.
      - `venv_frontend:    50MB`  - streamlit, requests, pandas (minimal)
+     - !! updated. now, we have 3 environments. `venv_serving` within 0.3GB for 'ML APP' serving, as we dont want to burden the consumers to have all the libs which developers, researchers use!
+6. Update! Logics around single-client instantiations and caching, making microservices architecture 'cleaner', making sure backend, frontend, base_urls have clear separations and configurability; such new refactors and work has been done recently.
 
 
+### P.S.: About minimal tech debt:
+- 95% of modules: adapters, rag modules, configs loader modules, data loaders/streamers, orchestrator, synthesis modules, etc. and lightweight logging: are perfectly modular.
+- In one module, conceptually, 'Retrieval backend spines' (`platform_core_notebooks`), I recognize some of the notebook logics aren't fully modularized python scripts - that's my tech debt, but with my current budget hours and with every other modules' work, research volume, across many weeks and months, I couldn't handle finishing it. There are only 2-4 core logics to be modularized.
+- For now, the notebooks are well-structured with clear exec flows, documented, produce high-quality visual outputs when executed. They have helpful embedding-audit execution history, they have analytic queries and tabular logs quickly after doing the rag's necessary, time-taking, cloud operations - PutVectors or Generate embeds operations. 
+- The scientific coding notebook approach is still very valuable here. They are very cleanly explained in markdown cells.
+- These are also not run for every query, they are 'Preparation' infrastructure and not daily 'Serving' infrastructure. My philosophy is that, these are handled once a year, twice a year or on-demand.
+- 'Automated gold tests' Anchors, and Gold-Suite with scores are also in notebook, with clean, visual appeal - coding. These havent been automated for 'every' run because these are expensive. They run 60+, or 100+ independent semantic searches depending on anchor sizes. Further, next sets of Gold P3 tests call LLM synthesis for final evaluation answer. They are expensive too.
 
-#### Compliance Write-up Author
-Joel Markapudi - ( markapudi.j@northeastern.edu, mjsushanth@gmail.com )
-- Please contact for any questions.
 
 #### Author's Retrospection:
 - Building FinRAG ModelPipeline required 11-13K+ lines of code across data engineering, embedding infrastructure, retrieval architecture, and validation frameworks. And countless adhoc analysis queries.
 - I hope this work exceeds traditional requirements or expectations; especially through these aspects of deterministic gold set generation, curation, multi-dimensional bias detection, business-realistic evaluation frameworks, and— achievements that emerged from months of experimentation, cloud-research, ML system-design study, and algorithmic refinement.
 
+#### Compliance Write-up Author
+Joel Markapudi - ( markapudi.j@northeastern.edu, mjsushanth@gmail.com )
+- Please contact me for any questions.
 ---
