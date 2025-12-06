@@ -58,26 +58,18 @@ app.py: doesn't need to understand deployment environments
 # Initialize API client (cached so it's only created once)
 @st.cache_resource
 def get_api_client():
-<<<<<<< Updated upstream
     """
     Get API client instance (singleton).
     Backend URL is read from config (environment-aware).
     Local: http://localhost:8000
     Cloud: http://backend:8000 (set by Sevalla)
     """
-    return finSightClient(base_url=BACKEND_URL, timeout=API_TIMEOUT)
+    return FinSightClient(base_url=BACKEND_URL, timeout=API_TIMEOUT)
     
     ## previous: option 1, 2. 
-    ## return finSightClient( base_url="http://localhost:8000", timeout=120)
-    ## return finSightClient()  # ← uses api_client's env logic
-=======
-    """Get API client instance (singleton)."""
-    return FinSightClient(
-        base_url="http://localhost:8000",
-        timeout=120
-    )
->>>>>>> Stashed changes
-
+    ## return FinSightClient( base_url="http://localhost:8000", timeout=120)
+    ## return FinSightClient()  # ← uses api_client's env logic
+    
 client = get_api_client()
 
 
