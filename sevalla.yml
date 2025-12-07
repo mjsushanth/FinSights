@@ -1,25 +1,17 @@
-# ModelPipeline/sevalla_assets/sevalla.yml
-version: 1
+# sevalla.yml (at Finsights-MLOps/FinSights/ root)
 
 services:
-  # Backend Service: FastAPI + ML Orchestrator
   backend:
     type: web
-    runtime: python:3.12  
     
     buildCommand: |
+      cd ModelPipeline
       pip install uv
       uv pip install -r finrag_ml_tg1/environments/requirements_sevalla.txt
     
-    startCommand: uvicorn serving.backend.api_service:app --host 0.0.0.0 --port 8000
-    
-    healthCheck:
-      path: /health
-      interval: 30
-    
-    resources:
-      memory: 2GB
-      cpu: 1.0
+    startCommand: |
+      cd ModelPipeline
+      uvicorn serving.backend.api_service:app --host 0.0.0.0 --port 8000
     
     envVars:
       - key: AWS_ACCESS_KEY_ID
@@ -30,22 +22,25 @@ services:
         value: us-east-1
       - key: LOG_LEVEL
         value: INFO
+    
+    healthCheckPath: /health
+    
+    plan: standard  # 1 CPU, 2GB RAM
   
-  # Frontend Service: Streamlit UI
   frontend:
     type: web
-    runtime: python:3.12
     
     buildCommand: |
+      cd ModelPipeline
       pip install uv
       uv pip install -r serving/frontend/requirements.txt
     
-    startCommand: streamlit run serving/frontend/app.py --server.port 8501 --server.address 0.0.0.0 --server.headless true
-    
-    resources:
-      memory: 512MB
-      cpu: 0.5
+    startCommand: |
+      cd ModelPipeline
+      streamlit run serving/frontend/app.py --server.port 8501 --server.address 0.0.0.0 --server.headless true
     
     envVars:
       - key: BACKEND_URL
         value: http://backend:8000
+    
+    plan: starter  # 0.5 CPU, 0.5GB RAM
