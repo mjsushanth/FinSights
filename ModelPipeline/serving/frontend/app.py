@@ -1,7 +1,12 @@
 # frontend/app.py
 """
 FinSight - Financial Document Intelligence System
-"""
+
+---------------------------------------------------------------------------
+
+cd ModelPipeline
+.\serving\frontend\venv_frontend\Scripts\Activate.ps1
+cd """
 
 import streamlit as st
 from api_client import FinSightClient
@@ -24,6 +29,15 @@ st.set_page_config(
 # INITIALIZATION
 # ============================================================================
 
+# """
+# Single source of truth: Only api_client.py knows about URLs
+# Thought p deep about this one, what to do.
+# local + cloud without app.py changes, should work. Env awareness solid goes to whom? it goes to- api_client.py
+# app.py: doesn't need to understand deployment environments
+# """
+
+
+# Initialize session state
 init_session_state()
 
 @st.cache_resource
