@@ -72,6 +72,32 @@ Example: `ModelPipeline\finrag_ml_tg1\rag_modules_src\synthesis_pipeline\models.
  ┗ 📜 __init__.py                               # Python package initialization for rag_modules_src
 ```
 
+### - Important Testing and Isolation Notebooks:
+```
+📦 rag_modules_src
+ ┣ 📂 01_Isolation_Test_NBS/                    # Component-level isolation tests for RAG pipeline stages
+ ┃ ┣ 📜 00_ITest_SupplyLine1.ipynb             # Tests initial data ingestion and entity loading mechanisms
+ ┃ ┣ 📜 01_ITest_Supply12_EntityEmbed.ipynb    # Validates entity extraction and embedding generation pipeline
+ ┃ ┣ 📜 02_ITest_RetrievalSpine_Steps4to7.ipynb # Tests core retrieval logic: query embedding → vector search → scoring
+ ┃ ┣ 📜 03_ITest_Variant_Retrieve.ipynb        # Validates alternative retrieval strategies and performance variants
+ ┃ ┣ 📜 05_ITest_ExpanderDedupe.ipynb          # Tests context expansion and duplicate sentence deduplication logic
+ ┃ ┣ 📜 06_ITest_RetrievalSpine_Steps8to10.ipynb # Validates reranking, context assembly, and final retrieval output
+ ┃ ┗ 📜 07_ITest_Assembled_Serve_1_2.ipynb     # End-to-end test: retrieval pipeline → formatted context for LLM serving
+ ┃
+ ┣ 📂 02_LLMEval_Notebooks/                     # LLM inference evaluation and response quality validation
+ ┃ ┣ 📜 08_ITest_Start_To_LLM_Serve.ipynb      # Full pipeline test: query → retrieval → LLM generation → response
+ ┃ ┣ 📜 09_ITest_LLM_Serves_P3.ipynb           # Extended LLM serving tests with production prompt templates
+ ┃ ┣ 📜 10_ITest_LLM_Log_Analytics.ipynb       # LLM request/response logging, token usage, and cost analysis
+ ┃ ┣ 📜 11_ITest_AnsScoring.ipynb              # Answer quality evaluation: ROUGE-L, BERTScore, factual accuracy metrics
+ ┃ ┗ 📜 12_ITest_Func_BussToMetric.ipynb       # Tests structured KPI extraction from business-level queries
+ ┃
+ ┗ 📂 03_LambdaRefactor_Tests/                  # AWS Lambda deployment architecture and abstraction layer tests
+   ┣ 📜 16_DataLoaderFactory_Tests.ipynb        # Tests DataLoader factory pattern for environment-agnostic initialization
+   ┗ 📜 17_MockLambda_S3Loader_T1.ipynb         # Validates Lambda-compatible S3 data loading with mock AWS environment
+```
+
+
+
 ### Summary of Entity-Chaining and Flows:
 **(Semantic Search + Context Assembly)**
 ```
