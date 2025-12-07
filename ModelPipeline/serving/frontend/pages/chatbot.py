@@ -1,6 +1,7 @@
 # frontend/pages/chatbot.py
 """
-FinSight Chatbot Page - RAG query interface with full sidebar. C1
+FinSight Chatbot Page - RAG query interface with full sidebar. 
+
 
 Preserves ALL existing functionality from original app.py:
 - Sidebar: System status, statistics, about, examples (via render_sidebar)
