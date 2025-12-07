@@ -179,6 +179,8 @@ datasets/
 # ============================================
 # ============================================
 
+*.ndjson
+
 # Virtual Environments for Frontend Serving
 ModelPipeline/serving/frontend/venv_frontend/
 ModelPipeline/finrag_ml_tg1/venv_ml_rag/
@@ -200,6 +202,9 @@ ModelPipeline/finrag_ml_tg1/venv_ml_rag
 ModelPipeline/finrag_ml_tg1/venv_serving
 ModelPipeline/serving/frontend/venv_frontend
 
+ModelPipeline/finrag_ml_tg1/rag_modules_src/exports/contexts
+ModelPipeline/finrag_ml_tg1/rag_modules_src/exports/responses
+
 # AWS Credentials
 ModelPipeline/finrag_ml_tg1/.aws_secrets/aws_credentials_tpad_mjs.env.txt
 ModelPipeline/finrag_ml_tg1/.aws_secrets/aws_credentials.env.txt
@@ -210,5 +215,5 @@ ModelPipeline/finrag_ml_tg1/.aws_secrets/aws_credentials.env
 /personal_notes_mjs
 personal_notes_mjs/
 
-ModelPipeline/sevalla_assets
-ModelPipeline/sevalla_assets/*
+# ModelPipeline/sevalla_assets
+# ModelPipeline/sevalla_assets/*
