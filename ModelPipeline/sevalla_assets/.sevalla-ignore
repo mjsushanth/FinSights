@@ -1,51 +1,23 @@
-# sevalla_assets/.sevalla-ignore
 
-# Python cache
-__pycache__/
-*.pyc
-*.pyo
-*.pyd
-.Python
+## "Ignore paths" and add patterns:
 
-# Virtual environments
-venv/
-venv_*/
-env/
-ENV/
+src_aws_etl/**               # Ignore entire data pipeline folder
+notebooks/**                 # Ignore notebooks
+experiments/**               # Ignore experiments  
+*.ipynb                      # Ignore all Jupyter notebooks
+*.csv                        # Ignore CSV files
+*.parquet                    # Ignore Parquet files
+data_cache/**                # Ignore data cache
+tests/**                     # Ignore tests folder
+lambda_assets/**             # Ignore Lambda artifacts
 
-# Secrets (NEVER upload!)
-.aws_secrets/
-*.env
-.env.*
-!.env.example
 
-# Development files
-.git/
-.gitignore
-.vscode/
-.idea/
+## Settings → Environment Variables
 
-# Data cache (use S3, not local)
-data_cache/
-*.parquet
-*.csv
-*.json
-
-# Notebooks & experiments
-*.ipynb
-notebooks/
-experiments/
-
-# Documentation
-*.md
-!DEPLOYMENT_GUIDE.md
-docs/
-
-# Testing
-tests/
-pytest.ini
-.pytest_cache/
-
-# Lambda artifacts (not needed for Sevalla)
-lambda_assets/
-*.zip
+Backend service:
+  AWS_ACCESS_KEY_ID = <your-key>
+  AWS_SECRET_ACCESS_KEY = <your-secret>
+  AWS_DEFAULT_REGION = us-east-1
+  
+Frontend service:
+  (Already set via sevalla.yml: BACKEND_URL=http://backend:8000)
