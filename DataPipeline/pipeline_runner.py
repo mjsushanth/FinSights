@@ -31,14 +31,18 @@ from typing import Callable
 # Default to the directory containing this script (project root)
 def get_base_dir() -> Path:
     """Determine the base directory for the pipeline."""
-    # First check environment variable
-    if "PIPELINE_BASE_DIR" in os.environ:
-        return Path(os.environ["PIPELINE_BASE_DIR"])
+    # # First check environment variable
+    # if "PIPELINE_BASE_DIR" in os.environ:
+    #     return Path(os.environ["PIPELINE_BASE_DIR"])
     
     # Otherwise use the directory containing this script
     return Path(__file__).parent.resolve()
 
 BASE_DIR = get_base_dir()
+# Force pipeline to run from DataPipeline folder
+if (BASE_DIR.name != "DataPipeline") and (BASE_DIR / "DataPipeline").exists():
+    BASE_DIR = BASE_DIR / "DataPipeline"
+    
 DATASETS_DIR = BASE_DIR / "datasets"
 CONFIG_DIR = BASE_DIR / "config"
 LOGS_DIR = BASE_DIR / "logs"
