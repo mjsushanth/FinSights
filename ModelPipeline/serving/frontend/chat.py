@@ -129,8 +129,8 @@ def handle_user_input(client: FinSightClient) -> None:
                 metadata = result.get("metadata", {})
                 
                 # markdown -- issues? lets attempt.
-                # st.markdown(answer)
-                st.text(answer)
+                # st.markdown(answer) / st.text, st.write
+                st.markdown(answer)
                 
                 # Add to history
                 add_assistant_message(
