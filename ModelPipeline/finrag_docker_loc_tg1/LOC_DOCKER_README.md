@@ -176,8 +176,6 @@ docker rmi finrag_docker_loc_tg1-frontend
 --- 
 
 
-
-
 ## -- Extra info while debugging networking:
 
 1. Normal Streamlit (local terminal):
@@ -198,6 +196,37 @@ Streamlit inside container sees: 172.17.0.x (Docker's internal IP)
 Container has NO IDEA host is 192.168.1.100
 ```
 - Docker's bridge network isolates the container, so Streamlit can't auto-detect your actual network IP.
+
+---
+---
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 ## Author

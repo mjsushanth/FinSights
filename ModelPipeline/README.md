@@ -40,6 +40,15 @@ FinRAG is out attempt at a production-grade financial intelligence platform that
 2. **[Quick Start with Command/Ps1 Scripts](SETUP_README.md)** → Get up and running quickly
   - Do setup with just click-install, and Run batch/sh files - launches streamlit.
 
+### CI/CD Process (or) Cloud Deployment Starts here:
+1. **[AWS Cloud Deployment Guide](./finrag_docker_loc_tg1_aws/ECS_DEPLOYMENT_GUIDE.md)** → Step-by-step ECS deployment instructions. It explains how GitHub Actions workflow (`deploy-ecs.yml`) automatically deploys your FinSights application to AWS ECS.
+
+### Monitoring:
+- Please refer to **[AWS Log Monitoring & Analytics Notebook](finrag_docker_loc_tg1_aws/AWS_LogMonitoring_Analytics.md)** for details on how we monitor logs, usage patterns, and cost trends using AWS SageMaker Studio notebooks.
+- The system monitors: **Query & Token Analysis Plots + Tables, Overall query history, Model Usage Distribution Analysis, Efficiency, Volume/Reliability, LLM-Cost Analytics** in our plots and tables.
+- At a raw level, we track input, output, total tokens, cost, context length, processing times in ms, errors and types, and the JSON bodies: **context-assembled** files for queries, and the complete **response** body from LLMs.
+- We have them all streamed directly to S3 buckets as the centralized location. It has logs/, contexts/, responses/ folders.
+
 ### **Documentation**
 - **[ARCHITECTURE.md](finrag_ml_tg1/ARCHITECTURE.md)** → Directory structure + pipeline flow diagrams
 - **[IMPLEMENTATION_GUIDE.md](finrag_ml_tg1/IMPLEMENTATION_GUIDE.md)** → Detailed technical implementation (Parts 1-10)
