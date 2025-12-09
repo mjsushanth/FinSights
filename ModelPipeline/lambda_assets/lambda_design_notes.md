@@ -1,5 +1,11 @@
+### NOT USED: Realized that ECS Fargate is a better deployment arena for this, as we want multi-service and HTTP communication, not lambda style step function architecture for this application. Cloud target has been updated and dedicated docker - ECS fargate deployment docs are now available!
+
+--- 
+
+### (Outdated knowledge/research):
 ### Container Image Deployment 
 
+```
 GitHub Repo (FinSights/)
     ↓ [GitHub Actions builds Docker image]
     ↓
@@ -11,6 +17,7 @@ Runs as: Standard container with exact directory structure
     ├── DataPipeline/
     ├── Frontend/
     └── lambda_handler.py
+```
 
 - Directory Structure WILL Be Preserved
 
