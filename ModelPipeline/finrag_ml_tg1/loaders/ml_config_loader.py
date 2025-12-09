@@ -371,7 +371,12 @@ class MLConfig:
         )
     
     def get_storage_options(self):
-        """Get Polars/PyArrow storage options for S3 access"""
+        """Get Polars/PyArrow storage options for S3 access (uses IAM role if available)"""
+        # If using IAM role, return empty dict - let AWS SDK auto-detect credentials
+        if self._aws_creds_source == "IAM_ROLE":
+            return {'aws_region': self.region}
+        
+        # Otherwise return explicit credentials
         return {
             'aws_access_key_id': self.aws_access_key,
             'aws_secret_access_key': self.aws_secret_key,
