@@ -62,6 +62,20 @@ jobs:
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v2
 
+      - name: Create ECS Cluster if not exists
+        run: |
+          # Check if cluster exists
+          if aws ecs describe-clusters --clusters ${{ env.ECS_CLUSTER }} --query "clusters[?status=='ACTIVE']" --output text | grep -q "${{ env.ECS_CLUSTER }}"; then
+            echo "✅ ECS cluster ${{ env.ECS_CLUSTER }} already exists"
+          else
+            aws ecs create-cluster \
+              --cluster-name ${{ env.ECS_CLUSTER }} \
+              --capacity-providers FARGATE FARGATE_SPOT \
+              --default-capacity-provider-strategy capacityProvider=FARGATE,weight=1
+            
+            echo "✅ Created ECS cluster: ${{ env.ECS_CLUSTER }}"
+          fi
+
       - name: Build backend Docker image
         run: |
           cd ModelPipeline
