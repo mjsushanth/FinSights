@@ -43,18 +43,26 @@ class MLConfig:
     
     def _load_aws_credentials(self):
         """
-        Load AWS credentials from file (local) OR environment (cloud).
+        Load AWS credentials from file (local) OR environment (cloud) OR IAM Role (ECS/Lambda).
         
         Priority:
-        1. Try loading from .aws_secrets/aws_credentials.env (local development)
-        2. Fall back to os.environ (cloud deployment - Sevalla/Lambda)
-        3. Raise error if neither source has credentials
+        1. Check if running in AWS environment (ECS/Lambda) - use IAM role (no credentials needed)
+        2. Try loading from .aws_secrets/aws_credentials.env (local development)
+        3. Fall back to os.environ (cloud deployment - explicit credentials)
+        4. Raise error if none available
         
-        This method works in both local and cloud environments without code changes.
+        This method works in local, cloud, and containerized environments without code changes.
         """
+        # Priority 1: Check for AWS containerized environment (ECS, Lambda)
+        # These environments use IAM roles - no explicit credentials needed
+        if os.getenv('AWS_EXECUTION_ENV') or os.getenv('AWS_LAMBDA_FUNCTION_NAME') or os.getenv('ECS_CONTAINER_METADATA_URI'):
+            print("[DEBUG] ✓ AWS containerized environment detected (ECS/Lambda) - using IAM role")
+            self._aws_creds_source = "IAM_ROLE"
+            return  # boto3 will automatically use the attached IAM role
+        
         aws_creds_path = self.model_root / 'finrag_ml_tg1' / '.aws_secrets' / 'aws_credentials.env'
         
-        # Attempt 1: Load from file (local development)
+        # Priority 2: Load from file (local development)
         if aws_creds_path.exists():
             load_dotenv(aws_creds_path, override=True)
             
@@ -69,15 +77,15 @@ class MLConfig:
                     f"  Expected variables: AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY"
                 )
         
-        # Attempt 2: Check environment variables (cloud deployment)
+        # Priority 3: Check environment variables (cloud deployment with explicit credentials)
         if os.getenv('AWS_ACCESS_KEY_ID') and os.getenv('AWS_SECRET_ACCESS_KEY'):
             print("[DEBUG] ✓ AWS credentials loaded from environment variables (cloud deployment)")
             self._aws_creds_source = "environment"
             return  # Success - credentials already in environment
         
-        # Attempt 3: Neither source available - raise error with helpful message
+        # Priority 4: Neither source available - raise error with helpful message
         raise FileNotFoundError(
-            f"AWS credentials not found in file OR environment!\n"
+            f"[WARNING] AWS credentials not found in file OR environment!\n"
             f"\n"
             f"LOCAL DEVELOPMENT:\n"
             f"  Expected file: {aws_creds_path.absolute()}\n"
@@ -331,8 +339,14 @@ class MLConfig:
         return f"s3://{self.bucket}/{key}"
     
     def get_s3_client(self):
-        """Create boto3 S3 client with loaded credentials"""
+        """Create boto3 S3 client (uses IAM role if available, otherwise explicit credentials)"""
         import boto3
+        
+        # If using IAM role, let boto3 auto-detect credentials
+        if self._aws_creds_source == "IAM_ROLE":
+            return boto3.client('s3', region_name=self.region)
+        
+        # Otherwise use explicit credentials
         return boto3.client(
             's3',
             aws_access_key_id=self.aws_access_key,
@@ -341,8 +355,14 @@ class MLConfig:
         )
     
     def get_bedrock_client(self):
-        """Create Bedrock runtime client for embeddings"""
+        """Create Bedrock runtime client (uses IAM role if available, otherwise explicit credentials)"""
         import boto3
+        
+        # If using IAM role, let boto3 auto-detect credentials
+        if self._aws_creds_source == "IAM_ROLE":
+            return boto3.client('bedrock-runtime', region_name=self.bedrock_region)
+        
+        # Otherwise use explicit credentials
         return boto3.client(
             service_name='bedrock-runtime',
             region_name=self.bedrock_region,
