@@ -24,28 +24,28 @@
 PROJECT: FinSights_Log_Analytics
 ═══════════════════════════════════════════════════════════════
 
-IDENTIFIERS:
-  Domain ID:        dzd-5znn554opul4h3
-  Project ID:       b8r202203aqcvb
-  Notebook ID:      aq6jx4r7wql7on
-  AWS Region:       us-east-1
-  Account ID:       729472661729
+- IDENTIFIERS:
+  - Domain ID:        dzd-5znn554opul4h3
+  - Project ID:       b8r202203aqcvb
+  - Notebook ID:      aq6jx4r7wql7on
+  - AWS Region:       us-east-1
+  - Account ID:       729472661729
 
-URLS:
-  Domain:           https://dzd-5znn554opul4h3.sagemaker.us-east-1.on.aws/
-  Project:          https://dzd-5znn554opul4h3.sagemaker.us-east-1.on.aws/projects/b8r202203aqcvb
-  Notebook:         https://dzd-5znn554opul4h3.sagemaker.us-east-1.on.aws/projects/b8r202203aqcvb/notebooks/notebook/aq6jx4r7wql7on
+- URLS:
+  - Domain:           https://dzd-5znn554opul4h3.sagemaker.us-east-1.on.aws/
+  - Project:          https://dzd-5znn554opul4h3.sagemaker.us-east-1.on.aws/projects/b8r202203aqcvb
+  - Notebook:         https://dzd-5znn554opul4h3.sagemaker.us-east-1.on.aws/projects/b8r202203aqcvb/notebooks/notebook/aq6jx4r7wql7on
 
-STORAGE:
-  S3 Bucket:        sentence-data-ingestion
-  Project Storage:  s3://sentence-data-ingestion/ML_NOTEBOOK_ASSETS/
-  Log Data:         s3://sentence-data-ingestion/DATA_MERGE_ASSETS/LOGS/FINRAG/logs/query_logs.parquet
+- STORAGE:
+  - S3 Bucket:        sentence-data-ingestion
+  - Project Storage:  s3://sentence-data-ingestion/ML_NOTEBOOK_ASSETS/
+  - Log Data:         s3://sentence-data-ingestion/DATA_MERGE_ASSETS/LOGS/FINRAG/logs/query_logs.parquet
 
-IAM:
-  Execution Role:   AmazonSageMakerUserIAMExecutionRole
-  Role ARN:         arn:aws:iam::729472661729:role/service-role/AmazonSageMakerUserIAMExecutionRole
+- IAM:
+  - Execution Role:   AmazonSageMakerUserIAMExecutionRole
+  - Role ARN:         arn:aws:iam::729472661729:role/service-role/AmazonSageMakerUserIAMExecutionRole
 
-COMPUTE:
-  Instance Type:    sc.t3.medium (2 vCPU, 4GB RAM)
-  Idle Timeout:     60 minutes
-  Cost:             ~$0.05/hour when running
+- COMPUTE:
+  - Instance Type:    sc.t3.medium (2 vCPU, 4GB RAM)
+  - Idle Timeout:     60 minutes
+  - Cost:             ~$0.05/hour when running
