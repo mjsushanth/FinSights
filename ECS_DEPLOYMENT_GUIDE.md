@@ -47,7 +47,7 @@ The workflow uses these existing resources:
 - **Service Discovery Service**: `srv-wjeqhqnrae5d76ra` (`backend`)
 - **Subnets**: 6 subnets across availability zones
 - **Task Execution Role**: `ecsTaskExecutionRole`
-- **Task Role**: `aws_ecs_task_rules` (with Bedrock + S3 permissions)
+- **Task Role**: `aws_ecs_task_rules` (with Bedrock + S3 + S3 Vectors permissions)
 
 ## How It Works
 
@@ -170,6 +170,43 @@ docker push 729472661729.dkr.ecr.us-east-1.amazonaws.com/finsights-frontend:late
 - `ecr:BatchGetImage`
 - `servicediscovery:*`
 - `ec2:DescribeNetworkInterfaces`
+
+### Issue: "User is not authorized to perform: s3vectors:QueryVectors"
+**Solution**: The ECS Task Role needs S3 Vectors permissions. Add this inline policy to `aws_ecs_task_rules`:
+
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": [
+        "s3vectors:QueryVectors",
+        "s3vectors:GetVectorIndex",
+        "s3vectors:DescribeVectorIndex",
+        "s3vectors:ListVectorIndexes"
+      ],
+      "Resource": "arn:aws:s3vectors:*:*:bucket/finrag-embeddings-s3vectors/*"
+    }
+  ]
+}
+```
+
+Apply via CLI:
+```bash
+aws iam put-role-policy \
+  --role-name aws_ecs_task_rules \
+  --policy-name S3VectorsQueryPolicy \
+  --policy-document file://s3vectors-policy.json
+```
+
+Then restart the backend service:
+```bash
+aws ecs update-service \
+  --cluster finsights-cluster-new \
+  --service finsights-backend \
+  --force-new-deployment
+```
 
 ## Best Practices
 
