@@ -1,0 +1,433 @@
+name: Setup AWS Infrastructure (Fresh AWS Account)
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment name (production)'
+        required: true
+        default: 'production'
+        type: choice
+        options:
+          - production
+         
+      vpc_id:
+        description: ''
+        required: false
+        type: string
+      force_recreate:
+        description: 'Force recreate all resources (WARNING: destroys existing)'
+        required: false
+        type: boolean
+        default: false
+
+env:
+  AWS_REGION: us-east-1
+  PROJECT_NAME: finsights
+  CLUSTER_NAME: finsights-cluster
+
+jobs:
+  setup-infrastructure:
+    name: Setup Complete AWS Infrastructure
+    runs-on: ubuntu-latest
+    
+    outputs:
+      ecr_backend_uri: ${{ steps.output-summary.outputs.ecr_backend_uri }}
+      ecr_frontend_uri: ${{ steps.output-summary.outputs.ecr_frontend_uri }}
+      cluster_name: ${{ steps.output-summary.outputs.cluster_name }}
+      security_group_id: ${{ steps.output-summary.outputs.security_group_id }}
+      service_discovery_namespace_id: ${{ steps.output-summary.outputs.namespace_id }}
+      service_discovery_service_id: ${{ steps.output-summary.outputs.service_id }}
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Get VPC ID
+        id: get-vpc
+        run: |
+          if [ -n "${{ inputs.vpc_id }}" ]; then
+            VPC_ID="${{ inputs.vpc_id }}"
+          else
+            VPC_ID=$(aws ec2 describe-vpcs \
+              --filters "Name=is-default,Values=true" \
+              --query "Vpcs[0].VpcId" \
+              --output text)
+          fi
+          
+          echo "vpc_id=$VPC_ID" >> $GITHUB_OUTPUT
+          echo "Using VPC: $VPC_ID"
+
+      - name: Get Subnets
+        id: get-subnets
+        run: |
+          SUBNETS=$(aws ec2 describe-subnets \
+            --filters "Name=vpc-id,Values=${{ steps.get-vpc.outputs.vpc_id }}" \
+            --query "Subnets[*].SubnetId" \
+            --output text | tr '\t' ',')
+          
+          echo "subnets=$SUBNETS" >> $GITHUB_OUTPUT
+          echo "Using subnets: $SUBNETS"
+
+      # ========================================================================
+      # IAM ROLES SETUP
+      # ========================================================================
+
+      - name: Create ECS Task Execution Role
+        id: create-execution-role
+        run: |
+          ROLE_NAME="ecsTaskExecutionRole"
+          
+          # Check if role exists
+          if aws iam get-role --role-name $ROLE_NAME 2>/dev/null; then
+            echo "✅ Role $ROLE_NAME already exists"
+            ROLE_ARN=$(aws iam get-role --role-name $ROLE_NAME --query 'Role.Arn' --output text)
+          else
+            # Create trust policy
+            cat > trust-policy.json << 'EOF'
+          {
+            "Version": "2012-10-17",
+            "Statement": [
+              {
+                "Effect": "Allow",
+                "Principal": {
+                  "Service": "ecs-tasks.amazonaws.com"
+                },
+                "Action": "sts:AssumeRole"
+              }
+            ]
+          }
+          EOF
+            
+            # Create role
+            ROLE_ARN=$(aws iam create-role \
+              --role-name $ROLE_NAME \
+              --assume-role-policy-document file://trust-policy.json \
+              --description "ECS Task Execution Role for pulling images and logs" \
+              --query 'Role.Arn' \
+              --output text)
+            
+            # Attach AWS managed policy for ECS task execution
+            aws iam attach-role-policy \
+              --role-name $ROLE_NAME \
+              --policy-arn arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy
+            
+            echo "✅ Created role $ROLE_NAME"
+          fi
+          
+          echo "execution_role_arn=$ROLE_ARN" >> $GITHUB_OUTPUT
+
+      - name: Create ECS Task Role (for Bedrock + S3 access)
+        id: create-task-role
+        run: |
+          ROLE_NAME="aws_ecs_task_rules"
+          
+          # Check if role exists
+          if aws iam get-role --role-name $ROLE_NAME 2>/dev/null; then
+            echo "✅ Role $ROLE_NAME already exists"
+            ROLE_ARN=$(aws iam get-role --role-name $ROLE_NAME --query 'Role.Arn' --output text)
+          else
+            # Create trust policy
+            cat > trust-policy.json << 'EOF'
+          {
+            "Version": "2012-10-17",
+            "Statement": [
+              {
+                "Effect": "Allow",
+                "Principal": {
+                  "Service": "ecs-tasks.amazonaws.com"
+                },
+                "Action": "sts:AssumeRole"
+              }
+            ]
+          }
+          EOF
+            
+            # Create role
+            ROLE_ARN=$(aws iam create-role \
+              --role-name $ROLE_NAME \
+              --assume-role-policy-document file://trust-policy.json \
+              --description "ECS Task Role with Bedrock and S3 permissions" \
+              --query 'Role.Arn' \
+              --output text)
+            
+            # Attach AWS managed policies
+            aws iam attach-role-policy \
+              --role-name $ROLE_NAME \
+              --policy-arn arn:aws:iam::aws:policy/AmazonBedrockFullAccess
+            
+            aws iam attach-role-policy \
+              --role-name $ROLE_NAME \
+              --policy-arn arn:aws:iam::aws:policy/AmazonS3FullAccess
+            
+            echo "✅ Created role $ROLE_NAME with Bedrock + S3 access"
+          fi
+          
+          echo "task_role_arn=$ROLE_ARN" >> $GITHUB_OUTPUT
+
+      # ========================================================================
+      # SECURITY GROUP SETUP
+      # ========================================================================
+
+      - name: Create Security Group
+        id: create-security-group
+        run: |
+          SG_NAME="${{ env.PROJECT_NAME }}-backend-sg"
+          
+          # Check if security group exists
+          EXISTING_SG=$(aws ec2 describe-security-groups \
+            --filters "Name=group-name,Values=$SG_NAME" "Name=vpc-id,Values=${{ steps.get-vpc.outputs.vpc_id }}" \
+            --query "SecurityGroups[0].GroupId" \
+            --output text 2>/dev/null || echo "None")
+          
+          if [ "$EXISTING_SG" != "None" ]; then
+            echo "✅ Security group $SG_NAME already exists: $EXISTING_SG"
+            SG_ID=$EXISTING_SG
+          else
+            # Create security group
+            SG_ID=$(aws ec2 create-security-group \
+              --group-name $SG_NAME \
+              --description "Security group for FinSights Backend" \
+              --vpc-id ${{ steps.get-vpc.outputs.vpc_id }} \
+              --query 'GroupId' \
+              --output text)
+            
+            # Add ingress rule for backend port 8000
+            aws ec2 authorize-security-group-ingress \
+              --group-id $SG_ID \
+              --protocol tcp \
+              --port 8000 \
+              --cidr 0.0.0.0/0
+            
+            # Add egress rule (all traffic)
+            aws ec2 authorize-security-group-egress \
+              --group-id $SG_ID \
+              --protocol -1 \
+              --cidr 0.0.0.0/0 \
+              2>/dev/null || echo "Egress rule may already exist"
+            
+            echo "✅ Created security group $SG_NAME: $SG_ID"
+          fi
+          
+          echo "security_group_id=$SG_ID" >> $GITHUB_OUTPUT
+
+      # ========================================================================
+      # ECR REPOSITORIES
+      # ========================================================================
+
+      - name: Create ECR Repositories
+        id: create-ecr
+        run: |
+          # Backend repository
+          BACKEND_REPO="${{ env.PROJECT_NAME }}-backend"
+          if aws ecr describe-repositories --repository-names $BACKEND_REPO 2>/dev/null; then
+            echo "✅ ECR repository $BACKEND_REPO already exists"
+          else
+            aws ecr create-repository \
+              --repository-name $BACKEND_REPO \
+              --image-scanning-configuration scanOnPush=true \
+              --encryption-configuration encryptionType=AES256
+            echo "✅ Created ECR repository: $BACKEND_REPO"
+          fi
+          
+          # Frontend repository
+          FRONTEND_REPO="${{ env.PROJECT_NAME }}-frontend"
+          if aws ecr describe-repositories --repository-names $FRONTEND_REPO 2>/dev/null; then
+            echo "✅ ECR repository $FRONTEND_REPO already exists"
+          else
+            aws ecr create-repository \
+              --repository-name $FRONTEND_REPO \
+              --image-scanning-configuration scanOnPush=true \
+              --encryption-configuration encryptionType=AES256
+            echo "✅ Created ECR repository: $FRONTEND_REPO"
+          fi
+          
+          # Get ECR URIs
+          ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+          BACKEND_URI="$ACCOUNT_ID.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/$BACKEND_REPO"
+          FRONTEND_URI="$ACCOUNT_ID.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/$FRONTEND_REPO"
+          
+          echo "ecr_backend_uri=$BACKEND_URI" >> $GITHUB_OUTPUT
+          echo "ecr_frontend_uri=$FRONTEND_URI" >> $GITHUB_OUTPUT
+
+      # ========================================================================
+      # ECS CLUSTER
+      # ========================================================================
+
+      - name: Create ECS Cluster
+        id: create-cluster
+        run: |
+          CLUSTER_NAME="${{ env.CLUSTER_NAME }}"
+          
+          # Check if cluster exists
+          if aws ecs describe-clusters --clusters $CLUSTER_NAME --query "clusters[?status=='ACTIVE']" --output text | grep -q "$CLUSTER_NAME"; then
+            echo "✅ ECS cluster $CLUSTER_NAME already exists"
+          else
+            aws ecs create-cluster \
+              --cluster-name $CLUSTER_NAME \
+              --capacity-providers FARGATE FARGATE_SPOT \
+              --default-capacity-provider-strategy capacityProvider=FARGATE,weight=1
+            
+            echo "✅ Created ECS cluster: $CLUSTER_NAME"
+          fi
+          
+          echo "cluster_name=$CLUSTER_NAME" >> $GITHUB_OUTPUT
+
+      # ========================================================================
+      # SERVICE DISCOVERY (CLOUD MAP)
+      # ========================================================================
+
+      - name: Create Service Discovery Namespace
+        id: create-namespace
+        run: |
+          NAMESPACE_NAME="${{ env.PROJECT_NAME }}.local"
+          
+          # Check if namespace exists
+          EXISTING_NS=$(aws servicediscovery list-namespaces \
+            --filters "Name=TYPE,Values=DNS_PRIVATE" \
+            --query "Namespaces[?Name=='$NAMESPACE_NAME'].Id" \
+            --output text)
+          
+          if [ -n "$EXISTING_NS" ]; then
+            echo "✅ Namespace $NAMESPACE_NAME already exists: $EXISTING_NS"
+            NAMESPACE_ID=$EXISTING_NS
+          else
+            # Create namespace
+            OPERATION_ID=$(aws servicediscovery create-private-dns-namespace \
+              --name $NAMESPACE_NAME \
+              --vpc ${{ steps.get-vpc.outputs.vpc_id }} \
+              --description "Private namespace for ${{ env.PROJECT_NAME }} services" \
+              --query 'OperationId' \
+              --output text)
+            
+            # Wait for operation to complete
+            echo "Waiting for namespace creation..."
+            sleep 10
+            
+            NAMESPACE_ID=$(aws servicediscovery get-operation \
+              --operation-id $OPERATION_ID \
+              --query 'Operation.Targets.NAMESPACE' \
+              --output text)
+            
+            echo "✅ Created namespace: $NAMESPACE_NAME ($NAMESPACE_ID)"
+          fi
+          
+          echo "namespace_id=$NAMESPACE_ID" >> $GITHUB_OUTPUT
+
+      - name: Create Service Discovery Service for Backend
+        id: create-service-discovery
+        run: |
+          SERVICE_NAME="backend"
+          NAMESPACE_ID="${{ steps.create-namespace.outputs.namespace_id }}"
+          
+          # Check if service exists
+          EXISTING_SVC=$(aws servicediscovery list-services \
+            --filters "Name=NAMESPACE_ID,Values=$NAMESPACE_ID" \
+            --query "Services[?Name=='$SERVICE_NAME'].Id" \
+            --output text)
+          
+          if [ -n "$EXISTING_SVC" ]; then
+            echo "✅ Service discovery service $SERVICE_NAME already exists: $EXISTING_SVC"
+            SERVICE_ID=$EXISTING_SVC
+          else
+            # Create service
+            SERVICE_ID=$(aws servicediscovery create-service \
+              --name $SERVICE_NAME \
+              --namespace-id $NAMESPACE_ID \
+              --dns-config "RoutingPolicy=MULTIVALUE,DnsRecords=[{Type=A,TTL=10}]" \
+              --health-check-custom-config FailureThreshold=1 \
+              --query 'Service.Id' \
+              --output text)
+            
+            echo "✅ Created service discovery service: $SERVICE_NAME ($SERVICE_ID)"
+          fi
+          
+          echo "service_id=$SERVICE_ID" >> $GITHUB_OUTPUT
+
+      # ========================================================================
+      # OUTPUT SUMMARY
+      # ========================================================================
+
+      - name: Output Infrastructure Summary
+        id: output-summary
+        run: |
+          echo "ecr_backend_uri=${{ steps.create-ecr.outputs.ecr_backend_uri }}" >> $GITHUB_OUTPUT
+          echo "ecr_frontend_uri=${{ steps.create-ecr.outputs.ecr_frontend_uri }}" >> $GITHUB_OUTPUT
+          echo "cluster_name=${{ steps.create-cluster.outputs.cluster_name }}" >> $GITHUB_OUTPUT
+          echo "security_group_id=${{ steps.create-security-group.outputs.security_group_id }}" >> $GITHUB_OUTPUT
+          echo "namespace_id=${{ steps.create-namespace.outputs.namespace_id }}" >> $GITHUB_OUTPUT
+          echo "service_id=${{ steps.create-service-discovery.outputs.service_id }}" >> $GITHUB_OUTPUT
+          
+          cat << EOF
+          ============================================
+          ✅ INFRASTRUCTURE SETUP COMPLETE
+          ============================================
+          
+          IAM Roles:
+            - Task Execution Role: ${{ steps.create-execution-role.outputs.execution_role_arn }}
+            - Task Role (Bedrock+S3): ${{ steps.create-task-role.outputs.task_role_arn }}
+          
+          Network:
+            - VPC: ${{ steps.get-vpc.outputs.vpc_id }}
+            - Security Group: ${{ steps.create-security-group.outputs.security_group_id }}
+            - Subnets: ${{ steps.get-subnets.outputs.subnets }}
+          
+          ECR Repositories:
+            - Backend: ${{ steps.create-ecr.outputs.ecr_backend_uri }}
+            - Frontend: ${{ steps.create-ecr.outputs.ecr_frontend_uri }}
+          
+          ECS:
+            - Cluster: ${{ steps.create-cluster.outputs.cluster_name }}
+          
+          Service Discovery:
+            - Namespace: ${{ env.PROJECT_NAME }}.local (${{ steps.create-namespace.outputs.namespace_id }})
+            - Backend Service: backend (${{ steps.create-service-discovery.outputs.service_id }})
+            - Backend DNS: backend.${{ env.PROJECT_NAME }}.local:8000
+          
+          ============================================
+          
+          Next Steps:
+          1. Update .github/workflows/deploy-ecs.yml with these values
+          2. Build and push Docker images to ECR
+          3. Run the deploy-ecs.yml workflow
+          
+          ============================================
+          EOF
+
+      - name: Save configuration to artifact
+        run: |
+          mkdir -p infrastructure-config
+          
+          cat > infrastructure-config/config.json << EOF
+          {
+            "environment": "${{ inputs.environment }}",
+            "region": "${{ env.AWS_REGION }}",
+            "vpc_id": "${{ steps.get-vpc.outputs.vpc_id }}",
+            "subnets": "${{ steps.get-subnets.outputs.subnets }}",
+            "security_group_id": "${{ steps.create-security-group.outputs.security_group_id }}",
+            "execution_role_arn": "${{ steps.create-execution-role.outputs.execution_role_arn }}",
+            "task_role_arn": "${{ steps.create-task-role.outputs.task_role_arn }}",
+            "ecr_backend_uri": "${{ steps.create-ecr.outputs.ecr_backend_uri }}",
+            "ecr_frontend_uri": "${{ steps.create-ecr.outputs.ecr_frontend_uri }}",
+            "cluster_name": "${{ steps.create-cluster.outputs.cluster_name }}",
+            "service_discovery_namespace_id": "${{ steps.create-namespace.outputs.namespace_id }}",
+            "service_discovery_service_id": "${{ steps.create-service-discovery.outputs.service_id }}",
+            "backend_dns": "backend.${{ env.PROJECT_NAME }}.local:8000"
+          }
+          EOF
+          
+          cat infrastructure-config/config.json
+
+      - name: Upload configuration artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: infrastructure-config-${{ inputs.environment }}
+          path: infrastructure-config/config.json
+          retention-days: 90

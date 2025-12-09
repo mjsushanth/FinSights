@@ -1,0 +1,353 @@
+name: Deploy to ECS with Service Discovery
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'ModelPipeline/**'
+  workflow_dispatch:
+    inputs:
+      deploy_environment:
+        description: 'Deployment environment'
+        required: true
+        default: 'production'
+        type: choice
+        options:
+          - production
+          - staging
+
+env:
+  AWS_REGION: us-east-1
+  ECR_REGISTRY: 729472661729.dkr.ecr.us-east-1.amazonaws.com
+  ECS_CLUSTER: finsights-cluster(new)
+  
+  # Backend configuration
+  BACKEND_ECR_REPOSITORY: finsights-backend
+  BACKEND_SERVICE: finsights-backend
+  BACKEND_TASK_DEFINITION: finsights-backend-task
+  BACKEND_CONTAINER_NAME: backend
+  
+  # Frontend configuration
+  FRONTEND_ECR_REPOSITORY: finsights-frontend
+  FRONTEND_SERVICE: finsights-frontend
+  FRONTEND_TASK_DEFINITION: finsights-frontend-task
+  FRONTEND_CONTAINER_NAME: frontend
+  
+  # Network configuration (from your existing setup)
+  SECURITY_GROUP: sg-0e52e067d61bee6d1
+  SUBNETS: subnet-0c3e25c5d9c2e285a,subnet-0e9570e383a8699b3,subnet-0234ba8f33931ca75,subnet-0bf5d258ccc973efc,subnet-0a1187bd5a10094b1,subnet-064db315995901231
+  
+  # Service Discovery
+  SERVICE_DISCOVERY_NAMESPACE_ID: ns-6dk6zufiwllnypkv
+  SERVICE_DISCOVERY_SERVICE_ID: srv-wjeqhqnrae5d76ra
+
+jobs:
+  deploy-backend:
+    name: Deploy Backend Service
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build backend Docker image
+        run: |
+          cd ModelPipeline
+          docker build \
+            --platform linux/amd64 \
+            -t ${{ env.ECR_REGISTRY }}/${{ env.BACKEND_ECR_REPOSITORY }}:latest \
+            -t ${{ env.ECR_REGISTRY }}/${{ env.BACKEND_ECR_REPOSITORY }}:${{ github.sha }} \
+            -f finrag_docker_loc_tg1_aws/backend.Dockerfile \
+            .
+          
+          echo "✅ Built backend image"
+
+      - name: Push backend image to ECR
+        run: |
+          docker push ${{ env.ECR_REGISTRY }}/${{ env.BACKEND_ECR_REPOSITORY }}:latest
+          docker push ${{ env.ECR_REGISTRY }}/${{ env.BACKEND_ECR_REPOSITORY }}:${{ github.sha }}
+          
+          echo "✅ Pushed backend image with tags: latest, ${{ github.sha }}"
+
+      - name: Get current task definition
+        id: get-task-def
+        run: |
+          aws ecs describe-task-definition \
+            --task-definition ${{ env.BACKEND_TASK_DEFINITION }} \
+            --query taskDefinition > task-def.json
+          
+          # Remove fields that can't be used in new revision
+          jq 'del(.taskDefinitionArn, .revision, .status, .requiresAttributes, .compatibilities, .registeredAt, .registeredBy)' \
+            task-def.json > task-def-clean.json
+
+      - name: Update task definition with new image
+        id: task-def
+        run: |
+          # Update the image in the task definition
+          jq --arg IMAGE "${{ env.ECR_REGISTRY }}/${{ env.BACKEND_ECR_REPOSITORY }}:latest" \
+            '.containerDefinitions[0].image = $IMAGE' \
+            task-def-clean.json > new-task-def.json
+          
+          echo "::set-output name=task-def-file::new-task-def.json"
+
+      - name: Register new task definition
+        id: register-task-def
+        run: |
+          TASK_DEF_ARN=$(aws ecs register-task-definition \
+            --cli-input-json file://new-task-def.json \
+            --query 'taskDefinition.taskDefinitionArn' \
+            --output text)
+          
+          echo "::set-output name=task-def-arn::$TASK_DEF_ARN"
+          echo "Registered task definition: $TASK_DEF_ARN"
+
+      - name: Check if service exists
+        id: check-service
+        run: |
+          if aws ecs describe-services \
+            --cluster ${{ env.ECS_CLUSTER }} \
+            --services ${{ env.BACKEND_SERVICE }} \
+            --query 'services[0].status' \
+            --output text 2>/dev/null | grep -q "ACTIVE"; then
+            echo "::set-output name=exists::true"
+            echo "Service exists"
+          else
+            echo "::set-output name=exists::false"
+            echo "Service does not exist"
+          fi
+
+      - name: Update existing service
+        if: steps.check-service.outputs.exists == 'true'
+        run: |
+          aws ecs update-service \
+            --cluster ${{ env.ECS_CLUSTER }} \
+            --service ${{ env.BACKEND_SERVICE }} \
+            --task-definition ${{ steps.register-task-def.outputs.task-def-arn }} \
+            --force-new-deployment
+          
+          echo "Updated existing service"
+
+      - name: Create new service with service discovery
+        if: steps.check-service.outputs.exists == 'false'
+        run: |
+          aws ecs create-service \
+            --cluster ${{ env.ECS_CLUSTER }} \
+            --service-name ${{ env.BACKEND_SERVICE }} \
+            --task-definition ${{ steps.register-task-def.outputs.task-def-arn }} \
+            --desired-count 1 \
+            --launch-type FARGATE \
+            --network-configuration "awsvpcConfiguration={subnets=[${{ env.SUBNETS }}],securityGroups=[${{ env.SECURITY_GROUP }}],assignPublicIp=ENABLED}" \
+            --service-registries "registryArn=arn:aws:servicediscovery:${{ env.AWS_REGION }}:729472661729:service/${{ env.SERVICE_DISCOVERY_SERVICE_ID }}"
+          
+          echo "Created new service with service discovery"
+
+      - name: Wait for service stability
+        run: |
+          echo "Waiting for service to stabilize..."
+          aws ecs wait services-stable \
+            --cluster ${{ env.ECS_CLUSTER }} \
+            --services ${{ env.BACKEND_SERVICE }}
+          
+          echo "✅ Backend service is stable"
+
+  deploy-frontend:
+    name: Deploy Frontend Service
+    runs-on: ubuntu-latest
+    needs: deploy-backend
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build frontend Docker image
+        run: |
+          cd ModelPipeline
+          docker build \
+            --platform linux/amd64 \
+            -t ${{ env.ECR_REGISTRY }}/${{ env.FRONTEND_ECR_REPOSITORY }}:latest \
+            -t ${{ env.ECR_REGISTRY }}/${{ env.FRONTEND_ECR_REPOSITORY }}:${{ github.sha }} \
+            -f finrag_docker_loc_tg1_aws/frontend.Dockerfile \
+            .
+          
+          echo "✅ Built frontend image"
+
+      - name: Push frontend image to ECR
+        run: |
+          docker push ${{ env.ECR_REGISTRY }}/${{ env.FRONTEND_ECR_REPOSITORY }}:latest
+          docker push ${{ env.ECR_REGISTRY }}/${{ env.FRONTEND_ECR_REPOSITORY }}:${{ github.sha }}
+          
+          echo "✅ Pushed frontend image with tags: latest, ${{ github.sha }}"
+
+      - name: Get current task definition
+        id: get-task-def
+        run: |
+          aws ecs describe-task-definition \
+            --task-definition ${{ env.FRONTEND_TASK_DEFINITION }} \
+            --query taskDefinition > task-def.json
+          
+          # Remove fields that can't be used in new revision
+          jq 'del(.taskDefinitionArn, .revision, .status, .requiresAttributes, .compatibilities, .registeredAt, .registeredBy)' \
+            task-def.json > task-def-clean.json
+
+      - name: Update task definition with new image and backend URL
+        id: task-def
+        run: |
+          # Update the image and BACKEND_URL environment variable
+          jq --arg IMAGE "${{ env.ECR_REGISTRY }}/${{ env.FRONTEND_ECR_REPOSITORY }}:latest" \
+             --arg BACKEND_URL "http://backend.finsights.local:8000" \
+            '(.containerDefinitions[0].image = $IMAGE) | 
+             (.containerDefinitions[0].environment[] | select(.name == "BACKEND_URL") | .value) = $BACKEND_URL' \
+            task-def-clean.json > new-task-def.json
+          
+          echo "::set-output name=task-def-file::new-task-def.json"
+
+      - name: Register new task definition
+        id: register-task-def
+        run: |
+          TASK_DEF_ARN=$(aws ecs register-task-definition \
+            --cli-input-json file://new-task-def.json \
+            --query 'taskDefinition.taskDefinitionArn' \
+            --output text)
+          
+          echo "::set-output name=task-def-arn::$TASK_DEF_ARN"
+          echo "Registered task definition: $TASK_DEF_ARN"
+
+      - name: Check if service exists
+        id: check-service
+        run: |
+          # Get list of services and check if frontend exists
+          SERVICES=$(aws ecs list-services --cluster ${{ env.ECS_CLUSTER }} --query 'serviceArns[*]' --output text)
+          
+          if echo "$SERVICES" | grep -q "finsights-frontend"; then
+            # Extract the actual service name (might have suffix)
+            SERVICE_NAME=$(echo "$SERVICES" | tr '\t' '\n' | grep finsights-frontend | awk -F'/' '{print $NF}')
+            echo "::set-output name=exists::true"
+            echo "::set-output name=service-name::$SERVICE_NAME"
+            echo "Service exists: $SERVICE_NAME"
+          else
+            echo "::set-output name=exists::false"
+            echo "Service does not exist"
+          fi
+
+      - name: Update existing service
+        if: steps.check-service.outputs.exists == 'true'
+        run: |
+          aws ecs update-service \
+            --cluster ${{ env.ECS_CLUSTER }} \
+            --service ${{ steps.check-service.outputs.service-name }} \
+            --task-definition ${{ steps.register-task-def.outputs.task-def-arn }} \
+            --force-new-deployment
+          
+          echo "Updated existing service"
+
+      - name: Create new service
+        if: steps.check-service.outputs.exists == 'false'
+        run: |
+          aws ecs create-service \
+            --cluster ${{ env.ECS_CLUSTER }} \
+            --service-name ${{ env.FRONTEND_SERVICE }} \
+            --task-definition ${{ steps.register-task-def.outputs.task-def-arn }} \
+            --desired-count 1 \
+            --launch-type FARGATE \
+            --network-configuration "awsvpcConfiguration={subnets=[${{ env.SUBNETS }}],securityGroups=[${{ env.SECURITY_GROUP }}],assignPublicIp=ENABLED}"
+          
+          echo "Created new service"
+
+      - name: Wait for service stability
+        run: |
+          SERVICE_NAME="${{ steps.check-service.outputs.service-name }}"
+          if [ -z "$SERVICE_NAME" ]; then
+            SERVICE_NAME="${{ env.FRONTEND_SERVICE }}"
+          fi
+          
+          echo "Waiting for service $SERVICE_NAME to stabilize..."
+          aws ecs wait services-stable \
+            --cluster ${{ env.ECS_CLUSTER }} \
+            --services "$SERVICE_NAME"
+          
+          echo "✅ Frontend service is stable"
+
+      - name: Get service public IP
+        run: |
+          SERVICE_NAME="${{ steps.check-service.outputs.service-name }}"
+          if [ -z "$SERVICE_NAME" ]; then
+            SERVICE_NAME="${{ env.FRONTEND_SERVICE }}"
+          fi
+          
+          # Get task ARN
+          TASK_ARN=$(aws ecs list-tasks \
+            --cluster ${{ env.ECS_CLUSTER }} \
+            --service-name "$SERVICE_NAME" \
+            --query 'taskArns[0]' \
+            --output text)
+          
+          # Get ENI ID
+          ENI_ID=$(aws ecs describe-tasks \
+            --cluster ${{ env.ECS_CLUSTER }} \
+            --tasks "$TASK_ARN" \
+            --query 'tasks[0].attachments[0].details[?name==`networkInterfaceId`].value' \
+            --output text)
+          
+          # Get public IP
+          PUBLIC_IP=$(aws ec2 describe-network-interfaces \
+            --network-interface-ids "$ENI_ID" \
+            --query 'NetworkInterfaces[0].Association.PublicIp' \
+            --output text)
+          
+          echo "🌐 Frontend is accessible at: http://$PUBLIC_IP:8501"
+          echo "🔗 Backend is accessible at: http://backend.finsights.local:8000 (internal)"
+
+  post-deployment:
+    name: Post-Deployment Summary
+    runs-on: ubuntu-latest
+    needs: [deploy-backend, deploy-frontend]
+    
+    steps:
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Deployment summary
+        run: |
+          echo "============================================"
+          echo "✅ DEPLOYMENT SUCCESSFUL"
+          echo "============================================"
+          echo ""
+          echo "Cluster: ${{ env.ECS_CLUSTER }}"
+          echo "Region: ${{ env.AWS_REGION }}"
+          echo ""
+          echo "Services deployed:"
+          echo "  - Backend: ${{ env.BACKEND_SERVICE }} (with service discovery)"
+          echo "  - Frontend: ${{ env.FRONTEND_SERVICE }}"
+          echo ""
+          echo "Service Discovery:"
+          echo "  - Backend DNS: backend.finsights.local:8000"
+          echo "  - Namespace: finsights.local"
+          echo ""
+          echo "============================================"
