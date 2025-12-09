@@ -167,7 +167,32 @@ jobs:
               --role-name $ROLE_NAME \
               --policy-arn arn:aws:iam::aws:policy/AmazonS3FullAccess
             
-            echo "✅ Created role $ROLE_NAME with Bedrock + S3 access"
+            # Add S3 Vectors permissions (inline policy)
+            cat > s3vectors-policy.json << 'POLICY_EOF'
+            {
+              "Version": "2012-10-17",
+              "Statement": [
+                {
+                  "Sid": "S3VectorsAccess",
+                  "Effect": "Allow",
+                  "Action": [
+                    "s3vectors:QueryVectors",
+                    "s3vectors:GetVectorIndex",
+                    "s3vectors:DescribeVectorIndex",
+                    "s3vectors:ListVectorIndexes"
+                  ],
+                  "Resource": "arn:aws:s3vectors:*:*:bucket/finrag-embeddings-s3vectors/*"
+                }
+              ]
+            }
+            POLICY_EOF
+            
+            aws iam put-role-policy \
+              --role-name $ROLE_NAME \
+              --policy-name S3VectorsQueryPolicy \
+              --policy-document file://s3vectors-policy.json
+            
+            echo "✅ Created role $ROLE_NAME with Bedrock + S3 + S3 Vectors access"
           fi
           
           echo "task_role_arn=$ROLE_ARN" >> $GITHUB_OUTPUT
