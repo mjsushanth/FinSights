@@ -16,7 +16,7 @@
 
 ## Architecture Diagram:
 <p align="center">
-  <img src="FinSights Architecture Diagram.jpg" width="800" alt="FinSights Architecture Diagram">
+  <img src="FinSights Architecture Diagram.png" width="800" alt="FinSights Architecture Diagram">
 </p>
 <p align="center"><em>FinSights Architecture Diagram</em></p>
 
