@@ -8,11 +8,18 @@
 - **Our Solution**: FinSights combines structured KPI extraction with semantic retrieval-augmented generation (RAG) to provide, assembles multi-sourced data to deliver accurate, context-aware answers to complex financial queries. It promises cost-effectiveness, scalability, and true grounding for insights by citing actual filing IDs.
 - FinSights' goal is to make dense financial documents easily explainable and interpretable. 
 
-
 ### Quick Redirect (Setup):
 - Setup Instructions: **[Setup Instructions](ModelPipeline/README.md#L38)** 
 - There are 2 setup options, preferred one being dockerized setup for local installation. **[Quick Start with Docker! (RECOMMENDED)](ModelPipeline/finrag_docker_loc_tg1/LOC_DOCKER_README.md)** and [Quick Start with Command/Ps1 Scripts](ModelPipeline/SETUP_README.md)
 - Cloud deployment / CICD instructions are also here: **[AWS Cloud Deployment Guide](ModelPipeline/finrag_docker_loc_tg1_aws/ECS_DEPLOYMENT_GUIDE.md)** → Step-by-step ECS deployment instructions.
+
+
+## Architecture Diagram:
+<p align="center">
+  <img src="FinSights Architecture Diagram.jpg" width="800" alt="FinSights Architecture Diagram">
+</p>
+<p align="center"><em>FinSights Architecture Diagram</em></p>
+
 
 
 ## High level Conceptual Flow:
