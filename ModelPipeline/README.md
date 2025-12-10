@@ -17,7 +17,7 @@ FinRAG is out attempt at a production-grade financial intelligence platform that
 - Real world data over toy datasets. And, tons of algorithmic strong features!
 
 ## (Some) Technical Highlights
-- **Embedding Infrastructure**: 200K+ Cohere v4 1024-d vectors in S3 Vectors, <$0.10/10K queries
+- **Embedding Infrastructure**: 400K+ Cohere v4 1024-d vectors in S3 Vectors, $0.017 - $0.04 per query.
 - **Hybrid Retrieval**: Semantic search (query variants + metadata filters) + structured KPI extraction
 - **Context Engineering**: Edge-safe window expansion (±3 sentences), provenance tracking, chronological assembly
 - **Evaluation Framework**: 31-question Gold P3 suite spanning factoid → multi-hop reasoning, Self, Hit@k, MRR, distance metrics; then, LLM-Eval (BERTScore, BLEURT, ROUGE-L, Cosine). 
@@ -25,15 +25,7 @@ FinRAG is out attempt at a production-grade financial intelligence platform that
 
 ---
 
-## System Capabilities
-
-**Query Examples**:
-- *"How did Meta's regulatory risk profile evolve from FCPA (2012) to GDPR (2018) to EU AI Act (2020)?"*  
-  → Cross-year trend synthesis and citation headers
-
----
-
-## Repository Navigation & Key Resources
+## Key Resources & Repository Navigation
 
 ### Start easily here: 
 1. **[Quick Start with Docker! (RECOMMENDED)](finrag_docker_loc_tg1/LOC_DOCKER_README.md)** → Local Docker-based setup for easy launch of backend + frontend.
@@ -56,6 +48,9 @@ FinRAG is out attempt at a production-grade financial intelligence platform that
   - **`rag_modules_src/`** → Production RAG components (entity extraction, retrieval, synthesis)
 **Isolation/Integration Tests, RAG Tests, ML-NLP heavy modules**:
 - **`validation_notebooks/`**: 3 Phase Gold tests, Manual grounding tests displayed side-by-side, RAG pipeline integration tests, S3 Vector tests. Complete isolation or 'conductor' tests which have chained 2-5 modules, etc.
+
+### Evaluation Philosophy:
+- **[Evaluation Framework & Gold Standards](finrag_ml_tg1/validation_notebooks/06_Gold_Test_Framework.md)** → We have significant, multi-phase evaluation strategies, gold standard creation, Automated and manual testing protocols. 
 
 ### Analytics, Logs & Drift Monitoring:
 - Please refer to **[AWS Log Monitoring & Analytics Notebook](finrag_docker_loc_tg1_aws/AWS_LogMonitoring_Analytics.md)** for details.
