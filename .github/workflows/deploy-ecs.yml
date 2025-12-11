@@ -5,7 +5,7 @@ on:
     branches:
       - main
     paths:
-      - 'ModelPipeline/**'
+      - 'ModelPipeline/serving/**'
   workflow_dispatch:
     inputs:
       deploy_environment:
