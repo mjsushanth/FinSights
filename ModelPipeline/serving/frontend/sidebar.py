@@ -97,6 +97,17 @@ def render_sidebar(client: FinSightClient) -> None:
         st.divider()
         
         # ====================================================================
+        # 3.1 REDIRECT BUTTON
+        # ====================================================================
+        REDIRECT_URL = "https://public.tableau.com/app/profile/syeda.tooba.ali/viz/shared/4NSQ3B2HM"
+        BUTTON_TEXT = "Financial Dashboard"
+        
+        if st.button(BUTTON_TEXT, use_container_width=True, type="primary"):
+            st.markdown(f'<meta http-equiv="refresh" content="0; url={REDIRECT_URL}">', unsafe_allow_html=True)
+            # Alternative: Open in new tab        
+        st.divider()
+
+        # ====================================================================
         # 4. EXAMPLE QUERIES
         # ====================================================================
         st.markdown("### Example Queries")

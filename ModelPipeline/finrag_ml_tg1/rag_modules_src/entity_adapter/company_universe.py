@@ -26,6 +26,12 @@ class CompanyUniverse:
 
     This class is intentionally read-only after initialization.
     """
+    MANUAL_ALIASES = {
+        'google': 'alphabet',      # Google -> Alphabet Inc.
+        'fb': 'meta',              # Facebook -> Meta Platforms
+        'facebook': 'meta',
+        # Add more as needed
+    }
 
     def __init__(
         self,
@@ -328,6 +334,11 @@ class CompanyUniverse:
             )
             if alias:
                 self._by_alias.setdefault(alias, []).append(info)
+
+            for manual_alias, canonical_alias in self.MANUAL_ALIASES.items():
+                if alias == canonical_alias:
+                    logger.debug(f"Adding manual alias '{manual_alias}' -> '{info.name}'")
+                    self._by_alias.setdefault(manual_alias, []).append(info)
 
     @staticmethod
     def _normalize_name(name: str) -> str:
