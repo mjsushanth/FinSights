@@ -96,6 +96,7 @@ jobs:
         if: always()
         run: |
           aws s3 sync logs/ s3://finsight-logs-${ENVIRONMENT}/runs/${{ github.run_id }}/ || true
+          aws s3 sync data_auto_stats/outputs/phase_statistics/ s3://finsight-logs-${ENVIRONMENT}/runs/${{ github.run_id }}/ge_statistics || true
 
       - name: Report status
         if: always()
