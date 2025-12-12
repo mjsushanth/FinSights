@@ -7,6 +7,8 @@ FinRAG is out attempt at a production-grade financial intelligence platform that
 
 **Core Innovation**: Hybrid retrieval system fusing structured KPI extraction - communication, multi-context assembly, narrative semantic search with meaningful variant-diversity queries, window-expansion on hop context, and excellent sets of adapters or extractors - that grab complex multi-year, multi-company, multi-KPI, multi-section financial patterns through natural language.
 
+Our [Documentation index](finrag_ml_tg1/DOCUMENTATION_INDEX.md) provides a complete resource directory. It's easy navigation, but the same can be done by reading through the key resources and depository navigation mentioned below. The documentation index file has it in a tabular format!
+
 ---
 
 ## Philosophy & Design Principles
@@ -56,6 +58,9 @@ FinRAG is out attempt at a production-grade financial intelligence platform that
 - Please refer to **[AWS Log Monitoring & Analytics Notebook](finrag_docker_loc_tg1_aws/AWS_LogMonitoring_Analytics.md)** for details.
 - **[Model Retraining Concerns](finrag_docker_loc_tg1_aws/AWS_LogMonitoring_Analytics.md##23)** are mentioned here.
 
+### Performance or Latency Analysis:
+- Please refer to **[Pipeline Latency Analysis](finrag_ml_tg1/PIPELINE_LATENCY_ANALYSIS.md)** for detailed latency breakdowns and optimizations.
+
 ### Model Optimization:
 - For model (RAG pipeline memory/IO) optimization, our complete document is here: **[TechNotes Memory Handling](finrag_ml_tg1/TechNotes_MemoryExp_Handling.md)**
 - Read our strategic design and performance-cost decisions here: **[Performance & Cost Analysis](finrag_ml_tg1/Performance_Cost_Analysis.md)**
@@ -76,7 +81,8 @@ FinRAG is out attempt at a production-grade financial intelligence platform that
 ## Quick Screenshots/Demo:
 1. As a short example, we have the following screenshots or attachments below. One would display a custom rendering of DOM object inside JupyterServe so that you have a very well formatted, pretty display. We currently have a notebook where we serve display tables of a couple of gold test queries. 
 2. Secondly, we have two further screenshots: that would be query wise token cost analytics table and model wise token cost analytics table. 
-3. If vector data embedding, or sentence-data are missing from dataset, we setup proper guardrails to acknowledge missing data and not hallucinate! 
+3. If vector data embedding, or sentence-data are missing from dataset, we setup proper guardrails to acknowledge missing data and not hallucinate!
+4. Note: *Update*! The project now has scaled to present frontend Streamlit app with Dockerized local setup or AWS ECS deployment. The 'serving' is now comlete with proper frontend UI.
 
 
 **Image 1**: Gold Test Query Serve Example -

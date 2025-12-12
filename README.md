@@ -13,6 +13,8 @@
 - There are 2 setup options, preferred one being dockerized setup for local installation. **[Quick Start with Docker! (RECOMMENDED)](ModelPipeline/finrag_docker_loc_tg1/LOC_DOCKER_README.md)** and [Quick Start with Command/Ps1 Scripts](ModelPipeline/SETUP_README.md)
 - Cloud deployment / CICD instructions are also here: **[AWS Cloud Deployment Guide](ModelPipeline/finrag_docker_loc_tg1_aws/ECS_DEPLOYMENT_GUIDE.md)** → Step-by-step ECS deployment instructions.
 
+### Full Model Readme at:
+- Please check the file [ModelPipeline README](ModelPipeline/README.md). Our core resources can be read in the Key Resource section, or the [Documentation Index](ModelPipeline/finrag_ml_tg1/DOCUMENTATION_INDEX.md).
 
 ## Architecture Diagram:
 <p align="center">
