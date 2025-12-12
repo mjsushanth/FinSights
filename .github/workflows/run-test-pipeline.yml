@@ -26,6 +26,13 @@ env:
   S3_CONFIG_FILE_KEY: 'CONFIG/companies.csv'
   S3_INGESTION_BUCKET_NAME: 'INGESTION_ASSETS'
   LOCAL_DATA_PATH: ${{ github.workspace }}/DataPipeline/config/companies.csv
+  # SMTP Settings
+  SMTP_SERVER: 'smtp.gmail.com'
+  SMTP_PORT: '587'
+  SENDER_EMAIL: ${{ secrets.GE_SENDER_EMAIL }}
+  SENDER_PASSWORD: ${{ secrets.GE_SENDER_PASSWORD }}
+  ALERT_EMAIL: 'roy.sr@northeastern.edu'
+  LOG_LEVEL: 'INFO'
 
 jobs:
   pipeline:
