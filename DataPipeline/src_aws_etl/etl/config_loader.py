@@ -31,7 +31,12 @@ class ETLConfig:
     """
     def _load_credentials(self):
         """Load AWS credentials from modular or root .env (with fallback)"""
-        
+
+        # Adding for workflow run
+        if os.getenv('AWS_ACCESS_KEY_ID') and os.getenv('AWS_SECRET_ACCESS_KEY'):
+            self._credentials_source = "environment"
+            return
+            
         # modular path first
         modular_path = Path(__file__).parent.parent / '.aws_secrets' / 'aws_credentials.env'
         root_path = Path(__file__).parent.parent.parent / '.env'
