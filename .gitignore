@@ -221,3 +221,7 @@ ModelPipeline/sevalla_assets/SEVALLA_UI_GUIDE.md
 
 ## API Keys / Secrets for docker local env
 ModelPipeline/finrag_docker_loc_tg1/secrets.env
+
+# Claude Tools
+.claude/
+CLAUDE.md
