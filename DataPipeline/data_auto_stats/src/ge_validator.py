@@ -766,7 +766,7 @@ if __name__ == "__main__":
         from data_loader import load_sec_data
         data = load_sec_data(
             use_s3=True,
-            bucket_name='sentence-data-ingestion',
+            bucket_name='sentence-data-ingestion-mjs',
             s3_key='DATA_MERGE_ASSETS/HISTORICAL_DATA/finrag_sec_fact_historical.parquet',
             sample=True  # Load sample of 1000 records
         )

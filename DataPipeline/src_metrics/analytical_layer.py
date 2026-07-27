@@ -761,7 +761,7 @@ def upload_results_to_s3(
     # -----------------------------
     # S3 CONFIG
     # -----------------------------
-    bucket = "sentence-data-ingestion"
+    bucket = "sentence-data-ingestion-mjs"
     base_prefix = "DATA_MERGE_ASSETS/FINRAG_FACT_METRICS"
     
     run_id = run_id or datetime.utcnow().strftime("%Y%m%dT%H%M%S")
@@ -935,7 +935,7 @@ def compute_total_missing_derived(df: pd.DataFrame, years: set[int]) -> int:
 
 def load_final_parquet_from_s3():
 
-    bucket = os.getenv("FINRAG_S3_BUCKET", "sentence-data-ingestion")
+    bucket = os.getenv("FINRAG_S3_BUCKET", "sentence-data-ingestion-mjs")
     base_prefix = "DATA_MERGE_ASSETS/FINRAG_FACT_METRICS"
 
     # Keep the same key as your earlier logs (KPI_FACT_DATA_EDGAR.parquet)
@@ -948,7 +948,7 @@ def load_final_parquet_from_s3():
     local_path = project_root / local_filename
     
     # S3 Details (unchanged from your original function)
-    bucket = os.getenv("FINRAG_S3_BUCKET", "sentence-data-ingestion")
+    bucket = os.getenv("FINRAG_S3_BUCKET", "sentence-data-ingestion-mjs")
     base_prefix = "DATA_MERGE_ASSETS/FINRAG_FACT_METRICS"
     parquet_key  = f"{base_prefix}/{local_filename}"
 
@@ -970,7 +970,7 @@ def upload_results_to_s3(
     task_id: str,
     run_id: str,
 ):
-    bucket = os.getenv("FINRAG_S3_BUCKET", "sentence-data-ingestion")
+    bucket = os.getenv("FINRAG_S3_BUCKET", "sentence-data-ingestion-mjs")
     base_prefix = "DATA_MERGE_ASSETS/FINRAG_FACT_METRICS"
 
     # Keep the same key as your earlier logs (KPI_FACT_DATA_EDGAR.parquet)

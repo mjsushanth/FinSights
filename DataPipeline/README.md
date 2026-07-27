@@ -23,7 +23,7 @@
 - Exports to Parquet files for downstream analytics
 
 ### Data Persistence on AWS S3:
-- We use an S3 bucket (sentence-data-ingestion) to store raw filings, processed Parquet files, and metadata.
+- We use an S3 bucket (sentence-data-ingestion-mjs) to store raw filings, processed Parquet files, and metadata.
 - Our clear directories are attached below, and we employ the classic ETL process of *Incremental Merge Jobs* with audit columns and a dedicated log file.
 - The source code this is exactly traced at `src_aws_etl/etl` folder. There are modular functions, a config loader service, and pre-flight checks.
 - Here is where, some discrepancies in external data schema from different sources are handled and schema harmonization is done before a final merge.
@@ -94,7 +94,7 @@ We implemented a two-phase automated data validation system using Great Expectat
 
 #### Technical Stack:
 - Great Expectations for schema generation and validation rules
-- Boto3 for S3 data access (bucket: `sentence-data-ingestion`)
+- Boto3 for S3 data access (bucket: `sentence-data-ingestion-mjs`)
 - PyArrow for Parquet handling
 - Configurable validation rules per phase in `config.py`
 - Ephemeral GE context for Docker/Airflow compatibility

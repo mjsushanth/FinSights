@@ -156,7 +156,7 @@ XBRL_TAGS = {
 
 # AWS
 AWS_PROFILE = "Finsights"
-S3_BUCKET = "sentence-data-ingestion"
+S3_BUCKET = "sentence-data-ingestion-mjs"
 S3_FOLDER = "QuantitativeData"
 
 # Notifications

@@ -225,3 +225,22 @@ ModelPipeline/finrag_docker_loc_tg1/secrets.env
 # Claude Tools
 .claude/
 CLAUDE.md
+
+# ============================================
+# Bulky / generated artifacts (keep out of git)
+# ============================================
+
+# Large data backups (1.7G) - never track
+OD_MS_DataBackups_Bulk/
+
+# Graphify: ignore only the bulky generated artifacts.
+# Keep small informative files trackable (e.g. GRAPH_REPORT.md ~68K).
+graphify-out/graph.json
+graphify-out/*.html
+graphify-out/cache/
+
+# macOS filesystem noise
+.DS_Store
+
+# Revival scratch workspace (throwaway inspection/upload scripts)
+ModelPipeline/revival_scratch/

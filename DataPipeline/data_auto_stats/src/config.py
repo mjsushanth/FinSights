@@ -23,7 +23,7 @@ LOG_DIR = BASE_DIR / "logs"
 # S3 Configuration  
 S3_CONFIG = {
     'enabled': True,
-    'bucket_name': 'sentence-data-ingestion',
+    'bucket_name': 'sentence-data-ingestion-mjs',
     # Different S3 keys for different phases
     'validation_s3_key': 'INGESTION_ASSETS/MERGED-SETS/finrag_sec_incremental_stg_data.parquet', # not 10-K_merged_.parquet  # 20 columns
     'statistics_s3_key': 'DATA_MERGE_ASSETS/FINRAG_FACT_SENTENCES/finrag_fact_sentences.parquet',    # 24 columns
