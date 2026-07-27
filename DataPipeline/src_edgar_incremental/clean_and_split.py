@@ -7,6 +7,16 @@ scraper (Gotcha 4) and adds a generalized footer-boilerplate strip
 (Gotcha 3) - verified this session to vary by filer (Apple has it, Amazon/
 Exxon/Tesla do not), so the regex is written to be a no-op where absent
 rather than assuming every filer's footer looks the same.
+
+Also collapses immediately-adjacent exact-duplicate sentences (see
+collapse_adjacent_duplicates()). Found via a deep-dive QA pass on the
+production fact table (see analytics/duplicate_sentence_analysis.md):
+distinct from the far more common case of the same boilerplate/legal
+sentence appearing in two UNRELATED, distant parts of a filing (real,
+meaningful, left untouched) - an immediately-consecutive repeat with
+nothing between the two occurrences has no legitimate reason to exist and
+was confirmed (e.g. Tesla FY2024 Item 1A) to be a formatting/extraction
+artifact, not real content.
 """
 
 from __future__ import annotations
@@ -59,11 +69,26 @@ def is_degenerate(sentence: str) -> bool:
     return False
 
 
+def collapse_adjacent_duplicates(sentences: list[str]) -> list[str]:
+    """Drops a sentence that is an exact repeat of the one immediately
+    before it. Only collapses back-to-back repeats - two occurrences of the
+    same sentence elsewhere in the section (a genuinely common pattern for
+    reused legal/financial boilerplate, e.g. the same compliance sentence
+    under two different debt instruments) are real content and left alone."""
+    out = []
+    for s in sentences:
+        if out and out[-1] == s:
+            continue
+        out.append(s)
+    return out
+
+
 def clean_and_split_section(raw_text: str) -> list[str]:
     text = normalize_item_periods(raw_text)
     text = strip_footer_boilerplate(text)
     sentences = split_sentences(text)
-    return [s for s in sentences if not is_degenerate(s)]
+    sentences = [s for s in sentences if not is_degenerate(s)]
+    return collapse_adjacent_duplicates(sentences)
 
 
 def run(sections_df: pl.DataFrame, out_name: str) -> pl.DataFrame:

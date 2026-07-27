@@ -82,7 +82,7 @@ dependencies:
   # Testing - bare pytest only, no mocking-framework ceremony
   - pytest>=8.0.0,<9.0
 
-  # Notebooks - for analytics_notebooks/ (fact/incremental/dimension table
+  # Notebooks - for analytics/ (fact/incremental/dimension table
   # EDA). Minimal set: kernel + headless execution, no full JupyterLab.
   - ipykernel>=6.29.0
   - notebook>=7.0.0
