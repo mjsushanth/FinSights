@@ -1,0 +1,43 @@
+# ============================================================================
+# src_metrics configuration
+# Purpose: single source of truth for the company universe, GAAP/domain
+# rule sources, and where the KPI fact table lives in S3.
+# ============================================================================
+
+s3:
+  bucket_name: sentence-data-ingestion-mjs
+  region: us-east-1
+
+company_dimension:
+  # Single parameter controlling the whole company universe. Growing from
+  # 25 to 30/40/100 companies is a one-line edit here, never a code change.
+  path: DataPipeline/data_cache/dimensions
+  filename: finrag_dim_companies_25.parquet
+
+gaap_registry:
+  path: DataPipeline/src_metrics/config
+  filename: gaap_aliases.yaml
+
+domain_rules:
+  path: DataPipeline/src_metrics/config
+  filename: not_applicable_by_cik.yaml
+
+output:
+  kpi_facts:
+    # Must match ModelPipeline/finrag_ml_tg1/.aws_config/ml_config.yaml's
+    # s3.kpi_facts block exactly - test_metrics_config.py asserts this so
+    # the two configs can't silently drift apart.
+    path: DATA_MERGE_ASSETS/FINRAG_FACT_METRICS
+    filename: KPI_FACT_DATA_EDGAR.parquet
+  archive:
+    path: DATA_MERGE_ASSETS/FINRAG_FACT_METRICS/ARCHIVE
+    filename_pattern: "KPI_FACT_DATA_EDGAR_{timestamp}.parquet"
+    max_backups: 3
+  local_mirrors:
+    - DataPipeline/data_cache/metrics_fact/KPI_FACT_DATA_EDGAR.parquet
+    - ModelPipeline/finrag_ml_tg1/data_cache/metrics_fact/KPI_FACT_DATA_EDGAR.parquet
+
+edgar:
+  start_year: 2006
+  end_year: 2025
+  identity_env_var: EDGAR_IDENTITY

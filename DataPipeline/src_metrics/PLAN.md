@@ -1,9 +1,17 @@
 # src_metrics rebuild — architecture plan
 
-**Status**: structure + this plan committed first; implementation follows
-in the same session. See `LEGACY_MODULE_FINDINGS.md` for the concrete,
-cited problems this rebuild fixes - this document is the "what we're
-building instead," not a repeat of the findings.
+**Status**: implemented and validated (2026-07-27) - all modules built,
+34 unit tests passing, 2 real-network integration tests passing (Apple,
+Mastercard), and a real-data parity check against the legacy production
+KPI table confirmed exact-match numeric output on overlapping years
+(e.g. Apple FY2024 Current Ratio: 0.867313 in both). **Not yet done**:
+the full 25-company production run + S3 push (cutover step 3-4) and the
+ModelPipeline hardcode fixes (step 6) - those are deliberately separate,
+larger-blast-radius steps, gated on a explicit go-ahead rather than
+bundled into this build-and-validate pass. See
+`LEGACY_MODULE_FINDINGS.md` for the concrete, cited problems this rebuild
+fixes - this document is the "what we're building instead," not a repeat
+of the findings.
 
 ## Design philosophy for this rebuild
 

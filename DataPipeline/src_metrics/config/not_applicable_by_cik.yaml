@@ -1,0 +1,96 @@
+# Ratio-suppression rules: metrics that are structurally not meaningful
+# for a given company (e.g. no inventory -> Quick Ratio is invalid), so
+# they're excluded rather than reported as a misleading number.
+#
+# Converted from src_metrics_legacy/analytical_layer.py's
+# NOT_APPLICABLE_BY_CIK (a dict literal keyed by raw CIK string, which had
+# a real bug: CIK "0000059478" - Eli Lilly - was defined twice, identical
+# content both times; a dict literal silently keeps the last one). This is
+# a list instead, specifically because a list makes a duplicate CIK an
+# explicit, checkable condition (domain_rules.py raises on it) rather than
+# a silent last-write-wins.
+#
+# The domain judgment itself (which ratios don't make sense for which
+# company, and why) is real and preserved verbatim in `reason:` - only the
+# mechanism (Python source -> data file) changed.
+
+- cik: "0000890926"
+  company: Radian Group
+  reason: >
+    Financial/insurance profile - no liquidity ratios, no FCF. Equity/asset
+    behavior is insurer-like (abnormal ROA/ROE); revenue breakouts missing
+    in some years.
+  excluded_metrics:
+    - Current Ratio
+    - Quick Ratio
+    - Free Cash Flow
+    - Operating Cash Flow Ratio
+    - "ROA % (Avg Assets)"
+    - "ROE % (Avg Equity)"
+    - Net Profit Margin %
+
+- cik: "0000813762"
+  company: Icahn Enterprises L.P.
+  reason: >
+    Missing current assets/current liabilities/inventory structurally in
+    many years - liquidity ratios aren't computable. CapEx also missing in
+    many years.
+  excluded_metrics:
+    - Current Ratio
+    - Quick Ratio
+    - Free Cash Flow
+    - Operating Cash Flow Ratio
+
+- cik: "0001141391"
+  company: Mastercard
+  reason: >
+    No inventory - Quick Ratio is structurally always invalid. CapEx is
+    not findable as a GAAP tag for this company.
+  excluded_metrics:
+    - Quick Ratio
+    - Net Profit Margin %
+    - "ROA % (Avg Assets)"
+    - "ROE % (Avg Equity)"
+    - Free Cash Flow
+    - Operating Cash Flow Ratio
+
+- cik: "0001018724"
+  company: Amazon
+  reason: >
+    Total Liabilities is missing due to reporting structure (lease
+    liabilities reported separately) - debt-based metrics are invalid.
+  excluded_metrics:
+    - Debt-to-Equity
+    - Debt-to-Assets
+
+- cik: "0000059478"
+  company: Eli Lilly
+  reason: >
+    No liability field present in the filings used - debt-based metrics
+    are not computable.
+  excluded_metrics:
+    - Debt-to-Equity
+    - Debt-to-Assets
+
+- cik: "0001273813"
+  company: Assured Guaranty Ltd
+  reason: Financial guaranty insurer - no liquidity ratios, no FCF.
+  excluded_metrics:
+    - Current Ratio
+    - Quick Ratio
+    - Free Cash Flow
+    - Operating Cash Flow Ratio
+
+- cik: "0001276520"
+  company: Genworth Financial
+  reason: >
+    Insurer - operating income isn't reported the way this metric expects.
+    ROA/ROE kept excluded for consistency with the other insurers above.
+  excluded_metrics:
+    - Current Ratio
+    - Quick Ratio
+    - Free Cash Flow
+    - Operating Cash Flow Ratio
+    - Operating Margin %
+    - "ROA % (Avg Assets)"
+    - "ROE % (Avg Equity)"

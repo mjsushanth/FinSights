@@ -175,6 +175,12 @@ cython_debug/
 config/
 datasets/
 
+# Exception: src_metrics' config/ holds real, meaningful data (the GAAP
+# tag registry and domain-rule YAML files) - not a throwaway folder like
+# the ones the blanket rule above was meant for.
+!DataPipeline/src_metrics/config/
+!DataPipeline/src_metrics/config/**
+
 
 # ============================================
 # ============================================
