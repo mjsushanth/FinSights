@@ -3,7 +3,7 @@ name: Src Metrics CI
 on:
   push:
     paths:
-      - 'DataPipeline/src_metrics/**'
+      - 'DataPipeline/src_metrics_legacy/**'
   workflow_dispatch:
 
 jobs:
@@ -24,7 +24,7 @@ jobs:
 
       - name: Build Docker image
         run: |
-          docker build -t metrics-app DataPipeline/src_metrics
+          docker build -t metrics-app DataPipeline/src_metrics_legacy
 
       - name: List Docker images
         run: docker images
