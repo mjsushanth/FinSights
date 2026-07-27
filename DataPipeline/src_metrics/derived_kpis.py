@@ -40,16 +40,19 @@ STATEMENT_LABEL_ALIASES: dict[str, list[str]] = {
         "Product Revenue", "Contract Revenue", "Sales and other operating revenue",
         "Total revenues and other income", "Sales and Operating Revenue", "Sales and Operating Revenues",
         "Total revenues", "Total sales and revenues",  # 2026-07-27: UnitedHealth, Caterpillar
+        "Sales to customers",  # 2026-07-27: Johnson & Johnson
+        "Total net sales",  # 2026-07-27: Amazon
     ],
-    "OperatingIncome": [
-        "Operating Income", "Operating Income (Loss)", "OperatingIncomeLoss",
-        "Income Before Tax from Continuing Operations", "Income Before Tax",
-        "Earnings from operations", "Operating profit",  # 2026-07-27: UnitedHealth, Caterpillar
-        "Total income before income taxes",  # 2026-07-27: UnitedHealth (tier-2 fallback wording)
-    ],
+    # Operating-income aliases are intentionally NOT kept here. They live in
+    # compute_operating_income()'s 3-tier fallback (the only code that derives
+    # operating income). A dict key here would be dead - nothing reads it -
+    # and that was a real bug: aliases added here for UnitedHealth/Caterpillar
+    # were silently ignored. Add operating-income wordings to the tiers there.
     "NetIncome": [
         "Net Income", "Net Income (Loss)", "NetIncomeLoss", "Net Income from Continuing Operations",
         "Net earnings", "Profit (loss)",  # 2026-07-27: UnitedHealth/Northrop Grumman, Caterpillar
+        "Consolidated net income attributable to Walmart",  # 2026-07-27: Walmart (attributable-to-parent)
+        "Net income (loss) attributable to ExxonMobil",  # 2026-07-27: ExxonMobil (attributable-to-parent)
     ],
     "TotalAssets": ["Total Assets", "Assets"],
     "TotalLiabilities": ["Total Liabilities", "Liabilities", "Total Liabilities and Stockholders' Equity"],
@@ -65,12 +68,14 @@ STATEMENT_LABEL_ALIASES: dict[str, list[str]] = {
         "Inventory, Net", "InventoryNet", "Inventory", "Crude oil, products and merchandise",
         "Materials and supplies",
         "Inventoried costs, net",  # 2026-07-27: Northrop Grumman (contract-cost inventory, not goods inventory)
+        "Inventories",  # 2026-07-27: Caterpillar, Johnson & Johnson, Walmart (plural wording)
     ],
     "CFO": [
         "Net Cash from Operating Activities", "Net Cash Provided by (Used in) Operating Activities",
         "Net Cash Provided by Operating Activities", "NetCashProvidedByUsedInOperatingActivities",
         "Cash flows from operating activities",  # 2026-07-27: UnitedHealth (verified this is the real total, not a header - confirmed non-null values)
         "Net cash provided by (used for) operating activities",  # 2026-07-27: Caterpillar
+        "Net cash flows from operating activities",  # 2026-07-27: Johnson & Johnson
     ],
     "CapEx": [
         "Payments to Acquire Property, Plant and Equipment", "Purchases of property and equipment",
@@ -78,6 +83,10 @@ STATEMENT_LABEL_ALIASES: dict[str, list[str]] = {
         "Payments for Property, Plant and Equipment", "Purchases of property, equipment and technology",
         "Purchases of property, equipment, technology and intangible assets",
         "Purchases of property, equipment and capitalized software",  # 2026-07-27: UnitedHealth
+        "Additions to property, plant and equipment",  # 2026-07-27: Johnson & Johnson
+        "Payments for property and equipment",  # 2026-07-27: Walmart
+        "Additions to property, plant, and equipment",  # 2026-07-27: ExxonMobil (Oxford comma)
+        "Purchases of property and equipment excluding finance leases, net of sales",  # 2026-07-27: Tesla
         "Capital expenditures – excluding equipment leased to others",  # 2026-07-27: Caterpillar
     ],
 }
@@ -109,6 +118,18 @@ def _sdiv(a: pd.Series | None, b: pd.Series | None) -> pd.Series:
     return out.replace([np.inf, -np.inf], np.nan)
 
 
+def _roe_avg_equity(net: pd.Series, eq: pd.Series) -> pd.Series:
+    """ROE on average equity, suppressed (NaN) for any year where the
+    current OR prior year's equity is <= 0. Average equity is unreliable
+    across a sign change and yields meaningless ratios - thousands of
+    percent or a flipped sign (e.g. Oracle's buyback-driven negative equity
+    produced ROE of 7301%). A negative-equity ROE is not a real return."""
+    avg_equity = _avg_series(eq)
+    roe = _sdiv(net, avg_equity) * 100
+    equity_ok = (eq > 0) & (eq.shift(1) > 0)
+    return roe.where(equity_ok.reindex(roe.index, fill_value=False))
+
+
 def _normalize_stmt_df(df: pd.DataFrame | None) -> pd.DataFrame | None:
     if df is None or df.empty:
         return df
@@ -120,13 +141,22 @@ def _normalize_stmt_df(df: pd.DataFrame | None) -> pd.DataFrame | None:
     return df
 
 
+def _norm_label(x: str) -> str:
+    """Normalize a statement-row label for matching: strip, lowercase, and
+    fold curly apostrophes to straight so an alias like "Total Stockholders'
+    Equity" matches a filer's "Total stockholders' equity" regardless of
+    which apostrophe glyph the XBRL uses (a real gap: Amazon/Tesla/Alphabet
+    equity failed to resolve purely on this)."""
+    return str(x).strip().lower().replace("’", "'").replace("‘", "'")
+
+
 def _row_to_year_series(stmt_df: pd.DataFrame | None, label_aliases: List[str]) -> pd.Series:
     if stmt_df is None or stmt_df.empty:
         return pd.Series(dtype="float64")
 
-    labels_norm = stmt_df["label"].astype(str).str.strip().str.lower()
+    labels_norm = stmt_df["label"].astype(str).map(_norm_label)
     for alias in label_aliases:
-        row = stmt_df.loc[labels_norm == alias.strip().lower()]
+        row = stmt_df.loc[labels_norm == _norm_label(alias)]
         if not row.empty:
             s = row.iloc[0].drop(labels=["label"])
             s.index = cols_to_year_index(s.index)
@@ -141,10 +171,10 @@ def _sum_rows_to_year_series(stmt_df: pd.DataFrame | None, label_aliases: List[s
     if stmt_df is None or stmt_df.empty:
         return pd.Series(dtype="float64")
 
-    labels_norm = stmt_df["label"].astype(str).str.strip().str.lower()
+    labels_norm = stmt_df["label"].astype(str).map(_norm_label)
     pieces = []
     for alias in label_aliases:
-        row = stmt_df.loc[labels_norm == alias.strip().lower()]
+        row = stmt_df.loc[labels_norm == _norm_label(alias)]
         if not row.empty:
             s = row.iloc[0].drop(labels=["label"])
             s.index = cols_to_year_index(s.index)
@@ -169,13 +199,20 @@ def _get_stmt_df(mf: MultiFinancials, candidates: List[str]) -> pd.DataFrame | N
 def compute_operating_income(inc_df: pd.DataFrame | None) -> pd.Series:
     """3-tier fallback: exact Operating Income tag -> Income Before Tax
     proxy -> manual Gross Profit - SG&A - R&D reconstruction."""
-    op = _row_to_year_series(inc_df, ["Operating Income", "Operating Income (Loss)", "OperatingIncomeLoss"])
+    op = _row_to_year_series(inc_df, [
+        "Operating Income", "Operating Income (Loss)", "OperatingIncomeLoss",
+        "Operating profit", "Earnings from operations",  # 2026-07-27: Caterpillar, UnitedHealth
+        "Income from operations",  # 2026-07-27: Tesla, Alphabet
+    ])
     if not op.empty:
         return op
 
     op = _row_to_year_series(inc_df, [
         "Income Before Tax from Continuing Operations", "Income Before Tax",
         "Earnings before provision for taxes on income",
+        "Total income before income taxes",  # 2026-07-27: UnitedHealth fallback wording
+        "Income before income taxes",  # 2026-07-27: Eli Lilly, Amazon
+        "Income (loss) before income taxes",  # 2026-07-27: ExxonMobil
     ])
     if not op.empty:
         return op
@@ -248,14 +285,13 @@ def compute_core_kpis_for_company(cik: str, n_years: int = 8) -> pd.DataFrame:
     capex = _row_to_year_series(cf, STATEMENT_LABEL_ALIASES["CapEx"]).abs()
 
     avg_assets = _avg_series(assets)
-    avg_equity = _avg_series(eq)
 
     idx = rev.index.union(assets.index).union(eq.index).union(cl.index).union(cfo.index)
     metrics = pd.DataFrame(index=idx)
     metrics["Net Profit Margin %"] = _sdiv(net, rev) * 100
     metrics["Operating Margin %"] = _sdiv(opinc, rev) * 100
     metrics["ROA % (Avg Assets)"] = _sdiv(net, avg_assets) * 100
-    metrics["ROE % (Avg Equity)"] = _sdiv(net, avg_equity) * 100
+    metrics["ROE % (Avg Equity)"] = _roe_avg_equity(net, eq)
     metrics["Current Ratio"] = _sdiv(ca, cl)
     metrics["Quick Ratio"] = _sdiv(ca - inv, cl)
     metrics["Debt-to-Equity"] = _sdiv(liab, eq)
