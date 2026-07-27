@@ -254,3 +254,9 @@ ModelPipeline/revival_scratch/
 # src_edgar_incremental scratch/test-run outputs (manifests, intermediate
 # parquets from experimental runs) - pipeline code is tracked, outputs are not
 DataPipeline/src_edgar_incremental/manifests/
+
+# DataPipeline's own copy of the production fact table + the incremental
+# batches that fed it - regenerate via src_edgar_incremental/, don't hand-edit
+# (see data_cache/README.md). Backups live in S3, not git, for these.
+DataPipeline/data_cache/stage1_facts/
+DataPipeline/data_cache/incremental_batches/

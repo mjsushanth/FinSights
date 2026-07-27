@@ -7,14 +7,20 @@ src_aws_etl/etl/merge_pipeline.py as the "incremental" input. This stage's
 job stops at producing a clean, schema-correct file - it does not merge.
 
 Sanity checks run before writing (per PLAN.md Stage 5 checklist): sentenceID
-uniqueness, no null keys, cik_int is one of the 21 curated companies,
+uniqueness, no null keys, cik_int is one of the curated companies,
 row_hash recomputation, and a direct dtype/column comparison against the
-real production parquet's schema.
+real production schema.
+
+Architecture note: the schema-comparison check reads the production table
+from S3 (via ETLConfig), not a local file path. Cloud is the source of
+truth for "what does the real schema look like right now" - a local copy
+could be stale (predates a merge someone else ran) in a way S3 can't be.
 """
 
 from __future__ import annotations
 
 import hashlib
+import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -22,11 +28,14 @@ import polars as pl
 
 MODULE_DIR = Path(__file__).parent
 SECTIONS_DIR = MODULE_DIR / "manifests"
-DIM_COMPANIES_21 = MODULE_DIR.parent / "data_cache" / "dimensions" / "finrag_dim_companies_21.parquet"
-REAL_FACT_TABLE = (
-    MODULE_DIR.parent.parent / "ModelPipeline" / "finrag_ml_tg1" / "data_cache"
-    / "stage1_facts" / "finrag_fact_sentences.parquet"
-)
+PROJECT_ROOT = MODULE_DIR.parent  # DataPipeline/
+sys.path.insert(0, str(PROJECT_ROOT))
+
+from src_aws_etl.etl.config_loader import ETLConfig
+
+# 25-company tier (21 original + UNH/NOC/CAT/TMUS gap-fill additions) -
+# strictly a superset of the original 21, so this stays valid for old runs too.
+DIM_COMPANIES = MODULE_DIR.parent / "data_cache" / "dimensions" / "finrag_dim_companies_25.parquet"
 
 SAMPLE_VERSION = "v2.2_edgartools_incremental"
 LOAD_METHOD = "edgartools_incremental"
@@ -87,10 +96,10 @@ def validate(df: pl.DataFrame) -> list[str]:
         if n_null:
             problems.append(f"{col} has {n_null} null value(s)")
 
-    dim21_ciks = set(pl.read_parquet(DIM_COMPANIES_21)["cik_int"].to_list())
-    bad_ciks = set(df["cik_int"].to_list()) - dim21_ciks
+    known_ciks = set(pl.read_parquet(DIM_COMPANIES)["cik_int"].to_list())
+    bad_ciks = set(df["cik_int"].to_list()) - known_ciks
     if bad_ciks:
-        problems.append(f"cik_int values not in the 21 curated companies: {bad_ciks}")
+        problems.append(f"cik_int values not in the curated companies dimension: {bad_ciks}")
 
     recomputed = df.with_columns(
         (pl.col("sentenceID") + pl.col("sentence"))
@@ -109,8 +118,17 @@ def validate(df: pl.DataFrame) -> list[str]:
             f"fewer than 20 sentences - possible section-detection failure:\n{low_count}"
         )
 
-    if REAL_FACT_TABLE.exists():
-        real_schema = pl.scan_parquet(REAL_FACT_TABLE).collect_schema()
+    try:
+        config = ETLConfig()
+        real_schema = pl.scan_parquet(
+            config.s3_uri(config.final_path), storage_options=config.get_storage_options()
+        ).collect_schema()
+    except Exception as e:
+        real_schema = None
+        problems.append(f"WARNING (non-fatal): could not read production schema from S3 "
+                         f"to compare against ({e}) - skipping schema check")
+
+    if real_schema is not None:
         for col in TARGET_COLUMN_ORDER:
             if col not in real_schema:
                 problems.append(f"column {col} not present in real production schema")

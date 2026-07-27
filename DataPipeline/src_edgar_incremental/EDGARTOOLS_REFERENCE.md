@@ -102,6 +102,31 @@ A naive sentence splitter treats `"Item 1A."` as its own one-token sentence
 `r'Item \1'`) that strips the trailing period from item headers before
 splitting. Reuse this exact technique rather than reinventing it.
 
+### Gotcha 5 — some older filings (~2010-2018) use a THIRD key style, and
+even bracket access can mis-map content
+Confirmed live on a real full-history pull (Northrop Grumman FY2010,
+Caterpillar FY2016/FY2017): `tenk.sections` for these older filings returns
+neither the modern `part_i_item_1a` style nor clean friendly names, but a
+sparse set like `{'risk_factors', 'business', 'properties',
+'legal_proceedings', 'financial_statements', ...}` covering only a handful
+of items (6 out of 22 for the NOC filing; 2 out of 22 for both Caterpillar
+filings) - the rest are simply absent from the dict, not present under a
+different key. Worse, bracket access (`tenk["Item 1A"]`) returns a plain
+`str` for these filings (not a `Section` object with `.text()`), and the
+returned text did not clearly correspond to the requested item (e.g.
+`tenk["Item 1A"]` returned prose that reads like M&A/organization content,
+not risk factors) - this looks like a genuine edge case in edgartools'
+older-filing parsing (possibly related to the "Cross Reference Index"
+format mentioned in the source), not something worth building bespoke
+per-era key-mapping logic to chase for a handful of filings. Impact
+observed: 3 of 80 filings (3.75%) in a 2006-2025 full-history pull came
+back with ~0 usable sections and were dropped entirely (not present with
+empty rows - just absent) - logged clearly by Stage 2's per-filing
+coverage line, not a silent failure. Documented here rather than "fixed"
+since the cost of handling every historical filing-format quirk isn't
+proportionate to 3 missing company-years out of a much larger, otherwise
+clean pull.
+
 ## Filtering filings (verified supported)
 
 ```python

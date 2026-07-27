@@ -9,12 +9,16 @@ copied, to avoid duplicating a ~1.7GB set of files.
 
 ## dimensions/
 Company and section dimension tables produced by the DuckDB engineering work.
-Four company-tier files at increasing size: `finrag_dim_companies_21` (the
-actual curated tier used to build the production RAG dataset -
-`ModelPipeline/finrag_ml_tg1/data_cache/stage1_facts/finrag_fact_sentences.parquet`
-uses exactly these 21 CIKs), `_75`, `_150`, `_540` (broader candidate pools,
-not the final selection). Plus `finrag_dim_sec_sections` (SEC 10-K section
-taxonomy) and `finrag_dim_sp500_holdings` (~500 S&P 500 constituents).
+Company-tier files at increasing size: `finrag_dim_companies_21` (the
+original curated tier), `finrag_dim_companies_25` (2026-07-27 - the 21 plus
+four gap-fill additions: UnitedHealth Group, Northrop Grumman, Caterpillar,
+T-Mobile US, chosen via a sector-gap analysis against the full corpus - see
+`src_edgar_incremental/PLAN.md` and the company-research findings referenced
+there; **this is the tier the current production fact table actually uses**),
+`_75`, `_150`, `_540` (broader candidate pools, not a final selection).
+Plus `finrag_dim_sec_sections` (SEC 10-K section taxonomy - also the
+ground-truth `section_ID`/`section_name` mapping the edgartools pipeline
+uses) and `finrag_dim_sp500_holdings` (~500 S&P 500 constituents).
 All small, all git-tracked.
 
 ## full_corpus/
@@ -42,8 +46,35 @@ exists separately under samples/ (see below).
 `sec_company_tickers.json` - SEC ticker/CIK lookup reference data.
 Gitignored, local only (matches its prior untracked state).
 
-## What is NOT here
-The actual production RAG dataset (`finrag_fact_sentences.parquet`, 469,252
-rows, 21 companies, 2006-2025) lives in
-`ModelPipeline/finrag_ml_tg1/data_cache/stage1_facts/` - it's the ETL output
-of `src_aws_etl/etl/merge_pipeline.py`, not a static asset cached here.
+## stage1_facts/ (added 2026-07-27)
+`finrag_fact_sentences.parquet` - **the canonical production RAG dataset**,
+now generated here (previously only lived under
+`ModelPipeline/finrag_ml_tg1/data_cache/stage1_facts/`, which is kept as a
+synced copy for the RAG runtime to read - see that folder's own notes).
+614,910 rows, 25 companies, report_years 2006-2025, produced by
+`src_aws_etl/etl/merge_pipeline.py` (the real merge/dedupe logic - reused,
+not reimplemented) merging the prior 21-company/469,252-row table against
+two `src_edgar_incremental` batches: FY2025 for the original 20 non-Google
+companies + a full rebuilt history for Alphabet, then a full 2006-2025
+history for the four new companies. Gitignored - regenerate via
+`src_edgar_incremental/run_pipeline.py` + `run_dev_merges.py`, or restore
+from the S3 backup noted below, rather than hand-editing.
+
+## incremental_batches/ (added 2026-07-27)
+The two incremental inputs consumed by the merge above, kept here for
+traceability of what went into the current fact table (not needed to
+regenerate it - `src_edgar_incremental/manifests/` holds the finer-grained
+per-run outputs if that's ever needed). Also uploaded to
+`s3://sentence-data-ingestion-mjs/DEV_INCREMENTAL_BATCHES/2026-07-27_edgartools_expansion/`.
+Gitignored (small but purely intermediate - the merged fact table above is
+the artifact that matters going forward).
+- `incremental_batch_A_fy2025_20co_plus_google_fullhist.parquet` - 52,124 rows
+- `incremental_batch_B_new4companies_fullhist.parquet` - 118,283 rows
+
+## Backups
+A pre-rebuild copy of the original 469,252-row/21-company fact table lives at
+`s3://sentence-data-ingestion-mjs/PREDEV_BACKUPS/edgartools_rebuild_2026-07-27/`
+- a development-stage backup (not a real ETL archive run). The real ETL
+archive path (`DATA_MERGE_ASSETS/ARCHIVE_DATA/`, managed by
+`src_aws_etl/etl/preflight_check.py`) now also holds its own timestamped
+copies from the two merges performed via `merge_pipeline.py`.

@@ -82,6 +82,13 @@ dependencies:
   # Testing - bare pytest only, no mocking-framework ceremony
   - pytest>=8.0.0,<9.0
 
+  # Notebooks - for analytics_notebooks/ (fact/incremental/dimension table
+  # EDA). Minimal set: kernel + headless execution, no full JupyterLab.
+  - ipykernel>=6.29.0
+  - notebook>=7.0.0
+  - nbconvert>=7.16.0
+  - matplotlib>=3.8.0
+
   # System libs (conda-managed SSL)
   - openssl>=3.0
   - ca-certificates
