@@ -20,7 +20,7 @@ from pathlib import Path
 
 import yaml
 
-MODULE_DIR = Path(__file__).parent
+MODULE_DIR = Path(__file__).resolve().parent
 REPO_ROOT = MODULE_DIR.parent.parent  # DataPipeline/src_metrics/ -> repo root
 DEFAULT_CONFIG_PATH = MODULE_DIR / ".aws_config" / "metrics_config.yaml"
 

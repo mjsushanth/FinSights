@@ -93,8 +93,8 @@ data_ml:
   dimensions:
     path: DATA_MERGE_ASSETS/DIMENSION_TABLES
     companies:
-      filename: finrag_dim_companies_21.parquet
-      description: "21 curated companies with CIK, ticker, name"
+      filename: finrag_dim_companies_25.parquet
+      description: "25 curated companies with CIK, ticker, name"
     sections:
       filename: finrag_dim_sec_sections.parquet
       description: "SEC 10-K section taxonomy (20 sections)"

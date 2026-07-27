@@ -51,14 +51,31 @@ Gitignored, local only (matches its prior untracked state).
 now generated here (previously only lived under
 `ModelPipeline/finrag_ml_tg1/data_cache/stage1_facts/`, which is kept as a
 synced copy for the RAG runtime to read - see that folder's own notes).
-614,910 rows, 25 companies, report_years 2006-2025, produced by
-`src_aws_etl/etl/merge_pipeline.py` (the real merge/dedupe logic - reused,
-not reimplemented) merging the prior 21-company/469,252-row table against
-two `src_edgar_incremental` batches: FY2025 for the original 20 non-Google
-companies + a full rebuilt history for Alphabet, then a full 2006-2025
-history for the four new companies. Gitignored - regenerate via
-`src_edgar_incremental/run_pipeline.py` + `run_dev_merges.py`, or restore
-from the S3 backup noted below, rather than hand-editing.
+614,787 rows (614,910 originally, then 123 exact-duplicate rows removed -
+see `analytics/duplicate_sentence_analysis.md`), 25 companies, report_years
+2006-2025, produced by `src_aws_etl/etl/merge_pipeline.py` (the real merge/
+dedupe logic - reused, not reimplemented) merging the prior 21-company/
+469,252-row table against two `src_edgar_incremental` batches: FY2025 for
+the original 20 non-Google companies + a full rebuilt history for
+Alphabet, then a full 2006-2025 history for the four new companies.
+Gitignored - regenerate via `src_edgar_incremental/run_pipeline.py` +
+`run_dev_merges.py`, or restore from the S3 backup noted below, rather
+than hand-editing.
+
+## metrics_fact/ (added 2026-07-27)
+`KPI_FACT_DATA_EDGAR.parquet` - the structured/numeric half of the hybrid
+RAG (raw GAAP XBRL facts + 10 derived ratios per company-year). 9,071 rows,
+25 companies. Produced by `src_metrics/pipeline.py`'s `MetricsPipeline`,
+pushed to S3 first (`DATA_MERGE_ASSETS/FINRAG_FACT_METRICS/`, the path
+`ModelPipeline/finrag_ml_tg1/.aws_config/ml_config.yaml` already expects),
+then synced here and to `ModelPipeline/finrag_ml_tg1/data_cache/metrics_fact/`
+automatically as the pipeline's last step (`push_to_s3.py`) - same cloud-
+source-of-truth pattern as `stage1_facts/`. Gitignored - regenerate via
+`src_metrics/run_pipeline.py`, don't hand-edit. Built in two passes: a full
+2006-2025 history fetch for the 4 newly-added companies (with a real
+domain review of their statement terminology - see
+`analytics/03_kpi_domain_review_new_companies.ipynb`), then a standard
+incremental (last-2-years) refresh for the original 21.
 
 ## incremental_batches/ (added 2026-07-27)
 The two incremental inputs consumed by the merge above, kept here for

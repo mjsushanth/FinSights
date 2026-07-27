@@ -266,3 +266,7 @@ DataPipeline/src_edgar_incremental/manifests/
 # (see data_cache/README.md). Backups live in S3, not git, for these.
 DataPipeline/data_cache/stage1_facts/
 DataPipeline/data_cache/incremental_batches/
+
+# Same reasoning, for the KPI/numeric fact table - regenerate via
+# src_metrics/run_pipeline.py, S3 is the source of truth.
+DataPipeline/data_cache/metrics_fact/

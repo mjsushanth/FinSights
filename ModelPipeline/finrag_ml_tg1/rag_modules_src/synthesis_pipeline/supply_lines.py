@@ -332,7 +332,7 @@ def init_rag_components(model_root: Path) -> RAGComponents:
     bedrock_client = config.get_bedrock_client()
 
     # Dimension paths
-    dim_companies = model_root / "finrag_ml_tg1/data_cache/dimensions/finrag_dim_companies_21.parquet"
+    dim_companies = model_root / "finrag_ml_tg1/data_cache/dimensions/finrag_dim_companies_25.parquet"
     dim_sections = model_root / "finrag_ml_tg1/data_cache/dimensions/finrag_dim_sec_sections.parquet"
 
     # Metric JSON path -- JSON outdated, use parquet.

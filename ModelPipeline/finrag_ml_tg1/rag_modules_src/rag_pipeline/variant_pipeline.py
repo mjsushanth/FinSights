@@ -313,7 +313,7 @@ def create_variant_pipeline(config: MLConfig) -> VariantPipeline:
     from pathlib import Path
     model_root = Path(__file__).resolve().parents[3]  # Up to ModelPipeline/
     
-    dim_companies = model_root / "finrag_ml_tg1/data_cache/dimensions/finrag_dim_companies_21.parquet"
+    dim_companies = model_root / "finrag_ml_tg1/data_cache/dimensions/finrag_dim_companies_25.parquet"
     dim_sections = model_root / "finrag_ml_tg1/data_cache/dimensions/finrag_dim_sec_sections.parquet"
     
     entity_adapter = EntityAdapter(

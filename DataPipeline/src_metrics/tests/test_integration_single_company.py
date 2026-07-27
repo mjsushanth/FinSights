@@ -43,6 +43,11 @@ def test_apple_derived_kpis_are_populated_and_sane():
     df = compute_core_kpis_for_company(APPLE_CIK, n_years=2)
     assert not df.empty, "expected at least some derived KPI rows for Apple"
 
+    # Regression: year used to come out as float64 (2023.0) from the
+    # statement column index, mismatching the GAAP-facts table's int year -
+    # broke the first real merge attempt against the production table.
+    assert df["year"].dtype.kind == "i", f"year should be int, got {df['year'].dtype}"
+
     present_labels = set(df["metric_label"].unique())
     assert present_labels & EXPECTED_DERIVED_LABELS, "no expected derived metrics found at all"
 

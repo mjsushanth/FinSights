@@ -26,7 +26,7 @@ sys.path.insert(0, str(PROJECT_ROOT))
 from src_aws_etl.etl.config_loader import ETLConfig
 
 from config import MetricsConfig, get_edgar_identity, load_metrics_config
-from coverage import compute_total_missing_derived
+from coverage import find_regressed_keys
 from derived_kpis import EXPECTED_DERIVED_LABELS, compute_core_kpis_for_company
 from domain_rules import load_domain_rules
 from gaap_registry import load_gaap_registry
@@ -76,11 +76,14 @@ class MetricsPipeline:
         combined = pd.concat(frames, ignore_index=True)
         return pl.from_pandas(combined)
 
-    def merge_and_validate(self, new_df: pl.DataFrame, years: set[int] | None = None) -> pl.DataFrame:
+    def merge_and_validate(self, new_df: pl.DataFrame) -> pl.DataFrame:
         """Downloads the current production KPI table from S3 (cloud is
         the source of truth), merges in the new data (new rows replace old
-        ones for the same cik+year+metric_label), and only proceeds if
-        coverage doesn't regress (compute_total_missing_derived)."""
+        ones for the same cik+year+metric_label), and only proceeds if no
+        existing (cik, year) pair's derived-metric coverage got worse
+        (find_regressed_keys) - a brand-new year (naturally partial, e.g.
+        a just-filed FY2025) is not held to this check, since there was
+        nothing there before for it to regress from."""
         current = read_current_kpi_facts(self.config, self.etl)
 
         if current is None:
@@ -91,20 +94,17 @@ class MetricsPipeline:
             base = current.join(replaced_keys, on=key_cols, how="anti")
             merged = pl.concat([base, new_df], how="vertical")
 
-            all_ciks = sorted(set(merged["cik"].to_list()))
-            all_years = years or set(merged["year"].cast(pl.Int64).to_list())
-
-            old_missing = compute_total_missing_derived(
-                current.to_pandas(), all_years, all_ciks, self.domain_rules, EXPECTED_DERIVED_LABELS
+            regressions = find_regressed_keys(
+                current.to_pandas(), merged.to_pandas(), self.domain_rules, EXPECTED_DERIVED_LABELS
             )
-            new_missing = compute_total_missing_derived(
-                merged.to_pandas(), all_years, all_ciks, self.domain_rules, EXPECTED_DERIVED_LABELS
-            )
-            print(f"Coverage check: missing metrics before={old_missing}, after={new_missing}")
-            if new_missing > old_missing:
+            print(f"Coverage check: {len(regressions)} (cik, year) pair(s) with regressed coverage")
+            if regressions:
+                for r in regressions[:10]:
+                    print(f"  {r['cik']} {r['year']}: {r['old_missing']} -> {r['new_missing']} missing "
+                          f"(lost: {r['lost_metrics']})")
                 raise ValueError(
-                    f"Refusing to merge: coverage would regress ({old_missing} -> {new_missing} "
-                    "missing derived metrics). Investigate before overwriting the production table."
+                    f"Refusing to merge: {len(regressions)} existing (cik, year) pair(s) would lose "
+                    "derived-metric coverage. Investigate before overwriting the production table."
                 )
 
         self.stats["rows"] = merged.height

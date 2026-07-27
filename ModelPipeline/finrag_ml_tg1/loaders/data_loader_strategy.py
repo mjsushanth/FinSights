@@ -98,8 +98,8 @@ class LocalCacheLoader(DataLoaderStrategy):
     def load_dimension_companies(self) -> pl.DataFrame:
         if self._dim_companies is None:
             cache_path = (
-                self.model_root / 
-                "finrag_ml_tg1/data_cache/dimensions/finrag_dim_companies_21.parquet"
+                self.model_root /
+                "finrag_ml_tg1/data_cache/dimensions/finrag_dim_companies_25.parquet"
             )
             self._dim_companies = pl.read_parquet(cache_path)
         return self._dim_companies

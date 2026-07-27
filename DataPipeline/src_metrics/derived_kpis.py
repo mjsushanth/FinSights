@@ -28,17 +28,28 @@ from edgar import Company, MultiFinancials
 from xbrl_facts import pad_cik, raw_cik, clean_numeric_series, cols_to_year_index
 
 STATEMENT_LABEL_ALIASES: dict[str, list[str]] = {
+    # Aliases below marked "2026-07-27" were added after a real-data domain
+    # review of the 4 newly-added companies (UnitedHealth, Northrop Grumman,
+    # Caterpillar, T-Mobile) - see analytics/03_kpi_domain_review_new_companies.ipynb.
+    # Confirmed via direct inspection of each company's actual statement row
+    # labels that these were genuine label-coverage gaps (this company just
+    # uses different wording for the same line item), not a sign the metric
+    # is inapplicable to the company.
     "Revenue": [
         "Revenue", "Revenues", "Sales Revenue, Net", "SalesRevenueNet", "SalesRevenueServicesNet",
         "Product Revenue", "Contract Revenue", "Sales and other operating revenue",
         "Total revenues and other income", "Sales and Operating Revenue", "Sales and Operating Revenues",
+        "Total revenues", "Total sales and revenues",  # 2026-07-27: UnitedHealth, Caterpillar
     ],
     "OperatingIncome": [
         "Operating Income", "Operating Income (Loss)", "OperatingIncomeLoss",
         "Income Before Tax from Continuing Operations", "Income Before Tax",
+        "Earnings from operations", "Operating profit",  # 2026-07-27: UnitedHealth, Caterpillar
+        "Total income before income taxes",  # 2026-07-27: UnitedHealth (tier-2 fallback wording)
     ],
     "NetIncome": [
         "Net Income", "Net Income (Loss)", "NetIncomeLoss", "Net Income from Continuing Operations",
+        "Net earnings", "Profit (loss)",  # 2026-07-27: UnitedHealth/Northrop Grumman, Caterpillar
     ],
     "TotalAssets": ["Total Assets", "Assets"],
     "TotalLiabilities": ["Total Liabilities", "Liabilities", "Total Liabilities and Stockholders' Equity"],
@@ -46,22 +57,28 @@ STATEMENT_LABEL_ALIASES: dict[str, list[str]] = {
         "Stockholders’ Equity", "Stockholders' Equity", "Total equity",
         "StockholdersEquityIncludingPortionAttributableToNoncontrollingInterest",
         "StockholdersEquity", "Total Stockholders' Equity", "Stockholders' Equity before Treasury Stock",
+        "Total shareholders’ equity", "Total shareholders' equity",  # 2026-07-27: Northrop Grumman ("shareholders" not "stockholders")
     ],
     "CurrentAssets": ["Current Assets", "Assets, Current", "AssetsCurrent", "Total Current Assets"],
     "CurrentLiabilities": ["Current Liabilities", "Liabilities, Current", "LiabilitiesCurrent", "Total Current Liabilities"],
     "Inventory": [
         "Inventory, Net", "InventoryNet", "Inventory", "Crude oil, products and merchandise",
         "Materials and supplies",
+        "Inventoried costs, net",  # 2026-07-27: Northrop Grumman (contract-cost inventory, not goods inventory)
     ],
     "CFO": [
         "Net Cash from Operating Activities", "Net Cash Provided by (Used in) Operating Activities",
         "Net Cash Provided by Operating Activities", "NetCashProvidedByUsedInOperatingActivities",
+        "Cash flows from operating activities",  # 2026-07-27: UnitedHealth (verified this is the real total, not a header - confirmed non-null values)
+        "Net cash provided by (used for) operating activities",  # 2026-07-27: Caterpillar
     ],
     "CapEx": [
         "Payments to Acquire Property, Plant and Equipment", "Purchases of property and equipment",
         "Capital Expenditures", "PaymentsToAcquirePropertyPlantAndEquipment",
         "Payments for Property, Plant and Equipment", "Purchases of property, equipment and technology",
         "Purchases of property, equipment, technology and intangible assets",
+        "Purchases of property, equipment and capitalized software",  # 2026-07-27: UnitedHealth
+        "Capital expenditures – excluding equipment leased to others",  # 2026-07-27: Caterpillar
     ],
 }
 
@@ -254,6 +271,12 @@ def compute_core_kpis_for_company(cik: str, n_years: int = 8) -> pd.DataFrame:
                .sort_values(["year", "metric_label"])
                .reset_index(drop=True)
     )
+    # year comes out of the statement column index as float64 (see
+    # cols_to_year_index) - cast to int so it matches the GAAP-facts
+    # table's integer year and the production schema (both must agree for
+    # a clean merge - a float/int dtype mismatch on the join key broke the
+    # first real merge attempt this session).
+    long_kpi["year"] = long_kpi["year"].astype(int)
 
     long_kpi["cik"] = cik10
     long_kpi["ticker"] = ticker

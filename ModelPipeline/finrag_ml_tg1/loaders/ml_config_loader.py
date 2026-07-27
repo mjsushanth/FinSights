@@ -636,10 +636,10 @@ class MLConfig:
         
         # Fallback if not in YAML (use known path)
         if not dim_config:
-            return "DATA_MERGE_ASSETS/DIMENSION_TABLES/finrag_dim_companies_21.parquet"
-        
+            return "DATA_MERGE_ASSETS/DIMENSION_TABLES/finrag_dim_companies_25.parquet"
+
         path = dim_config.get('path', 'DATA_MERGE_ASSETS/DIMENSION_TABLES')
-        filename = dim_config.get('companies', {}).get('filename', 'finrag_dim_companies_21.parquet')
+        filename = dim_config.get('companies', {}).get('filename', 'finrag_dim_companies_25.parquet')
         
         return f"{path}/{filename}"
 

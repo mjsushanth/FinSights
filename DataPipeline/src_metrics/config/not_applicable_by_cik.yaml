@@ -94,3 +94,22 @@
     - Operating Margin %
     - "ROA % (Avg Assets)"
     - "ROE % (Avg Equity)"
+
+# --------------------------------------------------------------------------
+# Added 2026-07-27, from a real-data domain review of the 4 companies added
+# this session (see analytics/03_kpi_domain_review_new_companies.ipynb) -
+# not an assumption, confirmed by directly inspecting each company's actual
+# balance sheet row labels via edgartools.
+# --------------------------------------------------------------------------
+
+- cik: "0000731766"
+  company: UnitedHealth Group
+  reason: >
+    Health insurer - the balance sheet has no inventory line of any kind
+    (confirmed by inspecting the real statement rows; medical/pharmacy
+    costs are not carried as inventory). Quick Ratio is defined as
+    (Current Assets - Inventory) / Current Liabilities - with no
+    inventory line to subtract, it would just silently equal Current
+    Ratio, which is misleading to report as if it were a distinct metric.
+  excluded_metrics:
+    - Quick Ratio
