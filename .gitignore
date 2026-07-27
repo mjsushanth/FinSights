@@ -230,8 +230,14 @@ CLAUDE.md
 # Bulky / generated artifacts (keep out of git)
 # ============================================
 
-# Large data backups (1.7G) - never track
-OD_MS_DataBackups_Bulk/
+# DataPipeline data_cache - large untracked source assets (folder itself mirrors
+# ModelPipeline's data_cache pattern; small tracked files - dimensions/, samples/
+# small_full + alphabet patch - stay in git, only the large corpus/samples/reference
+# files below are excluded). Superseded OD_MS_DataBackups_Bulk/ (removed 2026-07-26).
+DataPipeline/data_cache/full_corpus/
+DataPipeline/data_cache/samples/sec_finrag_1M_sample.parquet
+DataPipeline/data_cache/samples/sec_finrag_1M_sample_filtered.parquet
+DataPipeline/data_cache/reference/
 
 # Graphify: ignore only the bulky generated artifacts.
 # Keep small informative files trackable (e.g. GRAPH_REPORT.md ~68K).
@@ -244,3 +250,7 @@ graphify-out/cache/
 
 # Revival scratch workspace (throwaway inspection/upload scripts)
 ModelPipeline/revival_scratch/
+
+# src_edgar_incremental scratch/test-run outputs (manifests, intermediate
+# parquets from experimental runs) - pipeline code is tracked, outputs are not
+DataPipeline/src_edgar_incremental/manifests/

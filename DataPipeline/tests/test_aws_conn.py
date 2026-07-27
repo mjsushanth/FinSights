@@ -11,7 +11,7 @@ import sys
 # Add project root to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from src.aws_utils.s3_client import S3Client
+from src_legacy_bs4_scraper.aws_utils.s3_client import S3Client
 
 
 class TestS3Client:
@@ -58,10 +58,10 @@ class TestDownloadScript:
             'LOCAL_DATA_PATH': '/tmp/data.json'
         }
     
-    @patch('src.download_from_s3.S3Client')
+    @patch('src_legacy_bs4_scraper.download_from_s3.S3Client')
     def test_download_function(self, mock_client_class):
         """Test download_file function"""
-        from src.download_from_s3 import download_file
+        from src_legacy_bs4_scraper.download_from_s3 import download_file
         
         mock_client = MagicMock()
         mock_client.download_file.return_value = True
@@ -76,7 +76,7 @@ class TestUploadScript:
     """Tests for upload_to_s3.py"""
     
     def test_get_files_to_upload(self, tmp_path):        
-        from src.upload_to_s3 import get_files_to_upload
+        from src_legacy_bs4_scraper.upload_to_s3 import get_files_to_upload
         
         # Create test structure
         csv_dir = tmp_path / "datasets" / "CSV_FILES"
@@ -90,7 +90,7 @@ class TestUploadScript:
     
     def test_upload_file_success(self, tmp_path):
         """Test single file upload"""
-        from src.upload_to_s3 import upload_file_to_s3
+        from src_legacy_bs4_scraper.upload_to_s3 import upload_file_to_s3
         
         test_file = tmp_path / "test.csv"
         test_file.write_text("data")

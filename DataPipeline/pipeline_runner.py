@@ -154,7 +154,7 @@ def task_get_companies_list(ctx: PipelineContext, logger: logging.Logger) -> Tas
     logger.info("Downloading companies list from S3...")
     
     try:
-        result = run_module("src.download_from_s3")
+        result = run_module("src_legacy_bs4_scraper.download_from_s3")
         if result.stdout:
             logger.debug(f"stdout: {result.stdout}")
         
@@ -217,7 +217,7 @@ def task_download_filings(ctx: PipelineContext, logger: logging.Logger) -> TaskR
     logger.info("Downloading SEC filings...")
     
     try:
-        result = run_module("src.download_filings")
+        result = run_module("src_legacy_bs4_scraper.download_filings")
         logger.debug(f"stdout: {result.stdout}")
         
         return TaskResult(
@@ -240,7 +240,7 @@ def task_extract_and_convert(ctx: PipelineContext, logger: logging.Logger) -> Ta
     logger.info("Extracting and converting filings...")
     
     try:
-        result = run_module("src.extract_and_convert")
+        result = run_module("src_legacy_bs4_scraper.extract_and_convert")
         logger.debug(f"stdout: {result.stdout}")
         
         return TaskResult(
@@ -286,7 +286,7 @@ def task_upload_to_s3(ctx: PipelineContext, logger: logging.Logger) -> TaskResul
     logger.info("Uploading to S3...")
     
     try:
-        result = run_module("src.upload_to_s3")
+        result = run_module("src_legacy_bs4_scraper.upload_to_s3")
         logger.debug(f"stdout: {result.stdout}")
         
         return TaskResult(

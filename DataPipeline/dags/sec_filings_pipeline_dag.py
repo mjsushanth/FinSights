@@ -62,15 +62,15 @@ def _run_module(module: str, args: list[str] | None = None):
 
 def task_get_companies_list():
     """Connect to AWS S3 and get companies.csv"""
-    _run_module("src.download_from_s3")
+    _run_module("src_legacy_bs4_scraper.download_from_s3")
     
 def task_download_sec_filings():
     """Download filings from SEC EDGAR"""
-    _run_module("src.download_filings")
+    _run_module("src_legacy_bs4_scraper.download_filings")
 
 def task_extract_and_convert():
     """Extract items and convert to parquet"""
-    _run_module("src.extract_and_convert")
+    _run_module("src_legacy_bs4_scraper.extract_and_convert")
 
 # def task_validate_data():
 #     """Validate extracted data using Great Expectations"""
@@ -78,7 +78,7 @@ def task_extract_and_convert():
     
 def task_upload_files_to_s3():
     """Connect to AWS S3 and upload processed files"""
-    _run_module("src.upload_to_s3")
+    _run_module("src_legacy_bs4_scraper.upload_to_s3")
     #LOG.info(f"🎉 Pipeline succeeded for upload")
     
 def task_cleanup_temp_files(keep_json: bool = True):
