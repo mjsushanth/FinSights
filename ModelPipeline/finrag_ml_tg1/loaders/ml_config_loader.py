@@ -341,11 +341,11 @@ class MLConfig:
     def get_s3_client(self):
         """Create boto3 S3 client (uses IAM role if available, otherwise explicit credentials)"""
         import boto3
-        
+
         # If using IAM role, let boto3 auto-detect credentials
         if self._aws_creds_source == "IAM_ROLE":
             return boto3.client('s3', region_name=self.region)
-        
+
         # Otherwise use explicit credentials
         return boto3.client(
             's3',
@@ -353,21 +353,48 @@ class MLConfig:
             aws_secret_access_key=self.aws_secret_key,
             region_name=self.region
         )
-    
-    def get_bedrock_client(self):
-        """Create Bedrock runtime client (uses IAM role if available, otherwise explicit credentials)"""
+
+    def get_s3vectors_client(self):
+        """Create boto3 S3 Vectors client (uses IAM role if available, otherwise explicit credentials)"""
         import boto3
-        
+
+        if self._aws_creds_source == "IAM_ROLE":
+            return boto3.client('s3vectors', region_name=self.region)
+
+        return boto3.client(
+            's3vectors',
+            aws_access_key_id=self.aws_access_key,
+            aws_secret_access_key=self.aws_secret_key,
+            region_name=self.region
+        )
+
+    def get_bedrock_client(self, max_attempts=None):
+        """Create Bedrock runtime client (uses IAM role if available, otherwise explicit credentials)
+
+        max_attempts: if set, overrides botocore's own hidden retry-on-429 (legacy mode default
+        is 5 attempts). Pass max_attempts=1 when the caller has its own retry/rate-limiting
+        logic that needs to count real physical requests accurately -- otherwise botocore
+        silently multiplies each logical call by up to 5x underneath it (found 2026-07-28
+        during the Bin 2 throttle-storm investigation). Left as None (botocore's default) for
+        callers -- e.g. the LLM synthesis path -- that have no retry logic of their own and
+        rely on this as their only resilience to transient errors; do not change that default.
+        """
+        import boto3
+        from botocore.config import Config
+
+        bedrock_config = Config(retries={'max_attempts': max_attempts}) if max_attempts else None
+
         # If using IAM role, let boto3 auto-detect credentials
         if self._aws_creds_source == "IAM_ROLE":
-            return boto3.client('bedrock-runtime', region_name=self.bedrock_region)
-        
+            return boto3.client('bedrock-runtime', region_name=self.bedrock_region, config=bedrock_config)
+
         # Otherwise use explicit credentials
         return boto3.client(
             service_name='bedrock-runtime',
             region_name=self.bedrock_region,
             aws_access_key_id=self.aws_access_key,
-            aws_secret_access_key=self.aws_secret_key
+            aws_secret_access_key=self.aws_secret_key,
+            config=bedrock_config
         )
     
     def get_storage_options(self):

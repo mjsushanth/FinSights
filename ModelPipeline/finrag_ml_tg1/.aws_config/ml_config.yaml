@@ -161,18 +161,32 @@ data_ml:
   # cik_int: [ 1276520, 1318605, 1326801, 1341439, 1403161, 1652044 ]  
 
   # or
-  # cik_int: [ 34088, 59478, 104169, 200406, 320193, 789019, 813762, 814585, 890926, 909832 ] 
+  # cik_int: [ 34088, 59478, 104169, 200406, 320193, 789019, 813762, 814585, 890926, 909832 ]
   # cik_int: [ 1018724, 1045810, 1065280, 1141391, 1273813, 1276520, 1318605, 1326801, 1341439, 1403161, 1652044 ]
   # -----------------------------------------------------------------------------------------------------------------
-  
+
+  # ---------------------------------------------------------------------------------------------------------------
+  # CURRENT 25-company roster (post-expansion, 2026-07-27) -- ready for the full production run.
+  # Uncomment cik_int below (and set year to the desired range) when running the real embedding job.
+  # cik_int: [ 18230, 34088, 59478, 104169, 200406, 320193, 731766, 789019, 813762, 814585, 890926, 909832,
+  #            1018724, 1045810, 1065280, 1133421, 1141391, 1273813, 1276520, 1283699, 1318605, 1326801,
+  #            1341439, 1403161, 1652044 ]
+  # ---------------------------------------------------------------------------------------------------------------
+
 embedding_execution:
   mode: parameterized
-  
+
   filters:
-    cik_int: [ 34088, 59478, 104169, 200406, 320193, 789019, 813762, 814585, 890926, 909832, 1018724, 1045810, 1065280, 1141391, 1273813, 1276520, 1318605, 1326801, 1341439, 1403161, 1652044 ] 
-    year:  [2006, 2007, 2008, 2009, 2010, 2011]             
+    # FULL PRODUCTION RUN (2026-07-27), 3 volume-balanced bins across all 25 companies:
+    #   Bin 1: 2006-2016 (207,012 sentences, 33.7%) <- DONE
+    #   Bin 2: 2017-2021 (224,239 sentences, 36.5%) <- ACTIVE NOW (us.cohere.embed-v4:0)
+    #   Bin 3: 2022-2025 (183,536 sentences, 29.8%)
+    cik_int: [ 18230, 34088, 59478, 104169, 200406, 320193, 731766, 789019, 813762, 814585, 890926, 909832,
+               1018724, 1045810, 1065280, 1133421, 1141391, 1273813, 1276520, 1283699, 1318605, 1326801,
+               1341439, 1403161, 1652044 ]
+    year: [ 2017, 2018, 2019, 2020, 2021 ]
     sections: null
-  
+
   force_replace_vectors: false
   force_replace_meta: false
 
@@ -197,7 +211,7 @@ embedding:
     region: us-east-1
     models:
       cohere_embed_v3: { model_id: cohere.embed-english-v3, dimensions: 1024, batch_size: 96, input_type: search_document }
-      cohere_embed_v4: { model_id: cohere.embed-v4:0,      dimensions: 1024, batch_size: 96, input_type: search_document }
+      cohere_embed_v4: { model_id: cohere.embed-v4:0,      dimensions: 1024, batch_size: 96, input_type: search_document }  # reverted to on-demand 2026-07-27 -- cross-region hit the daily token cap
       titan_v2:        { model_id: amazon.titan-embed-text-v2:0, dimensions: 1024, batch_size: 25 }
     default_model: cohere_embed_v4
 
@@ -219,6 +233,7 @@ costs:
   
   rates:
     cohere_768d: 0.0001
+    cohere_1024d: 0.00012   # $0.12 / 1M tokens, Bedrock Cohere embed-v4, confirmed 2026-07-27
     bedrock_titan_1024d: 0.0001
 
 # ============================================================================
