@@ -198,6 +198,11 @@ datasets/
 # Large Embedding Cache Files
 ModelPipeline/finrag_ml_tg1/data_cache/embeddings/
 ModelPipeline/finrag_ml_tg1/data_cache/stage3_s3vectors/
+# Stage 2 meta table. Untracked 2026-07-29: it grows with every embedding run
+# (33.9 -> 62.0 MB so far) and GitHub warns above 50 MB. The authoritative copy
+# lives in S3 at ML_EMBED_ASSETS/, per DataPipeline/CLOUD_SOURCE_OF_TRUTH.md.
+# Regenerate locally with platform_core/data_preparation.py or pull from S3.
+ModelPipeline/finrag_ml_tg1/data_cache/meta_embeds/
 
 # Virtual Environments
 ModelPipeline/finrag_ml_tg1/venv_ml_rag
