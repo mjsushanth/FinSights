@@ -1,6 +1,12 @@
 # Embedding Transport Design — Bedrock | Cohere Direct
 
-**Written:** 2026-07-29. **Status:** DESIGN ONLY. No code written, no config changed.
+**Written:** 2026-07-29. **Status:** IMPLEMENTED 2026-07-29, same day, as a one-off notebook
+(`platform_core/06_Bin3_CohereDirect_Embeddings.ipynb`) rather than the module-level design
+sketched below — the actual build stayed even simpler than this doc proposed (no shared
+transport module at all, just a duplicated script). Bin 3 (180,848 sentences) ran on it in
+104.3 min with zero retries; the whole corpus (614,647) is now 100% embedded. Kept here for
+the reasoning on rate limits and the fatal/transient error split, both of which the notebook
+carried over as-designed.
 **Supersedes:** `EMBEDDING_PROVIDER_ABSTRACTION_DESIGN.md` (same day, earlier). That draft
 proposed an ABC + adapter + factory + normalized exception hierarchy. **That approach was
 deliberately rejected** in favour of simplicity: a plain dispatch and one duplicated retry

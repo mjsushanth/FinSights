@@ -138,8 +138,10 @@ User Raw Query
 
 
 ### Data Dependencies:
-- Stage 2 Meta Table: finrag_fact_sentences_meta_embeds.parquet (~73MB)
-- Stage 3 S3 Vectors Table: finrag_s3vectors_cohere_1024d.parquet (~360MB)
+- Stage 2 Meta Table (bulk/rich): finrag_fact_sentences_meta_embeds.parquet, 614,647 embedded rows (~62MB)
+- Stage 3 S3 Vectors Table (lean, join-ready): finrag_embeddings_s3vectors_cohere_1024d.parquet, 614,647 rows (~2.2GB)
+- Design intent (HLD): keep the lean vector table separate from the rich meta table so
+  metadata queries never load embeddings - confirmed 2026-07-29, matches current build.
 - Dimension Tables: Companies, Sections (small)
 - Metric Data: downloaded_data.json (KPI lookup)
 

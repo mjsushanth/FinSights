@@ -1,6 +1,11 @@
 # Git History Cleanup Plan — purge bulk data blobs
 
-**Written:** 2026-07-29. **Status:** PLAN ONLY. Nothing rewritten yet.
+**Written:** 2026-07-29. **Status:** EXECUTED same day. `.git` 2.6GB -> 104MB (96MB fresh clone).
+Force-pushed `main` (5e4a48b) and `revival/aws-infra` (b74d413). Verified zero commit-identity
+loss (filter-repo returned 312 distinct commits vs. 421 raw — the gap was 109 pre-existing exact
+duplicate commits, proven by diffing `author|date|subject` sets: 0 lost, 1 added). Full backup at
+`/Users/joel/.mounty/Seagate/FinSights_Backup_20260729/`, test-restore verified (0 fsck errors).
+See that drive's `README_BACKUP.md` for the restore command if this ever needs undoing.
 **Context:** `.git` is **2.6 GB** for a repo whose actual code and docs are ~220 MB. The bloat is
 historical data blobs — SEC index TSVs and regenerated parquet tables — that are no longer
 tracked or no longer belong in git. Sole owner, no collaborators, no coordination needed.

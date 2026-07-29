@@ -1,33 +1,51 @@
 # Embedding Generation — Progress Log
 
-**Last updated:** 2026-07-29 (early hours). **Read this first** if resuming with no context.
+**Last updated:** 2026-07-29 19:20. **Read this first** if resuming with no context.
+
+> **EMBEDDING IS COMPLETE — 614,647 / 614,647 eligible = 100%.** Stage 3 is also built.
+> The next milestone is the S3 Vectors `PutVectors` bulk insert — deferred, pending a go-ahead.
+
+**Since 08:20 (same day):**
+- Stage 2's `embedding_id` (+4 sibling columns) backfilled for all 180,848 Bin 3 rows — they were
+  never stamped because Bin 3 ran through the standalone notebook, not the production pipeline.
+  Non-null count: 433,799 -> 614,647. Local + S3 re-synced, byte-verified. Notebook 06 §11.
+- **Stage 3 built and uploaded**: `s3vectors_table_preparation.py`, provider `cohere_1024d` —
+  614,647 rows, 10 columns, 0 hash collisions, all 20 years present. Staged at
+  `ML_EMBED_ASSETS/S3_VECTORS_STAGING/cohere_1024d/`. Not yet inserted into the S3 Vectors index.
 
 ---
 
-## 1. Current state
+## 1. Current state — DONE
 
-| Bin | Years | Sentences | Status |
-|---|---|---|---|
-| **Bin 1** | 2006-2016 | 206,959 | **DONE** |
-| **Bin 2** | 2017-2021 | 224,196 | **DONE** (2026-07-29 04:18) |
-| **Bin 3** | 2022-2025 | 183,492 eligible | **NOT STARTED** — 2,644 done (old ad-hoc test data), 180,848 remaining |
+| Bin | Years | Eligible | Status | Transport |
+|---|---|---|---|---|
+| **Bin 1** | 2006-2016 | 206,959 | **DONE** | Bedrock |
+| **Bin 2** | 2017-2021 | 224,196 | **DONE** (2026-07-29 04:18) | Bedrock |
+| **Bin 3** | 2022-2025 | 183,492 | **DONE** (2026-07-29 07:31) | Cohere direct |
 
-**Vectors table: 433,799 rows**, durable in S3 + local, byte-identical
-(`1,558,533,985` both sides).
+**Vectors table: 614,647 rows / 2,293,538,065 B**, local and S3 verified **byte-identical** —
+matched on exact size *and* on a locally recomputed multipart composite ETag
+(`b47a120c6558e28f55f3770d18f1e9fa-35`, 64 MB parts).
 `ML_EMBED_ASSETS/EMBED_VECTORS/cohere_1024d/finrag_embeddings_cohere_1024d.parquet`
 
-**Meta table: 614,787 rows**, of which 433,799 have `embedding_id` set — exactly consistent
-with the vectors table.
+**Meta table: 614,787 rows.** 614,647 eligible (`sentence_token_count <= 1000`); the 140 outliers
+(53 / 43 / 44 by bin) are excluded by design, consistently across all three bins.
 
-**Overall: 433,799 / 614,647 eligible = 70.58%.**
-**Remaining: 180,848 sentences / 7,162,360 tokens / ~$0.86.**
+**Bin 3 run:** 180,848 sentences, 1,884 calls, **104.3 min, zero retries**,
+7,555,061 billed tokens = **$0.9066**. 76 shard checkpoints. Notebook
+`platform_core/06_Bin3_CohereDirect_Embeddings.ipynb` (sections 8-10 hold the full acceptance test).
 
-Integrity checks on the final table all PASS: no duplicate `sentenceID`, all dims exactly 1024,
-zero NaN. Scratch checkpoint auto-cleared on clean completion.
+**Full-table validation — all PASS** (notebook 06 §8-10):
 
-**Config is still set to Bin 2's scope.** To run Bin 3, edit
-`ml_config.yaml embedding_execution.filters.year` to `[2022, 2023, 2024, 2025]` (CIK list
-unchanged, all 25).
+- unique `sentenceID`, no nulls, every vector exactly 1024-d, no NaN, no Inf, no degenerate vectors
+- coverage by two-way anti-join: nothing missing, nothing orphaned, outliers correctly unembedded
+- **every one of the 20 report years at 100%** (2006-2025)
+- continuity: 3,000-row sample bit-identical to the pre-merge table; **0 collisions**
+- provider parity: L2 norm mean 1.0 in all three bins, cross-bin spread **0.00e+00** — Bedrock and
+  Cohere-direct vectors sit in one coherent space, measured on the real table rather than a probe
+
+**Total regeneration cost: ~$2.21** (~$1.30 Bedrock for Bins 1-2 + $0.9066 Cohere for Bin 3),
+against the ~$5 originally estimated.
 
 ## 2. Resume command
 
@@ -168,16 +186,26 @@ Costs so far: Bin 1 ~$1.14 billed. Bin 2 ~$0.44 + $0.016. Remaining Bin 3 ~$0.86
 
 ## 9. Next steps
 
-1. Set `embedding_execution.filters.year` to `[2022, 2023, 2024, 2025]`.
-2. Probe first (section 3). Bin 3 needs 7,162,360 tokens — close to a full day's cap on its own,
-   so expect **two sittings**. The window frees meaningful capacity as the previous day's large
-   buckets age out.
-3. Verify (section 6), then go to `EMBEDDINGS_VECTORS_REVIVAL_PLAN.md` **Step E** (Stage 3 build)
-   — Steps B and C there are already done.
+Embedding is finished; nothing in this document needs re-running. What remains:
 
-**Shelved (deliberately):** a direct-Cohere-API transport as a way around the daily cap. Fully
-designed and costed in `EMBEDDING_TRANSPORT_DESIGN.md` — same model, same $0.12/1M, no daily
-cap, ~2.3h for all remaining work — but parked in favour of just finishing on Bedrock. That doc
-also records a **real unfixed landmine (P0)**: `ml_config_loader.py:176-178` sends any
-non-Bedrock provider to the `cohere_768d` path, which would silently orphan the existing
-vectors table. Read it before ever flipping `embedding.default_provider`.
+1. **Stage 3** — `EMBEDDINGS_VECTORS_REVIVAL_PLAN.md` **Step E**: join meta + vectors and bulk
+   insert into the S3 Vectors index, which exists but is still **empty**. Steps B and C are done.
+   This gates all retrieval measurement (~$0.50 one-time, ~$0.15/mo).
+2. **Cleanup, now safe** — the 76 Bin 3 shards (636 MB, `data_cache/embeddings/_bin3_shards/`) and
+   `finrag_embeddings_cohere_1024d.parquet.premerge_bak` (1.5 GB) are redundant. The Seagate
+   archive `FinSights_Backup_20260729/` holds the pre-merge table independently.
+
+**Not done, deliberately:** the Bin 3 standalone parquet was not uploaded to S3. Its vectors are
+all in the merged table, so it is a convenience copy only.
+
+**Housekeeping found 2026-07-29:** one **stale incomplete multipart upload** from 2026-07-28 on the
+vectors key. Orphaned parts accrue storage silently — they do not appear in `s3 ls`. Small (~$0.03/mo)
+but worth an `abort-multipart-upload` plus a lifecycle rule to auto-abort incomplete uploads:
+`aws s3api list-multipart-uploads --bucket sentence-data-ingestion-mjs`
+
+**Superseded:** `EMBEDDING_TRANSPORT_DESIGN.md` shelved the direct-Cohere transport in favour of
+finishing on Bedrock. That call was reversed — the cap made it necessary and Bin 3 ran on Cohere
+direct, in one sitting with zero retries. The **P0 landmine** that doc flagged
+(`ml_config_loader.py` routing any non-Bedrock provider to the `cohere_768d` path, which would
+silently orphan the vectors table) is **fixed**: `embeddings_path()` and `embeddings_metadata_path()`
+now resolve `provider=None` through `data_ml.embeddings.canonical_slot`.

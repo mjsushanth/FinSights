@@ -242,9 +242,7 @@ CLAUDE.md
 # ============================================
 
 # DataPipeline data_cache - large untracked source assets (folder itself mirrors
-# ModelPipeline's data_cache pattern; small tracked files - dimensions/, samples/
-# small_full + alphabet patch - stay in git, only the large corpus/samples/reference
-# files below are excluded). Superseded OD_MS_DataBackups_Bulk/ (removed 2026-07-26).
+# ModelPipeline's data_cache pattern). Superseded OD_MS_DataBackups_Bulk/ (removed 2026-07-26).
 DataPipeline/data_cache/full_corpus/
 DataPipeline/data_cache/samples/sec_finrag_1M_sample.parquet
 DataPipeline/data_cache/samples/sec_finrag_1M_sample_filtered.parquet
@@ -283,3 +281,42 @@ ModelPipeline/finrag_ml_tg1/data_cache/analysis_exports/
 ModelPipeline/finrag_ml_tg1/data_cache/qa_manual_exports/
 DataPipeline/data_cache/samples/
 DataPipeline/src_aws_etl/data_exports_testing/
+
+# ============================================
+# Audit 2026-07-29: any data cache / table / JSON output is ignored regardless of
+# size (policy: volume/size never justifies tracking a regenerable data file).
+# Dimension/reference lookup tables - small (3-25KB) but still data_cache OUTPUT,
+# not source. Source of truth: DATA_MERGE_ASSETS/DIMENSION_TABLES/ in S3
+# (previously kept tracked deliberately; that decision is superseded).
+# ============================================
+DataPipeline/data_cache/dimensions/
+ModelPipeline/finrag_ml_tg1/data_cache/dimensions/
+
+# KPI fact table cache - ModelPipeline's copies (DataPipeline's own copy already
+# ignored above via data_cache/metrics_fact/). Regenerate via
+# platform_core/data_preparation.py or pull from S3.
+ModelPipeline/finrag_ml_tg1/data_cache/metrics_fact/
+ModelPipeline/finrag_ml_tg1/rag_modules_src/metric_pipeline/data/
+
+# Scratch/trial data - throwaway by name and by convention.
+ModelPipeline/finrag_ml_tg1/data_cache/trial_data_incr/
+
+# MLflow run-tracking store for the production pipeline (synthesis_pipeline/
+# mlflow_tracker.py) - regenerated on every run, never meant to be committed.
+# Separate from MLFlow_POC/, which has its own nested .gitignore.
+ModelPipeline/mlruns/
+
+# src_metrics_legacy - superseded pipeline (see DataPipeline/CLAUDE.md); the code
+# stays as reference, its output tables don't.
+DataPipeline/src_metrics_legacy/*.parquet
+DataPipeline/src_metrics_legacy/metrics_output/
+
+# One-off manual data exports from ad hoc research (csv/xlsx dumps) - the SQL
+# scripts and notebooks in the rest of data_engineering_research/ stay tracked
+# as genuine research reference; only the raw table exports are cache-shaped.
+DataPipeline/data_engineering_research/duckdb_data_engineering/manual_export_analysis/*.csv
+DataPipeline/data_engineering_research/duckdb_data_engineering/manual_export_analysis/*.xlsx
+
+# Microsoft Office lock/temp files (e.g. ~$Finance_RAG_HLD_v1.xlsx) - created
+# automatically while a file is open, accidental to commit, never source.
+~$*
