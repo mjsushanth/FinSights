@@ -67,7 +67,19 @@ data_ml:
   # Embeddings: Separate storage per provider
   embeddings:
     base_path: ML_EMBED_ASSETS/EMBED_VECTORS
-    
+
+    # THE ONE AND ONLY VECTORS TABLE. Every vector ever generated for this
+    # project lives in the cohere_1024d slot. Verified 2026-07-29: no other
+    # slot has ever held data.
+    # This exists to kill a latent P0: ml_config_loader.embeddings_path() used
+    # to fall back to a hardcoded 'cohere_768d' for any non-bedrock provider.
+    # Flipping the transport would have silently resolved the 768-d path,
+    # found nothing, and seeded a FRESH table -- orphaning all vectors with no
+    # error and no warning. The fallback now reads this key instead.
+    # The 768d / titan slots below are retained for schema compatibility only
+    # and are NEVER written to.
+    canonical_slot: cohere_1024d
+
     cohere_768d:
       path: ML_EMBED_ASSETS/EMBED_VECTORS/cohere_768d
       filename: finrag_embeddings_cohere_768d.parquet
@@ -205,7 +217,44 @@ embedding_execution:
 
 
 embedding:
+  # NOTE: 'default_provider' selects the API TRANSPORT. Leave it at 'bedrock'
+  # unless you have also read data_ml.embeddings.canonical_slot above --
+  # changing it alters which vectors table embeddings_path() resolves.
   default_provider: bedrock
+
+  # ==========================================================================
+  # SPEC -- identity of the embedding space. Shared by ALL transports. PINNED.
+  # ==========================================================================
+  spec:
+    dimensions: 1024               # POLICY: pinned. Cohere v4 silently returns
+                                   # 1536-d if output_dimension is omitted.
+    model_family: cohere_embed_v4  # POLICY: pinned. Titan / v3 are DIFFERENT
+                                   # vector spaces, not drop-in alternatives.
+
+    # ----------------------------------------------------------------------
+    # ASYMMETRIC ENCODER -- THESE TWO MUST DIFFER. NOT A STYLE CHOICE.
+    # ----------------------------------------------------------------------
+    # Cohere v3/v4 are asymmetric dual encoders: ONE shared tower, with the
+    # input tagged by role via input_type. The contrastive training objective
+    # ONLY ever optimised
+    #     cos( search_query(question) , search_document(answer) ).
+    # No other role combination is trained. Using search_document on BOTH
+    # sides silently converts retrieval into passage-SIMILARITY, which favours
+    # definitions, table headers and cross-references over the actual figures.
+    #
+    #   input_type_document -> the 614,787-sentence corpus.  ALREADY CORRECT.
+    #                          NEVER change this: it would invalidate every
+    #                          vector already generated and force a full
+    #                          re-embed.
+    #   input_type_query    -> user queries AND variant queries. This is the
+    #                          side that was wrong (it was borrowing the
+    #                          document value from bedrock.models below).
+    #
+    # Both transports take the same values -- this is transport-independent,
+    # which is why it lives in spec and not under bedrock:.
+    # Full explanation: EMBEDDING_INPUT_TYPE_ASYMMETRY.md
+    input_type_document: search_document
+    input_type_query: search_query
 
   bedrock:
     region: us-east-1
@@ -215,11 +264,67 @@ embedding:
       titan_v2:        { model_id: amazon.titan-embed-text-v2:0, dimensions: 1024, batch_size: 25 }
     default_model: cohere_embed_v4
 
+  # ==========================================================================
+  # COHERE DIRECT TRANSPORT -- second endpoint for the SAME model/space.
+  # ==========================================================================
+  # Why it exists: Bedrock's Cohere Embed V4 daily cap on account
+  # mjsushanth_mlops is 8,100,000 tokens/day and is NOT adjustable via API
+  # (support-case only, Basic support). It blocked generation twice.
+  # Cohere's own API has no daily cap. Same model, same 1024-d space, same
+  # $0.12/1M tokens -- differs ONLY in quota regime.
+  #
+  # STATUS: config presence only. No library code reads this block yet; the
+  # Bin 3 run used it via notebook 06 with hardcoded values. Wiring is
+  # specified in EMBEDDING_TRANSPORT_DESIGN.md section 6.
+  cohere_direct:
+    model_id: embed-v4.0          # native id (Bedrock's is cohere.embed-v4:0)
+    truncate: END                 # native vocabulary (Bedrock uses RIGHT)
+
+    # Env-var NAMES exactly as they appear in .aws_secrets/aws_credentials.env
+    # (gitignored). Key VALUES must never appear in this file.
+    # These names are deliberately non-standard -- there is NO 'COHERE_API_KEY'
+    # in this project; anything referencing that name is a bug.
+    api_key_env_trial: cohere_direct_apiprod_trialk1
+    api_key_env_prod: cohere_direct_apiprod_k1
+    api_key_env_prod_alt: cohere_direct_apiprod_k2
+
+    # POLICY: the trial key is FREE and rate-IDENTICAL (2,000 inputs/min) but
+    # capped at 1,000 API calls/MONTH -- it CANNOT complete a bulk run (needs
+    # ~2,870). Budget experiments in CALLS, not sentences: 1 call = 96
+    # sentences = 0.1% of the monthly trial allowance.
+    # Use 'trial' for all validation/calibration; switch to 'prod' only for a
+    # real bulk run. Defaulting to trial so an accidental run cannot spend.
+    use_key: trial                # trial | prod
+
+    max_inputs_per_min: 2000      # documented; identical for trial and prod
+    rate_safety_factor: 0.9       # -> max_rpm = floor(2000/96 * 0.9) = 18
+    timeout_seconds: 60
+    sdk_max_retries: 0            # our own retry loop owns retry; do not raise
+
   filtering:
     min_char_length: 30
     max_char_length: 1000
     max_token_count: 500
-    exclude_sections: [ITEM_15, ITEM_16]
+
+    # DEAD CODE -- never enforced anywhere. MLConfig.exclude_sections
+    # (ml_config_loader.py:293) only reads and prints it; no filter applies it.
+    # DO NOT ENFORCE IT. Doing so would be actively destructive:
+    #   - ITEM_16 does not exist in the corpus at all (0 of 614,787 rows).
+    #   - ITEM_15 is NOT boilerplate. Filers such as EXXON MOBIL, ORACLE and
+    #     NVIDIA incorporate the financial section into Item 15 by reference,
+    #     so the section parser correctly assigned their real MD&A there.
+    #     Exxon: 8,212 sentences in ITEM_15 vs 663 in ITEM_7 and 546 in ITEM_8.
+    #     ITEM_15 also has the HIGHEST likely_kpi rate of any section (24.9%,
+    #     above ITEM_7's 24.2%); only 13.4% matches auditor/exhibit boilerplate.
+    #   Excluding it would delete most of those companies' financial narrative.
+    # Verified 2026-07-29 against data_cache/stage1_facts/finrag_fact_sentences.parquet.
+    # See RETRIEVAL_IMPROVEMENT_STUDY.md section 2.2.
+    #
+    # Neutralised to [] rather than deleted: MLConfig.exclude_sections
+    # (ml_config_loader.py:294) does a hard dict lookup and would raise KeyError,
+    # and ml_config_loader.py:946 does ', '.join(...) on it.
+    # Original value, for the record: [ITEM_15, ITEM_16]
+    exclude_sections: []
 
       
 
@@ -369,7 +474,16 @@ retrieval:
   enable_variants: true     # Generate semantic query variants (requires Bedrock LLM)
   
   # Filter thresholds
-  recent_year_threshold: 2015  # For "company-global" time relaxation (report_year >= this)
+  # For "company-global" time relaxation (report_year >= this).
+  # Set to 2006 = the corpus minimum (verified: report_year spans 2006-2025,
+  # 20 distinct years, 614,787 rows), so the global call reaches EVERY year and
+  # this filter is effectively a no-op. Was 2015, which made 23.8% of the corpus
+  # unreachable on the global path for no benefit -- S3 Vectors PutVectors/storage
+  # is cheap enough that there is no cost argument for a narrower window.
+  # KEEP THE KNOB: raising this is still the right lever for a high-scale
+  # production deployment, where restricting the global fan-out to recent filings
+  # would cut query latency and per-query cost. Not needed at this corpus size.
+  recent_year_threshold: 2006
   min_similarity: 0.3          # Filter very weak hits (1 - distance/2 < this threshold)
   
   # S3 Vectors index configuration

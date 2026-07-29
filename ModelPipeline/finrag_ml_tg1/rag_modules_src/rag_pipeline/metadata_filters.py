@@ -20,7 +20,7 @@ Strategy:
 # Global call result:
 {
     "cik_int": {"$eq": 1045810}  or  {"$in": [1045810, 320193]},
-    "report_year": {"$gte": 2015}
+    "report_year": {"$gte": 2006}
 }
 
 # Edge case - no entities:
@@ -64,7 +64,9 @@ class MetadataFilterBuilder:
             config: MLConfig instance (extracts recent_year_threshold from retrieval config)
         """
         retrieval_cfg = config.get_retrieval_config()
-        self.recent_year_threshold = retrieval_cfg.get('recent_year_threshold', 2015)
+        # Fallback matches the configured value (corpus minimum year), so a missing
+        # key cannot silently reinstate a narrower floor. See ml_config.yaml.
+        self.recent_year_threshold = retrieval_cfg.get('recent_year_threshold', 2006)
     
     def build_filters(
         self, 
