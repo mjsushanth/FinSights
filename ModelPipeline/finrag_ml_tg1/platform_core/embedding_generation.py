@@ -51,6 +51,24 @@ from botocore.exceptions import ClientError
 # Matches the retry ceiling used in s3vectors_bulk_insertion.py::_put_vectors_with_retry
 DEFAULT_MAX_RETRIES = 7
 
+# Substring that identifies Bedrock's DAILY token cap inside a ThrottlingException.
+# Bedrock uses the same exception name AND the same HTTP 429 for two different
+# things: a transient per-minute throttle (retrying works) and the per-day token
+# cap (retrying cannot work until the rolling window frees capacity). The message
+# text is the ONLY discriminator the API exposes -- there is no distinct error
+# code, status, or Retry-After header. Observed verbatim on 2026-07-28 and
+# 2026-07-29: "Too many tokens per day, please wait before trying again."
+DAILY_CAP_MESSAGE_MARKER = 'tokens per day'
+
+
+class DailyTokenQuotaExhausted(Exception):
+    """Bedrock's per-day token cap is exhausted; not retryable within this run.
+
+    Raised instead of retrying so the run stops immediately rather than working
+    through the full backoff ladder against a wall that cannot move. Progress
+    already written to the checkpoint is unaffected -- re-run to resume.
+    """
+
 
 class GlobalRateLimiter:
     """Sliding-window limiter over ALL invoke_model attempts (success + retry),
@@ -440,6 +458,8 @@ class EmbeddingGenerationPipeline:
 
         Mirrors s3vectors_bulk_insertion.py::_put_vectors_with_retry's error
         classification and backoff strategy:
+        - Daily token cap (429 whose message contains 'tokens per day') -> HARD STOP,
+          raise DailyTokenQuotaExhausted without retrying (added 2026-07-29)
         - 429 TooManyRequestsException / 503 ServiceUnavailableException / 5xx -> retry
         - Any other 4xx -> fail fast (bad request won't fix itself on retry)
 
@@ -476,7 +496,36 @@ class EmbeddingGenerationPipeline:
 
             except ClientError as e:
                 error_code = e.response.get('Error', {}).get('Code', 'Unknown')
+                error_msg = e.response.get('Error', {}).get('Message', '')
                 http_status = e.response.get('ResponseMetadata', {}).get('HTTPStatusCode', 500)
+
+                # HARD STOP: daily token cap, checked BEFORE the retry classification
+                # below. Both this and an ordinary throttle arrive as
+                # ThrottlingException/429, so the status-based rules further down
+                # cannot tell them apart and would retry this to exhaustion (~16s of
+                # backoff, 7 pointless requests) before failing anyway.
+                #
+                # Deliberately a narrow substring match that FALLS THROUGH to the
+                # transient path if it does not hit: should AWS ever reword the
+                # message, behaviour degrades to exactly the pre-fix retry-then-crash
+                # -- never to something worse. Do NOT broaden this into "treat all
+                # 429s as fatal"; that would abort recoverable runs on ordinary
+                # throttles, which is a far worse failure mode than the one it fixes.
+                if DAILY_CAP_MESSAGE_MARKER in error_msg.lower():
+                    print(f"\n  {'=' * 66}")
+                    print(f"  HARD STOP - daily token quota exhausted")
+                    print(f"  {'=' * 66}")
+                    print(f"  This is NOT a transient throttle and NOT a code bug.")
+                    print(f"  AWS message: {error_msg}")
+                    print(f"  Retrying cannot clear a per-day cap, so this run stops now")
+                    print(f"  instead of spending {DEFAULT_MAX_RETRIES} attempts on it.")
+                    print(f"  Work already embedded is preserved in the checkpoint")
+                    print(f"  (written every {CHECKPOINT_EVERY_N_BATCHES} batches):")
+                    print(f"    {CHECKPOINT_PATH}")
+                    print(f"  Re-run once the rolling 24h window frees capacity; the run")
+                    print(f"  will resume from the checkpoint and skip completed work.")
+                    print(f"  {'=' * 66}\n")
+                    raise DailyTokenQuotaExhausted(error_msg) from e
 
                 # Classify by HTTP status, not error-code name -- AWS services name the same
                 # concept differently (Bedrock InvokeModel: 'ThrottlingException'; s3vectors

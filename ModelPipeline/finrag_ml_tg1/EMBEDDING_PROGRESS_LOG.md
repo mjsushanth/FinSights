@@ -1,45 +1,35 @@
 # Embedding Generation — Progress Log
 
-**Last updated:** 2026-07-28 (session start 2026-07-27 evening, continuing into 07-28)
-**Purpose:** resume-anywhere status tracker. If you're starting fresh after `/clear` or a
-new session with zero memory of this work, read this file first, in full, before touching
-anything. It tells you exactly what's done, what's blocked, and the precise command to
-resume. For the *remaining* S3 Vectors work (index creation is done — see §1 below; Stage 3
-build onward is not), see `EMBEDDINGS_VECTORS_REVIVAL_PLAN.md` — that doc is trimmed to only
-that forward-looking work; everything about embedding generation itself lives here instead.
+**Last updated:** 2026-07-29 (early hours). **Read this first** if resuming with no context.
 
 ---
 
-## 1. Exact current state — read this first
+## 1. Current state
 
-| Bin | Years | Companies | Sentences | Status |
-|---|---|---|---|---|
-| **Bin 1** | 2006-2016 | all 25 | 206,959 | ✅ **DONE** — verified, cost $0.9905, 8,254,022 tokens |
-| **Bin 2** | 2017-2021 | all 25 | 224,196 (after outlier skip) | ⏸️ **BLOCKED** — ~9,600 saved so far (~4.3%), see §3 |
-| **Bin 3** | 2022-2025 | all 25 | ~183,536 (estimate) | ⬜ **NOT STARTED** |
+| Bin | Years | Sentences | Status |
+|---|---|---|---|
+| **Bin 1** | 2006-2016 | 206,959 | **DONE** |
+| **Bin 2** | 2017-2021 | 224,196 | **DONE** (2026-07-29 04:18) |
+| **Bin 3** | 2022-2025 | 183,492 eligible | **NOT STARTED** — 2,644 done (old ad-hoc test data), 180,848 remaining |
 
-**Vectors table right now:** 209,603 rows total on S3 + local
-(`ML_EMBED_ASSETS/EMBED_VECTORS/cohere_1024d/finrag_embeddings_cohere_1024d.parquet`) — this
-is Bin 1's 206,959 + 1,690 rows of earlier ad-hoc test data (Apple 2024/2025/2022, harmless,
-legitimate real embeddings, not scaffolding to clean up).
+**Vectors table: 433,799 rows**, durable in S3 + local, byte-identical
+(`1,558,533,985` both sides).
+`ML_EMBED_ASSETS/EMBED_VECTORS/cohere_1024d/finrag_embeddings_cohere_1024d.parquet`
 
-**Config right now:** `ml_config.yaml`'s `embedding_execution.filters` is already set to
-**Bin 2's exact scope** (all 25 CIKs, `year: [2017, 2018, 2019, 2020, 2021]`) — no edit needed,
-just resume once unblocked (§3).
+**Meta table: 614,787 rows**, of which 433,799 have `embedding_id` set — exactly consistent
+with the vectors table.
 
-**S3 Vectors index:** ✅ created and verified today (bucket `finrag-embeddings-s3vectors`,
-index `finrag-sentence-fact-embed-1024d`, 1024-d/cosine) — see
-`EMBEDDINGS_VECTORS_REVIVAL_PLAN.md` §Step C. **Nothing has been inserted into it.** This was
-deliberately scoped to *creation only* — see §8 below for why Stage 3 (the table that would
-actually get inserted) is intentionally on hold.
+**Overall: 433,799 / 614,647 eligible = 70.58%.**
+**Remaining: 180,848 sentences / 7,162,360 tokens / ~$0.86.**
 
-**Where we are on the vectors table itself:** what your own architecture notes call the "Stage
-2 - Embed Table" (`sentenceID`, `embedding_id`, `embedding` — no company/year metadata yet) is
-**partially populated**: 209,603 of the eventual ~614,787 rows (Bin 1 + odds and ends). This is
-the "partial Stage 2" state — Stage 3 (joining in `cik_int`/`report_year`/`section_name`/`sic`
-and inserting into the index above) does not start until this table is complete.
+Integrity checks on the final table all PASS: no duplicate `sentenceID`, all dims exactly 1024,
+zero NaN. Scratch checkpoint auto-cleared on clean completion.
 
-## 2. To resume Bin 2 (once unblocked)
+**Config is still set to Bin 2's scope.** To run Bin 3, edit
+`ml_config.yaml embedding_execution.filters.year` to `[2022, 2023, 2024, 2025]` (CIK list
+unchanged, all 25).
+
+## 2. Resume command
 
 ```bash
 cd "ModelPipeline/finrag_ml_tg1/platform_core"
@@ -51,140 +41,143 @@ summary = pipeline.run()
 print('RUN_COMPLETE:', summary)
 "
 ```
+Auto-resumes from checkpoint if one exists and matches the configured scope.
 
-It will auto-resume from checkpoint if one exists and matches this scope (see the checkpoint
-bug in §5 — don't run an unrelated small scope in between, or it'll wipe Bin 2's checkpoint
-again). After Bin 2 finishes: quick-check (merge count, dims=1024, no NaN, S3-vs-local byte
-match — see §6 for the exact commands), then repeat for Bin 3 by editing
-`embedding_execution.filters.year` to `[2022, 2023, 2024, 2025]` (cik_int list stays the same).
+## 3. The blocker — and an important correction to how it behaves
 
-## 3. The blocker
+Bedrock Cohere Embed V4 on this account: **8,100,000 tokens/day, rolling 24h window,
+NOT adjustable.** Confirmed `Adjustable: false` on all four relevant quota codes
+(`L-F1BB08BB`, `L-795ADAB0`, `L-BE5FD99B`, `L-EB8C1F30`);
+`request-service-quota-increase` returns `IllegalArgumentException`. Support-case-only, and
+the account is on **Basic support** (`describe-cases` -> `SubscriptionRequiredException`), so
+the pending ticket has no SLA and went unanswered for 14h+.
 
-Hit **`ThrottlingException: ... Too many tokens per day, please wait before trying again.`**
-This account's Cohere Embed V4 daily token quota is **8,100,000 tokens/day, non-adjustable**,
-and Bin 1 alone (8,254,022 tokens) already exceeded it. It appears to be a **rolling 24-hour
-window**, not a calendar-day reset — so it won't clear until roughly 24h after Bin 1's run
-(~2026-07-27 21:19 EDT), and is shared across on-demand and cross-region invocation (cross-region
-debits it at 2x per token). No code fix addresses this — only time, or the pending AWS support
-quota increase (§4), resolves it.
+**KEY LEARNING: enforcement LAGS — you can overshoot the cap.** On 2026-07-29 the trailing-24h
+total was already ~8.9M (roughly 800k **past** the 8.1M cap), yet a further 133k tokens went
+through with zero retries and finished Bin 2. So:
+- do not assume "cap reached" means "nothing more will work"
+- **always probe with one tiny request before concluding you are blocked**
+- small top-up runs can slip through even when the window looks exhausted
 
-**Before retrying:** check whether enough time has passed, or check for a reply on the support
-ticket. If you resume and hit the same message immediately, it hasn't cleared yet — stop again
-rather than burning retry attempts against a wall that isn't moving.
+Probe (~30 tokens, instant):
+```python
+b.invoke_model(body=json.dumps({'texts':['probe'],'input_type':'search_document',
+    'embedding_types':['float'],'output_dimension':1024,'max_tokens':128000,
+    'truncate':'RIGHT'}), modelId='cohere.embed-v4:0', accept='*/*',
+    contentType='application/json')
+```
 
-## 4. AWS Support ticket (filed 2026-07-28)
+Corollary: hourly CloudWatch buckets **underestimate** available headroom. A projection of
+~74,800 sentences on 2026-07-29 actually delivered **91,200** (~22% more).
 
-Requested AWS default quota levels (not above-default) for:
-- Cohere Embed V4: on-demand RPM (100 → 1,000 default), cross-region RPM (200 → 2,000),
-  daily token caps (8.1M/16.2M → 216M/432M default)
-- Claude Sonnet 5: found at **0 applied quota across every dimension** (input/output/cross-region
-  TPM, daily caps) vs defaults like 3M/300K/6M/8.64B — essentially no usable access at all
-- Context given: this account (`mjsushanth_mlops`, 908877262866) is scaling toward 1-5M row
-  datasets (~40M-200M tokens), so the current caps are 5-25x too low for where this is headed,
-  independent of today's immediate issue.
+## 4. Code changes in place
 
-Check for a reply before assuming quotas are still at the reduced level.
+`platform_core/embedding_generation.py` unless noted.
 
-## 5. What was actually built today (code changes, still in place)
+1. **Stage 2 meta table regenerated** from the fresh 614,787-row / 25-company Stage 1
+   (was stale at 469,252 / 21 companies).
+2. **Merge-crash guard** — `_merge_vectors_table()` degrades to a fresh seed on a real
+   "not found" instead of crashing after embeddings are already paid for.
+3. **Cost tracking fixed** — was using `cohere_768d` ($0.10/1M); real rate is $0.12/1M, added
+   as `cohere_1024d` in `costs.rates`.
+4. **Checkpoint/resume** — writes every 50 batches to
+   `data_cache/_scratch/embedding_checkpoint.parquet`, resumes by skipping done sentenceIDs,
+   reuses `embedding_id`, clears on clean completion.
+   *Known bug, unfixed:* single global path, not scoped per run — an unrelated run's clean
+   completion deletes any other in-progress checkpoint.
+5. **Retry/backoff by HTTP status** (408/429 retry, other 4xx fail fast, 5xx retry) rather than
+   error-code names — Bedrock's `InvokeModel` uses `ThrottlingException`, not
+   `TooManyRequestsException`, and status-based classification also catches
+   `ModelNotReadyException` (429) / `ModelTimeoutException` (408).
+6. **botocore's hidden retry disabled at this call site** —
+   `get_bedrock_client(max_attempts=1)`. Left at default for other callers; the LLM synthesis
+   path has no retry of its own and relies on it.
+7. **`GlobalRateLimiter`** — sliding window over *every* attempt including retries,
+   `max_rpm=60` (60% of the account's real 100 RPM).
+8. **HARD STOP on the daily cap (added 2026-07-29).** See section 5.
 
-All in `ModelPipeline/finrag_ml_tg1/platform_core/embedding_generation.py` unless noted.
+## 5. Hard stop on daily quota — why and how
 
-1. **Stage 2 meta table regenerated** from the fresh 614,787-row/25-company Stage 1 (was
-   stale at 469,252 rows/21 companies). Verified 614,787 rows, 25 companies, both S3 and local.
-2. **Merge-crash guard** — `_merge_vectors_table()` no longer assumes the vectors table
-   exists; degrades to a fresh seed on a real "not found" error instead of crashing after
-   embeddings are already paid for. Verified against the real exception text (`OSError`,
-   "not found"/"404" in message — confirmed empirically, not guessed).
-3. **Cost tracking fixed** — was silently using the wrong rate (`cohere_768d`, $0.10/1M)
-   instead of the real Cohere v4 rate ($0.12/1M, added to `ml_config.yaml costs.rates` as
-   `cohere_1024d`). Passive (non-blocking) budget-alert print added.
-4. **Checkpoint/resume mechanism** — writes progress every 50 batches to a local scratch
-   parquet (`data_cache/_scratch/embedding_checkpoint.parquet`), resumes by skipping
-   already-embedded sentenceIDs, reuses `embedding_id` across a resume, clears on clean
-   completion. **Known bug, not yet fixed:** the checkpoint path is a single global path, not
-   scoped per run/scope — a *different*, unrelated small run's successful completion will
-   delete *any* other in-progress checkpoint, even one it never touched. Cost impact so far has
-   been negligible (~$0.02 of re-embedded tokens once), but worth scoping the path (e.g. by a
-   hash of the filter parameters) before relying on it across differently-scoped runs again.
-5. **Retry/backoff, twice-corrected:**
-   - v1: mirrored `s3vectors_bulk_insertion.py`'s error classification, but that service uses
-     `TooManyRequestsException` while Bedrock's `InvokeModel` actually uses `ThrottlingException`
-     — confirmed via botocore's real service model, not guesswork. Fixed.
-   - v2: further generalized to classify by **HTTP status** (408/429 retryable, other 4xx
-     fail-fast, 5xx retryable) instead of matching specific error-code name strings, since that
-     also catches `ModelNotReadyException` (429) and `ModelTimeoutException` (408), which the
-     name-based check would have missed.
-6. **botocore's hidden internal retry disabled** for this call site specifically —
-   `loaders/ml_config_loader.py::get_bedrock_client(max_attempts=None)` now accepts an optional
-   override; the embedding path passes `max_attempts=1` so our own retry loop and rate limiter
-   count real physical requests accurately (botocore's legacy-mode default silently retries up
-   to 5x per logical call otherwise). **Left at default (unset) for other callers** — the LLM
-   synthesis path (`bedrock_client.py`) has zero retry logic of its own and currently relies on
-   botocore's hidden retry as its only resilience; do not change that default without giving it
-   real retry logic first.
-7. **`GlobalRateLimiter`** — a sliding-window limiter (module-level class in
-   `embedding_generation.py`) gating *every* Bedrock call attempt, including retries, to
-   `max_rpm=60` (60% of the account's real 100 RPM ceiling). This closed the actual gap: the
-   earlier `target_tpm` pacing only slowed down *successful* calls, never retries — and retries
-   themselves consume RPM budget even when they fail, so a throttle storm was self-reinforcing.
-   Verified in isolation (fake-clock + real-clock unit tests, zero AWS calls) before being wired
-   into the real pipeline. `target_tpm` pacing is kept too (orthogonal, tokens vs. requests).
+**Problem:** Bedrock returns `ThrottlingException` with HTTP **429** for *two different things*:
+- a transient per-minute throttle — `"Too many requests..."` — retrying **works**
+- the daily token cap — `"Too many tokens per day..."` — retrying **cannot work**
 
-## 6. Verification commands (reuse after each future bin)
+Same exception name, same status code. The retry loop could not tell them apart, so on the
+daily cap it worked the full 7-attempt ladder (~16s) and crashed anyway, with a traceback that
+made a routine quota decision look like a code bug.
+
+**Fix:** `DAILY_CAP_MESSAGE_MARKER = 'tokens per day'` checked *before* the status-based
+classification; raises `DailyTokenQuotaExhausted` immediately and prints a readable halt block
+naming the checkpoint path and next steps.
+
+**Why the brittleness is safe:** the message text is the *only* discriminator the API exposes —
+no distinct code, status, or `Retry-After`. The match is deliberately narrow and **falls through
+to the transient path** if it misses, so if AWS rewords the message, behaviour degrades to
+exactly the pre-fix retry-then-crash — never worse. **Do NOT broaden this to "all 429s are
+fatal"**: that would abort recoverable runs on ordinary throttles, a far worse failure mode.
+
+Verified by simulated `ClientError` (no AWS calls), 4/4 PASS:
+daily cap -> aborts after 1 call; transient -> still retries all 7; bad request -> still fails
+fast; reworded daily cap -> degrades to retry path. Not yet triggered in a live run (nothing
+throttled during the run that closed Bin 2).
+
+## 6. Verification commands
 
 ```python
-import polars as pl, numpy as np
-vec = pl.read_parquet(".../data_cache/embeddings/cohere_1024d/finrag_embeddings_cohere_1024d.parquet")
-assert vec['sentenceID'].n_unique() == len(vec)                       # no duplicate sentenceIDs
-arr = np.array(vec['embedding'].to_list())
-assert arr.shape[1] == 1024 and not np.isnan(arr).any()                # correct dims, no NaN
+import polars as pl
+v = pl.scan_parquet("data_cache/embeddings/cohere_1024d/finrag_embeddings_cohere_1024d.parquet")
+s = v.select([pl.len().alias("rows"), pl.col("sentenceID").n_unique().alias("uniq"),
+              pl.col("embedding").list.len().min().alias("dmin"),
+              pl.col("embedding").list.len().max().alias("dmax")]).collect()
+nan = v.select(pl.col("embedding").list.eval(pl.element().is_nan().any())
+               .list.first().sum()).collect()
+# expect rows == uniq, dmin == dmax == 1024, nan == 0
 ```
-S3-vs-local byte check: `aws s3 cp s3://.../<file>.parquet /tmp/check.parquet && cmp /tmp/check.parquet <local path>`
-(don't trust the S3 ETag directly for multipart uploads — it's not a plain MD5).
+Use `scan_parquet`, never `read_parquet` — the table is 1.56 GB.
+S3-vs-local: compare byte sizes (do not trust the multipart ETag as an MD5).
 
-## 7. Things learned this session worth remembering
+## 7. Cost reality
 
-- **RPM vs TPM are independent ceilings** — you're bound by whichever you hit first, not by
-  whichever number looks bigger. This account's real constraint was RPM (100), not TPM (150K,
-  already at AWS default) — the opposite of what token-volume-based intuition suggests.
-- **Every retry consumes real quota**, even failed ones. A `EstimatedTPMQuotaUsage` CloudWatch
-  reading that looks "under quota" can be misleading — per AWS's own blog, it reflects
-  *completed* usage, not the *upfront reservation* that actually drives throttling decisions.
-- **The AWS Service Quotas console's "Applied account-level quota value" column can be far
-  below "AWS default quota value"** for a given account — this is where the real ceiling
-  showed up; CloudWatch metrics alone don't surface this, and neither does
-  `service-quotas list-service-quotas`'s CLI output unless you also check the account's
-  applied value against the default (the CLI doesn't print the default side-by-side by default).
-- **Cross-region inference profiles trade 2x per-minute throughput for 2x daily-token debit
-  rate** — a bad trade for any single job whose own token volume is already close to the daily
-  cap (as ours was), even though it looks like a pure win from the per-minute numbers alone.
-- **Batch Inference is not available for any Cohere Embed model** on Bedrock (confirmed against
-  AWS's authoritative supported-models list) — not a fallback option for this workload.
+**Reconciled exactly** — Cost Explorer `UsageQuantity x 1M` == CloudWatch `InputTokenCount`
+sum == **9,506,195** for UTC 2026-07-28.
 
-## 8. Decision: full embedding pipeline first, Stage 3 after (recorded 2026-07-28)
+Important: a **CE daily row aggregates every run in that UTC day**, not one run. Comparing a
+single run's tracked tokens to a daily CE row overstates "waste" — the 15.2% gap once suspected
+as per-run retry waste was mostly the cross-region experiment (229,032) plus an aborted Bin 2
+start and ad-hoc embeds. **Estimate per-bin cost from token counts, not by scaling a CE row.**
 
-Explicit call made this session, not just an open question: **do not start Stage 3 (the
-meta+vectors join) or any `put_vectors` insertion until all three bins (1, 2, 3) are complete
-and verified.** Reasoning:
-- Building Stage 3 against partial data (Bin 1 only) would mean rebuilding/re-joining once
-  Bins 2-3 land anyway — no benefit to going early here, unlike the S3 Vectors index itself
-  (a one-time, idempotent, insert-independent setup step, which is why that part *was* done
-  today even though embedding generation isn't finished).
-- The session's owner explicitly wants a clean stopping point: finish embedding generation
-  fully first (resume Bin 2 once the daily quota clears, then run Bin 3), *then* move to Stage
-  3 + bulk insert + retrieval validation as one clean forward pass, not interleaved with
-  quota-recovery waiting.
+Also: **EDT/UTC skew.** Bin 1 ran the evening of 07-27 EDT, which is 07-28 UTC — that is why it
+appeared on the "07-28" CE row.
 
-**So the actual next steps, in order, whenever this resumes:**
-1. Check AWS support ticket reply / whether enough time has passed for the daily quota to clear.
-2. Resume Bin 2 (§2), verify (§6).
-3. Run Bin 3 (same command, edit `year` to `[2022, 2023, 2024, 2025]`), verify (§6).
-4. Only then: open `EMBEDDINGS_VECTORS_REVIVAL_PLAN.md` and start at Step E (Stage 3 build) —
-   Steps B and C in that doc are already done.
+Costs so far: Bin 1 ~$1.14 billed. Bin 2 ~$0.44 + $0.016. Remaining Bin 3 ~$0.86.
 
-## 9. Session closed 2026-07-28 — everything above is the full state
+## 8. Other learnings worth keeping
 
-No further embedding work happened after Bin 2 was blocked and the S3 Vectors index was
-created. Code changes (§5) and the new index (S3 Vectors, above) are committed to git on
-`revival/aws-infra`. A completely fresh terminal/session tomorrow can start from reading this
-file top to bottom and needs nothing else from this conversation.
+- **RPM and TPM are independent ceilings** — bound by whichever hits first. This account's real
+  constraint was RPM (100), not TPM (150k, already at AWS default).
+- **Every retry consumes real quota**, even failed ones.
+- **Service Quotas' "applied account-level" value can sit far below "AWS default"** — that is
+  where the real ceiling showed up; CloudWatch alone does not surface it.
+- **Cross-region inference debits the daily token cap at 2x** — a bad trade when a job's own
+  volume is already near the cap. Reverted to on-demand 2026-07-27.
+- **Batch Inference is not available for any Cohere Embed model** on Bedrock.
+- Batches are always exactly **96 texts** (the token cap of 128k is never the binding
+  constraint at ~39 tokens/sentence), so a request-based rate limiter converts cleanly.
+- The progress print shows **>100%** when resuming from a checkpoint: the numerator counts
+  checkpoint + new, the denominator only the remaining work. Cosmetic only.
+
+## 9. Next steps
+
+1. Set `embedding_execution.filters.year` to `[2022, 2023, 2024, 2025]`.
+2. Probe first (section 3). Bin 3 needs 7,162,360 tokens — close to a full day's cap on its own,
+   so expect **two sittings**. The window frees meaningful capacity as the previous day's large
+   buckets age out.
+3. Verify (section 6), then go to `EMBEDDINGS_VECTORS_REVIVAL_PLAN.md` **Step E** (Stage 3 build)
+   — Steps B and C there are already done.
+
+**Shelved (deliberately):** a direct-Cohere-API transport as a way around the daily cap. Fully
+designed and costed in `EMBEDDING_TRANSPORT_DESIGN.md` — same model, same $0.12/1M, no daily
+cap, ~2.3h for all remaining work — but parked in favour of just finishing on Bedrock. That doc
+also records a **real unfixed landmine (P0)**: `ml_config_loader.py:176-178` sends any
+non-Bedrock provider to the `cohere_768d` path, which would silently orphan the existing
+vectors table. Read it before ever flipping `embedding.default_provider`.
