@@ -275,3 +275,11 @@ DataPipeline/data_cache/incremental_batches/
 # Same reasoning, for the KPI/numeric fact table - regenerate via
 # src_metrics/run_pipeline.py, S3 is the source of truth.
 DataPipeline/data_cache/metrics_fact/
+# Bulk data purged from git history 2026-07-29 (see GIT_HISTORY_CLEANUP_PLAN.md).
+# All of this is regenerable or backed up to S3 / the Seagate archive at
+# FinSights_Backup_20260729/. The .gitkeep files stay tracked to preserve layout.
+ModelPipeline/finrag_ml_tg1/data_cache/stage1_facts/
+ModelPipeline/finrag_ml_tg1/data_cache/analysis_exports/
+ModelPipeline/finrag_ml_tg1/data_cache/qa_manual_exports/
+DataPipeline/data_cache/samples/
+DataPipeline/src_aws_etl/data_exports_testing/
