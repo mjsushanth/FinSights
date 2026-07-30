@@ -1,17 +1,53 @@
 # Embedding Generation — Progress Log
 
-**Last updated:** 2026-07-29 19:20. **Read this first** if resuming with no context.
+**Last updated:** 2026-07-30. **Read this first** if resuming with no context.
 
-> **EMBEDDING IS COMPLETE — 614,647 / 614,647 eligible = 100%.** Stage 3 is also built.
-> The next milestone is the S3 Vectors `PutVectors` bulk insert — deferred, pending a go-ahead.
+> **PIPELINE FULLY COMPLETE END TO END.** Embedding: 614,647 / 614,647 eligible = 100%.
+> Stage 3 built AND `PutVectors` bulk-inserted into the live S3 Vectors index — done, not
+> pending. Retrieval, synthesis, and serving (backend + frontend) have all been run and
+> verified against real AWS this session. See "2026-07-30 — full-system live verification"
+> below for the update that supersedes the "deferred, pending a go-ahead" line further down
+> (kept for history, not deleted — that line was accurate at the time it was written, just
+> stale now).
 
-**Since 08:20 (same day):**
+## 2026-07-30 — full-system live verification
+
+Every stage/table re-verified directly (not from docs) in one pass: local file present, S3
+object present, sizes match, local timestamp precedes or matches cloud upload timestamp
+(local-then-upload, as designed). No stage is missing, stale, or generated-but-never-uploaded.
+
+| Table | Local | S3 | Order |
+|---|---|---|---|
+| Stage 1 (fact sentences) | 37.5MB, 07-27 | 35.8MB, 07-27 03:09 | local→cloud |
+| Metrics/KPI fact table | 79.4KB, 07-27 17:37 | 77.5KB, 07-27 17:37 | matched exactly |
+| Merged embeddings (all bins) | 2.29GB, 07-29 08:05 | 2.1GiB, 07-29 08:05:26 | local→cloud |
+| Stage 2 (meta+embeds) | 64.8MB, 07-29 19:01 | 61.8MB, 07-29 19:08 | local (19:01) → cloud (19:08) |
+| Stage 3 (S3 Vectors staging table) | 2.30GB, 07-29 19:18 | 2.1GiB, 07-29 19:18:02 | local→cloud, same minute |
+
+**S3 Vectors index confirmed live and populated by direct query** (not by re-reading this doc's
+older claim below): queried `finrag-sentence-fact-embed-1024d` with a real 1024-d Cohere
+embedding, got 5 real hits back with real metadata (`sentenceID`, `cik_int`, `report_year`,
+mixed `bedrock_cohere_v4`/`cohere_direct_v4` embedding-batch provenance) — proof the bulk
+insert genuinely landed, not just that a doc says it did.
+
+**Full pipeline + serving smoke test, same session:** `synthesis_pipeline/main.py` CLI ran
+end-to-end against real AWS (14,558 in / 2,555 out tokens, $0.0273, real cited answer, real S3
+context/response exports). FastAPI backend (`:8000`) and Streamlit frontend (`:8501`) both
+started, backend `/health` and `/query` both returned correctly, frontend confirmed wired to
+the backend at its default `BACKEND_URL`. Nothing left to build or generate — this is a live,
+answering system on the new AWS account.
+
+---
+
+**Since 08:20, 2026-07-29 (historical — superseded by the update above):**
 - Stage 2's `embedding_id` (+4 sibling columns) backfilled for all 180,848 Bin 3 rows — they were
   never stamped because Bin 3 ran through the standalone notebook, not the production pipeline.
   Non-null count: 433,799 -> 614,647. Local + S3 re-synced, byte-verified. Notebook 06 §11.
 - **Stage 3 built and uploaded**: `s3vectors_table_preparation.py`, provider `cohere_1024d` —
   614,647 rows, 10 columns, 0 hash collisions, all 20 years present. Staged at
-  `ML_EMBED_ASSETS/S3_VECTORS_STAGING/cohere_1024d/`. Not yet inserted into the S3 Vectors index.
+  `ML_EMBED_ASSETS/S3_VECTORS_STAGING/cohere_1024d/`. ~~Not yet inserted into the S3 Vectors
+  index.~~ (This was true when written; the bulk insert ran later the same session and is
+  confirmed live as of 2026-07-30 above.)
 
 ---
 

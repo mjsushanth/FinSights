@@ -38,12 +38,9 @@ services:
     restart: unless-stopped
     networks:
       - finrag-network
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 40s
+    # Healthcheck is defined in backend.Dockerfile (HEALTHCHECK instruction) and
+    # inherited from the image. It is a python urllib probe, not curl - the slim
+    # runtime stage ships no apt packages. Do not re-add a curl test here.
 
   # ==========================================================================
   # Frontend Service - Streamlit UI
@@ -73,12 +70,7 @@ services:
     restart: unless-stopped
     networks:
       - finrag-network
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8501/_stcore/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 40s
+    # Healthcheck inherited from frontend.Dockerfile - see note above.
 
 # ============================================================================
 # Networks - This is the "bridge" for microservices communication

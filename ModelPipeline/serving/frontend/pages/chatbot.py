@@ -26,6 +26,7 @@ from state import init_session_state
 from chat import render_chat_history, handle_user_input
 from sidebar import render_sidebar
 from config import BACKEND_URL, API_TIMEOUT
+from components.styles import inject_global_css
 
 # ============================================================================
 # PAGE CONFIGURATION
@@ -37,6 +38,12 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="expanded"
 )
+
+# Streamlit runs each page in pages/ as its own script, so app.py's body - and
+# therefore its inject_global_css() call - never executes on this page. Without
+# this line the chat page falls back to unstyled Streamlit defaults: no source
+# chips, no stat tiles, no chat-bubble accents. Must follow set_page_config.
+inject_global_css()
 
 # ============================================================================
 # INITIALIZATION

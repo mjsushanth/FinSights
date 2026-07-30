@@ -50,65 +50,55 @@ The flow: **Clone -> Set up AWS creds -> Navigate once -> Build + Start**
    - docker compose --progress plain build --no-cache backend
 
 
-### Docker Image Size Breakdown:
+### Docker Image Size Breakdown (multi-stage rebuild, 2026-07-30):
+
+The figures previously recorded here (1.55GB / 1.38GB) came from the original
+single-stage build. The Dockerfiles are now multi-stage: dependencies are installed
+into a venv at /opt/venv in a builder stage, and only that venv plus the app code is
+copied into a clean python:3.12-slim runtime. No pip, no uv, no build-essential, and
+no apt layer at all survive into the final image - the healthcheck is a python urllib
+probe rather than curl, specifically so the runtime needs no package manager.
+
 ```
-Base Layer (Python 3.12-slim):
-├─ 87.4MB  → Debian base OS
-├─ 41.3MB  → Python runtime setup
-├─ 4.94MB  → Additional system setup
-└─ Total: ~133MB base
-
-Your Dockerfile Layers:
-├─ 336MB   → RUN apt-get install build-essential curl  ← BUILD TOOLS
-├─ 66.9MB  → COPY . .                                    ← CODE
-├─ 592MB   → RUN pip install requirements               ← PYTHON PACKAGES
-└─ Total: ~995MB added by your Dockerfile
-─────────────────────────────────────────────────────
-TOTAL: 133MB + 995MB = 1.55GB 
+python:3.12-slim base             205MB
+backend  dependency venv          527MB   (boto3, polars, pyarrow, fastapi, pandas)
+backend  app code                 4.6MB
+frontend dependency venv          368MB   (streamlit -> pyarrow, pandas, numpy)
+frontend app code                 143KB
 ```
 
-- **1 image: 1.55GB (finrag_docker_loc_tg1-backend),** 
-- **2 images: 1.38GB (finrag_docker_loc_tg1-frontend)**
-✅ Base OS + Python: 133MB
-✅ Build tools: 336MB (needed for compiling)
-✅ Code: 67MB
-✅ Python packages: 592MB (ML dependencies)
+Current, as reported by `docker images`:
 
---- 
+- **finrag_docker_loc_tg1-backend    889MB**  (was 1.55GB)
+- **finrag_docker_loc_tg1-frontend   674MB**  (was 1.38GB)
+
+Caveat worth knowing: `docker images` and `docker image inspect` disagree substantially
+under the containerd image store - inspect reported 189MB / 140MB for these same
+images. The layer sum above does not fully reconcile against either figure either.
+Quote the `docker images` number and do not trust a precise reconciliation.
+
+What remains is close to irreducible: pandas is genuinely imported by entity_adapter
+and metric_pipeline, pyarrow is required for parquet, and streamlit pulls
+pyarrow/pandas/numpy of its own accord.
+
+---
 ### Docker Inspection & Optimization Commands
 
 1. View all images with sizes
 docker images --format "table {{.Repository}}\t{{.Tag}}\t{{.Size}}\t{{.CreatedAt}}"
 
-2. View only FinRAG images
-docker images | Select-String "finrag"
-
-```shell
->> 
-REPOSITORY                            TAG                 SIZE      CREATED AT
-finrag_docker_loc_tg1-backend         latest              1.55GB    2025-12-08 01:25:15 -0500 EST
-finrag_docker_loc_tg1-frontend        latest              1.38GB    2025-12-08 01:24:55 -0500 EST
-```
+2. View only FinRAG images   (PowerShell equivalent: docker images | Select-String "finrag")
+docker images "finrag*"
 
 3. View image layer history
 docker history finrag_docker_loc_tg1-backend --human --no-trunc
 docker history finrag_docker_loc_tg1-frontend --human --no-trunc
 
-4. View large layers only (over 100MB)
-docker history finrag_docker_loc_tg1-backend --format "table {{.Size}}\t{{.CreatedBy}}" | Select-String -Pattern "MB|GB"
+4. View layer sizes only
+docker history finrag_docker_loc_tg1-backend --format "table {{.Size}}\t{{.CreatedBy}}"
 
-```shell
-PS D:\JoelDesktop folds_24\NEU FALL2025\MLops IE7374 Project\FinSights\ModelPipeline\finrag_docker_loc_tg1> docker history finrag_docker_loc_tg1-backend --format "table {{.Size}}\t{{.CreatedBy}}" | Select-String -Pattern "MB|GB"
->>
-
-592MB     RUN /bin/sh -c pip install --upgrade pip && ΓÇª
-66.9MB    COPY . . # buildkit
-336MB     RUN /bin/sh -c apt-get update && apt-get insΓÇª
-41.3MB    RUN /bin/sh -c set -eux;   savedAptMark="$(aΓÇª
-4.94MB    RUN /bin/sh -c set -eux;  apt-get update;  aΓÇª
-87.4MB    # debian.sh --arch 'amd64' out/ 'trixie' '@1ΓÇª
-```
-
+5. Full disk accounting - images, containers, volumes, build cache
+docker system df
 docker system df -v
 
 6. Freeing up in system; Do it at your own risk. Just to clear up space, unused data, build cache, stopped containers.

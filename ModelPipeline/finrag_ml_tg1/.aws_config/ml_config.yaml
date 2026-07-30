@@ -503,7 +503,24 @@ retrieval:
 
   ## Filtered is precision layer - should still dominate
   ## 30% global is substantial - 9 hits can add real temporal diversity
- 
+
+  # Cross-encoder reranking (Cohere Rerank 3.5 via Bedrock). Master switch OFF by
+  # default -- see investigation_analysis/retrieval_telemetry_and_reranking_design.md
+  # and investigation_analysis/ANALYSIS_reranker_judgment_calls_2026-07-29.md for the design
+  # and the reasoning behind these defaults.
+  enable_reranking: false
+  rerank_model_id: "cohere.rerank-v3-5:0"
+  # top-N + score-floor, not a token budget (research finding: token budget solves
+  # a non-binding constraint here and interacts badly with variable block sizes
+  # from window-overlap merging). N=8 is ~2x the hard floor of 4 derived from the
+  # gold set's max distinct (cik,year,section) groups per question -- calibrate
+  # both from the A1 score-only arm's gold-block rank/score percentiles before
+  # trusting these as final.
+  rerank_top_n_blocks: 8
+  rerank_min_score: 0.0
+  rerank_max_sources: 100          # stay inside one SearchUnit; hard API cap is 1000
+  rerank_cost_per_1k_queries: 2.00
+
 
 # ============================================================================
 # SERVING MODELS CONFIGURATION

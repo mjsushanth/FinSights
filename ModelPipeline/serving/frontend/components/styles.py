@@ -1,6 +1,9 @@
 # ModelPipeline\serving\frontend\components\styles.py
 import streamlit as st
 
+from components.answer_render import palette_css
+
+
 def inject_global_css():
     """Inject global CSS for FinSight / FinSights UI."""
 
@@ -12,6 +15,11 @@ def inject_global_css():
         """,
         unsafe_allow_html=True,
     )
+
+    # Per-company chip colours and entrance delays, generated from the single
+    # palette definition in answer_render.py. Kept in its own <style> block so the
+    # large literal stylesheet below stays a plain (non-f) string.
+    st.markdown(f"<style>{palette_css()}</style>", unsafe_allow_html=True)
 
     st.markdown(
         """
@@ -361,6 +369,425 @@ def inject_global_css():
             border: 1px solid rgba(148, 163, 184, 0.2) !important;
             border-radius: 8px !important;
             margin-bottom: 0.5rem !important;
+        }
+
+        /* =======================================================================
+           ANSWER TYPOGRAPHY
+           Long-form financial prose - the answers run 500-2000 words, so reading
+           comfort matters more here than density.
+           ======================================================================= */
+
+        [data-testid="stChatMessage"] .stMarkdown p {
+            line-height: 1.72 !important;
+            margin-bottom: 0.85rem !important;
+        }
+
+        [data-testid="stChatMessage"] .stMarkdown strong {
+            color: #f8fafc !important;
+            font-weight: 650 !important;
+        }
+
+        /* =======================================================================
+           SOURCE CHIPS  (components/answer_render.py)
+           Each chip carries ticker / fiscal year / 10-K item. Per-chip colour is
+           injected inline as --fs-bg / --fs-bd / --fs-fg so one rule serves all
+           companies.
+           ======================================================================= */
+
+        @keyframes fsFadeUp {
+            from { opacity: 0; transform: translateY(7px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes fsSheen {
+            0%   { background-position: 0% 50%; }
+            100% { background-position: 200% 50%; }
+        }
+
+        @keyframes fsPulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50%      { opacity: 0.55; transform: scale(0.82); }
+        }
+
+        .fs-sources {
+            margin: 1.1rem 0 0.2rem 0;
+            padding-top: 0.95rem;
+            position: relative;
+            animation: fsFadeUp 0.42s cubic-bezier(0.22, 1, 0.36, 1) both;
+        }
+
+        /* Gradient hairline instead of a flat grey rule - green bleeding into blue,
+           the same two-stop identity used by the logo and primary buttons. */
+        .fs-sources::before {
+            content: "";
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 1px;
+            background: linear-gradient(90deg,
+                rgba(34, 197, 94, 0.55) 0%,
+                rgba(14, 165, 233, 0.45) 45%,
+                rgba(148, 163, 184, 0.06) 100%);
+        }
+
+        .fs-sources-head {
+            display: flex;
+            align-items: baseline;
+            justify-content: space-between;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+            margin-bottom: 0.7rem;
+        }
+
+        .fs-sources-title {
+            font-size: 0.72rem !important;
+            font-weight: 700 !important;
+            letter-spacing: 0.09em;
+            text-transform: uppercase;
+            color: #94a3b8 !important;
+        }
+
+        .fs-sources-meta {
+            font-size: 0.72rem !important;
+            color: #64748b !important;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .fs-group {
+            margin-bottom: 0.75rem;
+            animation: fsFadeUp 0.44s cubic-bezier(0.22, 1, 0.36, 1) both;
+            animation-delay: var(--fs-delay, 0ms);
+        }
+
+        .fs-group-topic {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.45rem;
+            margin-bottom: 0.4rem;
+        }
+
+        .fs-group-num {
+            flex: 0 0 auto;
+            min-width: 1.15rem;
+            height: 1.15rem;
+            padding: 0 0.25rem;
+            border-radius: 5px;
+            background: linear-gradient(140deg,
+                rgba(34, 197, 94, 0.22) 0%,
+                rgba(14, 165, 233, 0.20) 100%) !important;
+            border: 1px solid rgba(34, 197, 94, 0.22);
+            color: #e2e8f0 !important;
+            font-size: 0.66rem !important;
+            font-weight: 700 !important;
+            line-height: 1.05rem !important;
+            text-align: center;
+            font-variant-numeric: tabular-nums;
+            transition: box-shadow 0.2s ease, transform 0.2s ease;
+        }
+
+        .fs-group:hover .fs-group-num {
+            transform: scale(1.08);
+            box-shadow: 0 0 12px -1px rgba(34, 197, 94, 0.55);
+        }
+
+        .fs-group-topic { transition: transform 0.2s ease; }
+
+        .fs-group-label {
+            font-size: 0.82rem !important;
+            font-weight: 600 !important;
+            color: #cbd5e1 !important;
+            line-height: 1.3 !important;
+        }
+
+        .fs-group-extra {
+            font-size: 0.75rem !important;
+            color: #64748b !important;
+            margin: 0.15rem 0 0 1.6rem;
+        }
+
+        .fs-chips {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.32rem;
+            margin-left: 1.6rem;
+        }
+
+        .fs-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.3rem;
+            padding: 0.18rem 0.55rem;
+            border-radius: 999px;
+            background: var(--fs-bg) !important;
+            border: 1px solid var(--fs-bd) !important;
+            font-size: 0.7rem !important;
+            line-height: 1.35 !important;
+            white-space: nowrap;
+            cursor: default;
+            will-change: transform;
+            transition: transform 0.2s cubic-bezier(0.22, 1, 0.36, 1),
+                        box-shadow 0.2s ease,
+                        border-color 0.2s ease,
+                        filter 0.2s ease;
+        }
+
+        /* Hover zoom + coloured bloom, so the chip lifts off the page rather than
+           just brightening. The glow colour is the company's own hue. */
+        .fs-chip:hover {
+            transform: translateY(-2px) scale(1.055);
+            box-shadow: 0 4px 16px -2px var(--fs-glow, rgba(34, 197, 94, 0.35)),
+                        0 0 0 1px var(--fs-glow, rgba(34, 197, 94, 0.35));
+            border-color: var(--fs-fg) !important;
+            filter: brightness(1.13) saturate(1.1);
+            z-index: 2;
+        }
+
+        /* Small leading dot in the company colour - a visual anchor that makes a
+           row of chips scannable by hue before the text is even read. */
+        .fs-chip .fs-chip-dot {
+            width: 5px;
+            height: 5px;
+            border-radius: 50%;
+            flex: 0 0 auto;
+            background: var(--fs-fg);
+            box-shadow: 0 0 6px var(--fs-glow, transparent);
+            transition: box-shadow 0.2s ease;
+        }
+
+        .fs-chip:hover .fs-chip-dot {
+            box-shadow: 0 0 10px 1px var(--fs-fg);
+        }
+
+        .fs-chip .fs-chip-t {
+            color: var(--fs-fg) !important;
+            font-weight: 700 !important;
+            letter-spacing: 0.02em;
+            font-size: 0.7rem !important;
+        }
+
+        .fs-chip .fs-chip-y,
+        .fs-chip .fs-chip-s {
+            color: #cbd5e1 !important;
+            font-weight: 500 !important;
+            font-size: 0.7rem !important;
+        }
+
+        .fs-chip .fs-chip-y { font-variant-numeric: tabular-nums; }
+
+        .fs-chip .fs-chip-sep {
+            color: rgba(148, 163, 184, 0.5) !important;
+            font-size: 0.7rem !important;
+        }
+
+        .fs-chip-kpi .fs-chip-t {
+            font-weight: 600 !important;
+            letter-spacing: 0.04em;
+        }
+
+        /* =======================================================================
+           STAT STRIP + DETAIL ROWS  (metrics.py)
+           ======================================================================= */
+
+        .fs-stats {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.45rem;
+            margin: 0.9rem 0 0.15rem 0;
+            animation: fsFadeUp 0.5s cubic-bezier(0.22, 1, 0.36, 1) 0.12s both;
+        }
+
+        .fs-stat {
+            flex: 1 1 auto;
+            min-width: 92px;
+            padding: 0.45rem 0.7rem;
+            border-radius: 10px;
+            position: relative;
+            overflow: hidden;
+            background: linear-gradient(160deg,
+                rgba(148, 163, 184, 0.10) 0%,
+                rgba(148, 163, 184, 0.045) 100%) !important;
+            border: 1px solid rgba(148, 163, 184, 0.16) !important;
+            cursor: default;
+            will-change: transform;
+            transition: transform 0.22s cubic-bezier(0.22, 1, 0.36, 1),
+                        border-color 0.22s ease,
+                        box-shadow 0.22s ease,
+                        background 0.22s ease;
+        }
+
+        .fs-stat:hover {
+            transform: translateY(-3px);
+            background: linear-gradient(160deg,
+                rgba(148, 163, 184, 0.16) 0%,
+                rgba(148, 163, 184, 0.07) 100%) !important;
+            border-color: rgba(148, 163, 184, 0.34) !important;
+            box-shadow: 0 8px 22px -8px rgba(2, 6, 23, 0.9);
+        }
+
+        /* Light sweeps across the tile on hover - the "fluid" cue, not a loop, so
+           it never becomes visual noise while reading. */
+        .fs-stat::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(105deg,
+                transparent 35%,
+                rgba(255, 255, 255, 0.07) 50%,
+                transparent 65%);
+            background-size: 200% 100%;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.22s ease;
+        }
+
+        .fs-stat:hover::after {
+            opacity: 1;
+            animation: fsSheen 0.85s ease-out;
+        }
+
+        .fs-stat-l {
+            font-size: 0.62rem !important;
+            font-weight: 700 !important;
+            letter-spacing: 0.085em;
+            text-transform: uppercase;
+            color: #64748b !important;
+            margin-bottom: 0.12rem;
+        }
+
+        .fs-stat-v {
+            font-size: 0.83rem !important;
+            font-weight: 650 !important;
+            color: #e2e8f0 !important;
+            font-variant-numeric: tabular-nums;
+            overflow-wrap: anywhere;
+        }
+
+        /* The two tiles worth colouring: which model answered, and what it cost.
+           Blue for model, green for cost - the same two identity stops. */
+        .fs-stat-model {
+            border-color: rgba(14, 165, 233, 0.32) !important;
+            background: linear-gradient(160deg,
+                rgba(14, 165, 233, 0.13) 0%,
+                rgba(14, 165, 233, 0.045) 100%) !important;
+        }
+        .fs-stat-model .fs-stat-v {
+            color: #38bdf8 !important;
+            text-shadow: 0 0 14px rgba(56, 189, 248, 0.4);
+        }
+        .fs-stat-model:hover {
+            border-color: rgba(56, 189, 248, 0.75) !important;
+            box-shadow: 0 8px 24px -8px rgba(14, 165, 233, 0.5);
+        }
+
+        .fs-stat-cost {
+            border-color: rgba(34, 197, 94, 0.32) !important;
+            background: linear-gradient(160deg,
+                rgba(34, 197, 94, 0.13) 0%,
+                rgba(34, 197, 94, 0.045) 100%) !important;
+        }
+        .fs-stat-cost .fs-stat-v {
+            color: #22c55e !important;
+            text-shadow: 0 0 14px rgba(34, 197, 94, 0.4);
+        }
+        .fs-stat-cost:hover {
+            border-color: rgba(34, 197, 94, 0.75) !important;
+            box-shadow: 0 8px 24px -8px rgba(34, 197, 94, 0.5);
+        }
+
+        .fs-pills {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.35rem;
+            margin-bottom: 0.85rem;
+        }
+
+        .fs-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            padding: 0.2rem 0.55rem;
+            border-radius: 999px;
+            font-size: 0.72rem !important;
+            font-weight: 600 !important;
+            cursor: default;
+        }
+
+        .fs-pill-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            flex: 0 0 auto;
+        }
+
+        .fs-pill {
+            transition: transform 0.2s cubic-bezier(0.22, 1, 0.36, 1),
+                        box-shadow 0.2s ease, border-color 0.2s ease;
+        }
+
+        .fs-pill:hover { transform: translateY(-1px) scale(1.04); }
+
+        .fs-pill-on {
+            background: rgba(34, 197, 94, 0.12) !important;
+            border: 1px solid rgba(34, 197, 94, 0.4) !important;
+            color: #22c55e !important;
+        }
+
+        .fs-pill-on:hover {
+            border-color: rgba(34, 197, 94, 0.85) !important;
+            box-shadow: 0 4px 14px -3px rgba(34, 197, 94, 0.5);
+        }
+
+        /* Slow pulse on the active dot - reads as "this supply line fired", the one
+           place a looping animation earns its keep. */
+        .fs-pill-on .fs-pill-dot {
+            background: #22c55e;
+            box-shadow: 0 0 7px rgba(34, 197, 94, 0.9);
+            animation: fsPulse 2.4s ease-in-out infinite;
+        }
+
+        .fs-pill-off {
+            background: rgba(148, 163, 184, 0.08) !important;
+            border: 1px solid rgba(148, 163, 184, 0.22) !important;
+            color: #64748b !important;
+        }
+        .fs-pill-off .fs-pill-dot { background: #475569; }
+
+        .fs-det-h {
+            font-size: 0.66rem !important;
+            font-weight: 700 !important;
+            letter-spacing: 0.09em;
+            text-transform: uppercase;
+            color: #64748b !important;
+            margin: 0.2rem 0 0.45rem 0;
+        }
+
+        .fs-det-row {
+            display: flex;
+            justify-content: space-between;
+            gap: 1rem;
+            padding: 0.32rem 0.4rem;
+            border-radius: 6px;
+            border-bottom: 1px solid rgba(148, 163, 184, 0.09);
+            transition: background 0.18s ease, padding-left 0.18s ease;
+        }
+
+        .fs-det-row:hover {
+            background: rgba(34, 197, 94, 0.06);
+            padding-left: 0.62rem;
+        }
+
+        .fs-det-row:last-child { border-bottom: none; }
+
+        .fs-det-k {
+            font-size: 0.75rem !important;
+            color: #94a3b8 !important;
+        }
+
+        .fs-det-v {
+            font-size: 0.75rem !important;
+            color: #e2e8f0 !important;
+            font-variant-numeric: tabular-nums;
+            text-align: right;
+            overflow-wrap: anywhere;
         }
 
         </style>

@@ -84,6 +84,15 @@ data_cache/
 DataPipeline/
 Edgar-Sentences-SDK/raw_data/
 
+# The bare patterns above (and *.parquet etc.) are matched against the CONTEXT
+# ROOT only - they do not recurse. finrag_ml_tg1/data_cache/ therefore slipped
+# into the image on 2026-07-30 (harmless while empty, but it would have baked in
+# the ~8.8GB of embedding/vector tables had they still been present locally).
+# The **/ form is what actually recurses. Deliberately NOT globbing
+# **/*.parquet: metric_pipeline/data/KPI_FACT_DATA_EDGAR.parquet (84KB) ships
+# with the code and Supply Line 1 may read it directly.
+**/data_cache/
+
 # Stage 3 vtable, embed large table, analysis exports, trial data incr
 finrag_ml_tg1/data_cache/embeddings/
 finrag_ml_tg1/data_cache/stage3_s3vectors/
@@ -143,15 +152,30 @@ htmlcov/
 # Docker Files Themselves (prevent recursion)
 # ============================================================================
 finrag_docker_loc_tg1/
+finrag_docker_loc_tg1_aws/
 docker-compose.yml
 *.Dockerfile
+
+# ============================================================================
+# Not part of the serving runtime
+# ============================================================================
+mlruns/
+revival_scratch/
+finrag_ml_tg2/
 
 # ============================================================================
 # Secrets & Environment Files (use env_file in docker-compose instead)
 # ============================================================================
 .env
 .env.*
-aws_credentials.env
 secrets.env
+
+# NOTE: these patterns need the **/ prefix. A bare "aws_credentials.env" is
+# matched against the context root only, so it did NOT exclude the real file at
+# finrag_ml_tg1/.aws_secrets/aws_credentials.env - verified baked into an image
+# layer on 2026-07-30. Credentials reach the container via docker-compose
+# env_file instead (MLConfig._load_aws_credentials Priority 3, environment).
+**/aws_credentials.env
+**/.aws_secrets/
 
 # ============================================================================

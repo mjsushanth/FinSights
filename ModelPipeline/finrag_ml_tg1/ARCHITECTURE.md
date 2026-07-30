@@ -166,7 +166,7 @@ User Raw Query
   Uses: environments/requirements-sevalla.txt
   Size: ~500MB
   Purpose: Backend + Frontend serving ONLY
-  When: Running start_finrag, testing deployment, Sevalla cloud
+  When: Testing deployment, Sevalla cloud (local runs now go through Docker via ModelPipeline/finsights.command)
 ```
 
 

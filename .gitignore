@@ -248,11 +248,13 @@ DataPipeline/data_cache/samples/sec_finrag_1M_sample.parquet
 DataPipeline/data_cache/samples/sec_finrag_1M_sample_filtered.parquet
 DataPipeline/data_cache/reference/
 
-# Graphify: ignore only the bulky generated artifacts.
-# Keep small informative files trackable (e.g. GRAPH_REPORT.md ~68K).
-graphify-out/graph.json
-graphify-out/*.html
-graphify-out/cache/
+# Graphify: everything generated is ignored, only the human-readable report is
+# tracked. Deny-then-allow rather than listing artifacts, because the old
+# path-anchored patterns missed anything nested: `graphify .` writes a dated
+# subdirectory (graphify-out/2026-07-30/) whose graph.json is 2.1MB, and
+# cost.json / manifest.json / .graphify_* had no rule at all.
+graphify-out/**
+!graphify-out/GRAPH_REPORT.md
 
 # macOS filesystem noise
 .DS_Store
