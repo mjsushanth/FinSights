@@ -157,6 +157,13 @@ docker-compose.yml
 *.Dockerfile
 
 # ============================================================================
+# Deployment control plane - runs on the operator's machine, never inside the
+# image it deploys. Excluded so the served container carries no code capable
+# of creating or deleting AWS infrastructure.
+# ============================================================================
+deploy_aws/
+
+# ============================================================================
 # Not part of the serving runtime
 # ============================================================================
 mlruns/

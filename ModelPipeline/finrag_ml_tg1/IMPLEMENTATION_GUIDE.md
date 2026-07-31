@@ -69,7 +69,7 @@ This document chronicles the entire development journey of FinRAG, emphasizing p
 
 
 ### Part 3.1: S3 Vector Cost Analysis 
-- Reference - [Full Details](ModelPipeline\finrag_ml_tg1\notebooks-experiments\S3Vect_QueryCost.md)
+- Reference - [Full Details](S3Vect_QueryCost.md)
 - Ingestion Costs: 200K vectors (1024-d) storage = $0.40/month ($0.002 per 1K vectors). One-time PutVectors API calls negligible at $0.01 per 10K requests.
 - Query Economics: Open queries (no filters) cost $0.10 per 10K queries. Filtered queries (metadata pushdown) cost $0.05 per 10K queries — 50% cheaper due to reduced search space.
 - Production Projections: Academic workload (1M queries/month mixed regime) = ~$7-10/month total. Scales linearly; 10M queries = $70-100/month, making S3 Vectors 99% cheaper than managed vector DBs (Pinecone $70/month baseline for 200K vectors alone).
@@ -336,6 +336,286 @@ G(anchor) = {sentences from same (cik, year, section)
 - Single codebase idea: User → API Gateway → Lambda (runs FastAPI via Mangum) → S3/Bedrock
 - User → API Gateway → Lambda (contains RAG logic) → S3/Bedrock /// direct handler as Lambda, no FastAPI.
 
+*(Resolved in Part 13.6 — Lambda was abandoned and ECS Fargate chosen instead. The lean-env goal
+was met by the slim serving images: research evaluation packages were never installed into them.)*
+
+---
+
+# Part 13: Revival, Deployment, and Measurement (2026-07-24 → 2026-07-31)
+
+The week the project stopped adding features and started **measuring the ones it had**. Three of the
+items below ended in a *decision not to build*, which is the outcome this part is most proud of.
+
+Every figure in Part 13 is traceable to
+[`investigation_analysis/EMPIRICAL_METHODS_AND_FINDINGS.md`](investigation_analysis/EMPIRICAL_METHODS_AND_FINDINGS.md),
+which catalogues the method behind each one, including its blind spots.
+
+### Part 13.1: Account revival and the vector-space equivalence gate
+
+The old AWS account was decommissioned; its 203,076-vector index is unrecoverable. Rebuilding on a
+new account raised a question that had to be settled **before** spending money: Bin 1–2 vectors came
+from Cohere Embed v4 **via Bedrock**, and the remaining bin was cheaper via the **Cohere direct API**.
+Are those the same vector space?
+
+- **The gate was pre-registered, not chosen after seeing results**: `mean cosine ≥ 0.9999` → GO,
+  `< 0.99` → STOP and re-embed everything on one transport ($2.29). Writing the threshold down first
+  is what makes the result evidence instead of rationalisation.
+- **Result: `mean 0.999848`, `min 0.999726`, `std 3.27e-05` (n=32).** Just *below* the gate. A naive
+  reading says STOP.
+- **The noise-floor control changed the answer.** Two calls to the *identical* endpoint with the
+  *identical* text and only a different API key: `31/32 bit-identical`, but 1/32 differed by
+  `1-cos = 2.772e-04`. Cross-transport worst case was **0.99×** the same-endpoint worst case — the
+  "drift" was no larger than the model's own run-to-run variation.
+
+  > **Any measurement without a noise floor is uninterpretable.** Cohere's serving stack is not
+  > bit-deterministic (batch composition, kernel selection, accumulation order), so a difference this
+  > small could never have been attributed to transport in the first place.
+
+- **The discriminating control** asked the question that actually mattered — does the difference affect
+  *retrieval*? Cohere-direct vectors whose nearest stored Bedrock vector is their own: **32/32 (100%)**.
+  Semantic signal `0.746` vs transport noise `1.5e-04` → **signal-to-noise ≈ 4,919×**. Also checked:
+  float32 storage quantum is ~1e-7 per component, so precision cannot explain a 1.5e-04 effect.
+- **`DECISION: GO — treat Bedrock and Cohere-direct as ONE vector space.`** Bin 3 was embedded through
+  the direct API into the *same* index; Bins 1–2 were never re-embedded; the Bedrock daily token cap
+  was sidestepped. Post-run parity across all three bins: L2 norm `1.0`, spread `~2.53e-7`.
+- Conditions attached to the GO, and honoured: n=32 all-Bin-1 caveat, `input_type` pinned,
+  `output_dimension` always passed explicitly (**both** APIs silently default to 1536-d if omitted).
+- Byte-level integrity of the 2,293,538,065-byte vectors table was verified by size *and* a locally
+  recomputed multipart composite ETag (`...-35`, 64 MB parts) — with the warning recorded that a
+  multipart ETag is **not** an MD5. Design docs:
+  [transport](investigation_analysis/EMBEDDING_TRANSPORT_DESIGN.md) ·
+  [provider abstraction](investigation_analysis/EMBEDDING_PROVIDER_ABSTRACTION_DESIGN.md).
+
+### Part 13.2: The `input_type` asymmetry — theory shipped, effect not found
+
+- **The bug**: the live query path embedded user questions with `input_type="search_document"`. That is
+  the *corpus* setting. Retrieval is **asymmetric** — "does passage P answer question Q?" is not
+  symmetric, and forcing `sim(a,b) == sim(b,a)` is a modelling error, not a simplification.
+- **Shipped** as an additive config change: `input_type_document` / `input_type_query` in
+  `ml_config.yaml`, `MLConfig.query_input_type`, `assert_input_types_differ()`. Verified on the wire —
+  a live query request body carries `search_query`, the corpus path still resolves `search_document`.
+  A/B against the pre-edit YAML: **48 path/property resolutions, zero differences.**
+- **Then measured, with the prediction written down first.** 10 gold questions, both roles, correct-vs-distractor
+  cosine *margin* as the metric (raw cosines are not comparable across roles).
+  Result: **5/10, mean margin delta 0.0012** — a **null result** on this sample.
+- Recorded as a null, not spun into a win. The fix is still correct on theory grounds and stays in;
+  the *claim of measured improvement* does not exist and is not made.
+  Full write-up: [EMBEDDING_INPUT_TYPE_ASYMMETRY.md](investigation_analysis/EMBEDDING_INPUT_TYPE_ASYMMETRY.md).
+
+### Part 13.3: Reranking — built, measured across five steps, then declined
+
+A Cohere Rerank 3.5 cross-encoder stage was implemented and evaluated properly rather than adopted
+because it is standard practice.
+
+| Step | What it tested | Outcome |
+| :-- | :-- | :-- |
+| 1 | A0/A1/A2 ablation | recall/MRR deltas inside noise |
+| 2 | top-N sweep | revealed a **retrieval ceiling** the reranker cannot exceed |
+| 3 | score calibration | a written prediction was **falsified** |
+| 4 | answer-quality A/B/C, 30 real Bedrock calls | 10 questions × 3 configs |
+| 5 | reading the retrieved **text** and judging all 30 answers by hand | **changed the decision** |
+
+- **The binding defect sat upstream of `top_n`.** **45.2% of blocks surviving at top-8 come from a
+  fiscal year the question did not ask about**, against a **31.5%** off-year rate in the unpruned pool.
+  For single-company/single-year questions: **47.4% vs 31.3%**. Reranking *concentrates* off-year
+  contamination, because off-year blocks are longer (5.49 vs 4.04 sentences), score higher (0.300 vs
+  0.219), and **the cross-encoder never sees year metadata at all**.
+- Tuning `N` cannot fix this: raising it admits more off-year text, lowering it concentrates what
+  remains. Hand judgement at top-8: **worse on 5 of 10** questions, better on 3, same on 2.
+- **Ship decision: `enable_reranking: false` stays the default.** The measured benefit was a 32% cost
+  reduction; the project's own acceptance bar makes quality non-inferiority primary and cost secondary,
+  and non-inferiority failed. The real fix is a retrieval-stage metadata-filter change that would raise
+  the ceiling for *every* arm at once.
+- Also recorded: a **reproducibility failure** during the arc, and a published error deliberately kept
+  visible rather than quietly edited.
+  [Final synthesis](investigation_analysis/RERANKING_FINAL_SYNTHESIS.md) ·
+  [impact](investigation_analysis/RERANKING_IMPACT_ANALYSIS.md) ·
+  [answer quality](investigation_analysis/RERANKING_ANSWER_QUALITY_TEST.md) ·
+  [what underperformed](investigation_analysis/TECHNIQUES_THAT_UNDERPERFORMED_HERE.md).
+
+### Part 13.4: Retrieval telemetry — the instrumentation that moved the bottleneck
+
+`run_supply_line_2_rag()` now instruments six sub-stages with `perf_counter` into a `timings_ms` dict,
+persisted under `retrieval_stats.timings_ms`. **30 real end-to-end runs carry it.**
+
+| Sub-stage | mean (no rerank, n=10) | share |
+| :-- | --: | --: |
+| `entities` — EntityAdapter | 44.6 ms | ~1% |
+| `embed` — query embedding | 398.9 ms | ~8% |
+| **`retrieve` — S3 Vectors** | **4,667.1 ms** | **~90%** |
+| `expand` — ±3 sentence window | 50.7 ms | ~1% |
+| `assemble` — ContextAssembler | 3.7 ms | <1% |
+| `rerank` — Cohere Rerank 3.5 | 463–479 ms (arms B/C only) | — |
+
+- This **contradicts** a long-standing headline claim that window expansion cost "~8-12 s". Measured:
+  **50.7 ms — a ~200× error.** Someone optimising the documented bottleneck would have been tuning a
+  50 ms stage while a 4,667 ms stage sat beside it.
+- `Performance_Cost_Analysis.md:10` and `:30` are therefore reclassified as **illustrative prose,
+  unbacked** — flagged rather than silently rewritten.
+- Root cause of the blindness: `retrieval_stats` was declared in `serving/backend/models.py` and was
+  **`null` in every response export**, which is how a log-analytics notebook could report
+  `Failed Queries: 0` across 59 queries while being unable to see retrieval failures at all.
+
+  > **An unmeasured bottleneck claim will send you to the wrong stage.** A verification tool that is
+  > silently broken is worse than no verification tool.
+
+### Part 13.5: Serving containers rebuilt, sized from measurement
+
+- New slim `backend.Dockerfile` / `frontend.Dockerfile` built `--platform linux/arm64`. Research
+  evaluation packages (DeBERTa, BLEURT, TensorFlow) are **absent** from the serving images — that is
+  what finally delivered the lean environment Part 12 asked for.
+- Memory was **measured under a real query**, not estimated:
+  **backend 213 MiB idle → 1,220 MiB peak**; **frontend 146 MiB, flat** (it holds no ML code).
+- Task sized from those numbers: **1 vCPU / 3072 MiB**, reservations 2560 / 384 MiB. Reserving from a
+  measured peak is the difference between a sizing decision and a guess.
+  Method preserved as [`measure_container_memory.sh`](investigation_analysis/measure_container_memory.sh).
+
+### Part 13.6: `deploy_aws/` — the infrastructure control plane as ordinary Python
+
+~2,480 lines across 9 modules. No Terraform, no CloudFormation: the control plane is a normal Python
+package with classes, a frozen config, and a CLI — which is precisely why it is readable.
+
+- **`config.py`** — a frozen `DeployConfig` dataclass, the single source of truth for cluster name,
+  ports, buckets, CPU/memory. It validates the Fargate cpu/memory pairing *up front* and holds
+  **no account ID** — the account is discovered, never hardcoded.
+- **`aws_session.py`** — one boto3 `Session`, clients cached per service. Detects environment
+  credentials (`AWS_ACCESS_KEY_ID`, web identity, ECS container URI) and only then falls back to a
+  named profile, so the same code runs locally and in CI.
+- **`policies.py`** — least-privilege IAM built from code: five statements, **no wildcards, no
+  `Delete` on anything**, S3 writes scoped to `LOGS/FINRAG/*`, S3 Vectors limited to `QueryVectors`.
+- **`taskdef.py`** — restates both container health checks in the task definition, because
+  **Fargate ignores the image's `HEALTHCHECK`**; without this the container sits at
+  `healthStatus: UNKNOWN` forever and `dependsOn: HEALTHY` never satisfies. Probes use CMD-form
+  Python `urllib` since the slim images have no `curl`.
+- **`provisioner.py`** — **idempotency as convergence**: guard only the non-idempotent call
+  (`CreateRole`) and run the naturally idempotent ones (`AttachRolePolicy`, `PutRetentionPolicy`)
+  unconditionally. That is what makes a re-run a *self-heal* rather than a no-op. Network discovery
+  verifies **real IGW routes**, handling explicit-vs-main route-table association correctly.
+- **`images.py`** — Docker build and ECR push driven from Python; the ECR token is passed on **stdin**
+  so it never appears in the process table.
+- **`service.py`** — polls for steady state instead of using the boto3 waiter, so failure *reasons*
+  get logged rather than swallowed by a timeout.
+- **`cli.py`** — `preflight · up · down · status · smoke · logs · destroy · render-taskdef`.
+  `preflight` **invokes** both Bedrock models rather than listing them, because listing proves nothing
+  about permissions.
+- **Destroy-and-rebuild is the integration test.** `destroy` → 6/6 resource checks empty → `up`
+  rebuilt cleanly to task-definition revision 2. Pets vs cattle, verified rather than asserted.
+  Ledger: [`deploy_aws/DEPLOY_LEDGER.md`](../deploy_aws/DEPLOY_LEDGER.md).
+
+### Part 13.7: Architecture decisions that came out of costing them
+
+- **Two containers in one task, not two services.** They share one network namespace, so
+  `localhost:8000` reaches across at **$0**. Two services would need an ALB (~$16.43/mo) to deliver
+  their own benefit — **DNS-based service discovery solves churn, not distribution**: resolvers cache
+  per TTL and carry no load information. Co-location is also the only arrangement that preserves
+  compose-style `depends_on` ordering, since ECS cannot express ordering *between* services.
+- **Fargate bills per task, not per container**, per second, on task-level reservation. A second
+  container is nearly free; a second task doubles the bill. Task *count* is the cost variable.
+- **Public subnet + internet gateway, not private subnet + NAT.** Public vs private is a property of
+  the **route table**, not the subnet. An IGW is free; a NAT gateway is ~$32.85/mo per AZ plus
+  $0.045/GB.
+- **ARM64 (Graviton)**: cheaper per vCPU-hour, and the *native* architecture on an Apple Silicon dev
+  machine — so images build without QEMU emulation.
+- **IAM task role, delivered over the container credential endpoint `169.254.170.2`.** No access keys
+  in the image, in the task definition, or in the repo. "Use an IAM role" turned out to be a
+  **deployment** change, not a code change — boto3's credential chain already ends there.
+- **Cross-region inference (CRIS)**: a `us.*` model id is an *inference profile*, not a foundation
+  model. The policy needs the profile ARN **plus** the FM ARN in every region it can route to.
+- Verified end to end on the new account: `using IAM role`, `S3_STREAMING mode`,
+  `cost=$0.0140, tokens=12670, time=9631ms`, and `POST /query 200 OK from 127.0.0.1` — that source
+  address is the direct proof of the shared-namespace wiring, not a detail.
+
+### Part 13.8: Failures found only by actually deploying
+
+Kept because each one is a class of mistake, not a one-off.
+
+- **`CreateCluster` failed with `Unable to assume the service linked role`.** A genuinely fresh account
+  has no `AWSServiceRoleForECS` — the console creates it silently on first visit. Added
+  `ensure_service_linked_role()`, which must catch `InvalidInputException` (not
+  `EntityAlreadyExists`) when it already exists.
+- **A deploy that failed reported exit code 0** — the 0 came from `tail` at the end of a shell
+  pipeline, not from the deploy. Fixed by writing the real status into the log.
+- **A monitor loop grepped `IAM_ROLE` while the log says `IAM role`**, and waited on a condition that
+  could never become true while the query had already succeeded.
+- **The Pricing API "returned nothing", so ARM rates were labelled UNVERIFIED** — wrongly. Usage types
+  carry a region prefix (`USE1-Fargate-ARM-vCPU-Hours:perCPU`). *"My tool returned nothing" and "the
+  data does not exist" are different conclusions.*
+- **`smoke` contradicted the architecture**: it tried to `POST /query` from outside, when the entire
+  design makes the backend unreachable from outside. Rewritten to assert the security property
+  positively.
+- **The biggest pre-deployment risk, closed by test rather than argument**: Polars reaches S3 through
+  the Rust `object_store` crate with its **own** credential resolution, so "boto3 finds the task role"
+  did not imply "Polars finds the task role." It did — but that had to be verified, not assumed.
+
+### Part 13.9: The caching question — a recommendation reversed by measurement
+
+`orchestrator.py` rebuilds its component graph per request. Whether that matters was settled by
+measuring it, and the measurement **reversed** the initial "not worth it" recommendation.
+
+- **AST statelessness audit first** — caching a component is only safe if it holds no per-request
+  state. A custom AST pass over every RAG class flagged `self.<attr>` assignment outside `__init__`:
+  **17 SAFE / 1 SUSPECT**, and the SUSPECT was verified by hand as a **false positive**. Its two
+  blind spots (in-place mutation of a contained object; module-level globals) were checked separately.
+  Script: [`audit_state.py`](investigation_analysis/audit_state.py).
+- **Constructor cost: 825 ms.** **Discarded table loads: 872.7 ms.** Total avoidable ≈ **1,698 ms**,
+  which is **~17.7% of a 9.6 s query** — not a rounding error.
+  Scripts: [`measure_constructor_cost.py`](investigation_analysis/measure_constructor_cost.py) ·
+  [`measure_table_load_cost.py`](investigation_analysis/measure_table_load_cost.py).
+- **`tracemalloc` cannot see native allocations** (Arrow/Polars allocate outside the Python heap), so
+  it was paired with process-level RSS — two tools with different blind spots aimed at one event.
+- A counter-intuitive result worth keeping: **latency tracks round trips, not bytes.** A 25-row table
+  took **477.5 ms**; a 614,787-row table took **189.1 ms**.
+- Still open as work: the fix needs **double-checked locking** on the loader's lazy memo, or concurrent
+  first requests will each load the same 62 MB table. Benign races (memoising an immutable value) and
+  corrupting races (per-call state) are not the same problem.
+
+### Part 13.10: Deployment as a manual button, deliberately
+
+- `.github/workflows/aws-deploy-manual.yml` triggers on **`workflow_dispatch` only** — a clickable
+  button in the Actions tab, never an automatic push-to-prod. For a project that spends real money per
+  query, "every commit deploys" is a defect, not a feature.
+- `runs-on: ubuntu-24.04-arm` (GA, free for public repos) so CI builds the same architecture the task
+  runs — no cross-compilation.
+- A dropdown of 8 actions; `destroy` is gated on typing `DESTROY`; `concurrency` with
+  `cancel-in-progress: false` so two deploys cannot interleave; the resulting **cost posture is written
+  into `$GITHUB_STEP_SUMMARY`** so the bill is visible on the run page.
+- `AWS_PROFILE` is deliberately **not** set, so the runner's environment credentials win.
+
+### Part 13.11: Corrected figures, and how they were checked
+
+Documentation drift was audited against the data rather than against other documents.
+
+| Figure | Was documented | Verified | Source of truth |
+| :-- | :-- | :-- | :-- |
+| Companies | 4,674 | **25** | 4,674 is the upstream **ETL universe**, not the embedded corpus |
+| Vectors | 203,076 | **614,647** | 203,076 was the deleted account's index |
+| Stage 1 rows | "200K" | **614,787** (24 cols, 35.8 MiB) | parquet footer read over S3 |
+| Stage 2 rows | — | **614,787** (34 cols, 61.8 MiB) | parquet footer read over S3 |
+| Latency | flat "30-50s" | **9.6-14s / 50s+ / ~4 min** by class | query log |
+
+- The 140-row gap between 614,787 sentences and 614,647 vectors is **the token-outlier sentences
+  excluded by design** — not drift, and now documented as such.
+- **Latency is three classes, not one number**: 9.6–14 s simple/moderate, 50 s+ multi-year and
+  cross-company, up to ~4 minutes on very large KPI-heavy questions. The **pipeline is a near-constant
+  5–8 s**; the variance is LLM generation. One recorded extreme: 319.9 s total = 7.8 s pipeline +
+  312.1 s generation.
+- Any claim resting on corpus-scale *breadth* was overstated and is now marked as such wherever it
+  appeared, including in the session-level navigation files.
+
+### Part 13.12: What was written down, so the next person does not re-derive it
+
+- **[EMPIRICAL_METHODS_AND_FINDINGS.md](investigation_analysis/EMPIRICAL_METHODS_AND_FINDINGS.md)** —
+  the catalogue: every measurement method used in the project with its **blind spots**, a consolidated
+  contradiction table, and an explicit **"what has never been measured"** section. Claims are labelled
+  MEASURED / illustrative / CONFIGURED rather than presented uniformly.
+- **[SYSTEMS_WALKTHROUGH.md](../finrag_docker_loc_tg1_aws/SYSTEMS_WALKTHROUGH.md)** and four rendered
+  diagrams (control plane, request path, module map, `up` sequence) generated by a declarative
+  SVG builder in `finrag_docker_loc_tg1_aws/diagrams/build_diagrams.py` — the diagrams are **code**,
+  so they can be regenerated when the architecture moves.
+- **[ECS_FARGATE_RUNBOOK.md](../finrag_docker_loc_tg1_aws/ECS_FARGATE_RUNBOOK.md)** — status banner,
+  quick start, verified pricing, cost model, and a section listing the failures above.
+- Four measurement scripts preserved next to their findings, so the numbers can be **re-run**, not
+  just re-read.
 
 ---
 

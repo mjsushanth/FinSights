@@ -81,13 +81,18 @@ Endpoints:
 - API docs  <http://localhost:8000/docs>
 
 Full Docker notes: [Dockerized Setup Guide](./finrag_docker_loc_tg1/LOC_DOCKER_README.md).
-AWS/ECS deployment: [ECS Deployment Guide](./finrag_docker_loc_tg1_aws/ECS_DEPLOYMENT_GUIDE.md).
+
+**AWS/ECS deployment:** [ECS Fargate Design and Runbook](./finrag_docker_loc_tg1_aws/ECS_FARGATE_RUNBOOK.md)
+- the live deployment. Double-click `finsights_aws.command`, or run
+`python -m deploy_aws.cli up` from `ModelPipeline/`. `down` scales to zero so it stops
+billing; `destroy` removes everything including the images.
+Historical only: [Dec 2025 ECS record](./finrag_docker_loc_tg1_aws/HISTORICAL_2025-12_ECS_DEPLOYMENT_GUIDE.md) - a decommissioned account, not a runbook.
 
 ---
 
 ## What to expect from a query
 
-- **Cost:** roughly $0.02-0.03 per query (real Bedrock spend).
+- **Cost:** $0.017-$0.06+ per query (real Bedrock spend, scales with query complexity).
 - **Latency:** 25-50 seconds. This is a deliberate cost-over-latency trade-off,
   not a bug - see `finrag_ml_tg1/PIPELINE_LATENCY_ANALYSIS.md`.
 - Answers end with grouped, per-company source citations.

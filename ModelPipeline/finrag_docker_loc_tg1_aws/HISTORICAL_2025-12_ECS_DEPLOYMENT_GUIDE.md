@@ -1,5 +1,28 @@
 # ECS Deployment Workflow - Setup Guide
 
+> ## HISTORICAL RECORD - DO NOT FOLLOW AS A RUNBOOK
+>
+> This documents the FinSights ECS Fargate deployment that ran **publicly** in AWS account
+> **729472661729**, around **December 2025**. That deployment was the only one this system ever
+> had that served real traffic, and it was demonstrated publicly.
+>
+> **That account is decommissioned.** Every account ID, ECR registry host, subnet ID, security
+> group ID, Cloud Map service ID, and sample URL below is therefore dead. Two further reasons
+> this cannot be replayed as written: the `deploy-ecs.yml` workflow it describes patches task
+> definitions that only ever existed as console state in that account, and both workflows use
+> GitHub Actions syntax (`::set-output`, `actions/upload-artifact@v3`) that has since been
+> retired.
+>
+> Kept deliberately, and not sanitised, because it is the only surviving record of what was
+> actually built and what actually broke - including the `s3vectors:QueryVectors` denial hit by
+> a live task while serving a query.
+>
+> Current account is **908877262866**, where no deployment infrastructure yet exists.
+> **Replacement documentation will be written only after the new AWS pipeline works end to end.**
+>
+> Renamed and banner added 2026-07-30. See also
+> `HISTORICAL_2025-12_INFRASTRUCTURE_SETUP_GUIDE.md` at the repository root.
+
 ## Overview
 
 This GitHub Actions workflow (`deploy-ecs.yml`) automatically deploys your FinSights application to AWS ECS whenever you push changes to the `main` branch or manually trigger it.

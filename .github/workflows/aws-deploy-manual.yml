@@ -1,0 +1,205 @@
+# =============================================================================
+# FinSights - AWS ECS Fargate, MANUAL deployment only
+#
+# THIS WORKFLOW NEVER RUNS BY ITSELF.
+#
+# `workflow_dispatch` is the only trigger. There is deliberately no `push`, no
+# `pull_request`, and no `schedule`. Merging to main does not deploy. Tagging a
+# release does not deploy. The only way anything reaches AWS is a human opening
+# the Actions tab, selecting this workflow, choosing an action, and pressing
+# "Run workflow".
+#
+# Why this shape rather than continuous deployment
+# -----------------------------------------------
+# Continuous deployment is the right default when a deploy is cheap, fast, and
+# reversible. Here it is none of those things:
+#
+#   - Running the service costs real money per hour, so the normal resting
+#     state of this system is OFF (desired count zero). A push-triggered deploy
+#     would silently switch billing back on.
+#   - A deploy builds and pushes ~640 MB of images. Doing that on every commit
+#     to a documentation file is waste.
+#   - The interesting verbs are not "deploy". They are `down` and `destroy`.
+#     Neither has any meaning as an automatic reaction to a commit.
+#
+# So the button, not the trigger, is the feature. Everything this workflow can
+# do is also available locally as `python -m deploy_aws.cli <verb>` - CI calls
+# the same code path rather than reimplementing it, which is precisely what the
+# Dec 2025 workflows got wrong.
+#
+# Relationship to the old workflows
+# ---------------------------------
+# This supersedes `setup-infrastructure.yml` and `deploy-ecs.yml`, which target
+# the decommissioned account 729472661729 and cannot work as written. They are
+# left untouched as a historical record. Do not enable them.
+#
+# One-time setup
+# --------------
+# Add two repository secrets under Settings -> Secrets and variables -> Actions:
+#   AWS_ACCESS_KEY_ID
+#   AWS_SECRET_ACCESS_KEY
+#
+# Better, when you get to it: replace both with OIDC. See the commented
+# role-to-assume block below - it removes long-lived keys from GitHub entirely.
+# =============================================================================
+
+name: AWS Deploy (manual)
+
+on:
+  workflow_dispatch:
+    inputs:
+      action:
+        description: "What to do on AWS"
+        required: true
+        default: status
+        type: choice
+        options:
+          - status          # read-only: what is running, where, what it costs
+          - preflight       # read-only: check every dependency, change nothing
+          - up              # build ARM64 images, push, deploy, wait for healthy
+          - up-no-build     # redeploy the images already in ECR (about a minute)
+          - down            # desired count 0 - stops compute spend
+          - smoke           # verify reachability and that the backend stays private
+          - logs-backend    # recent backend CloudWatch output
+          - destroy         # remove EVERYTHING including the images
+      confirm_destroy:
+        description: "Type DESTROY here (only needed for the destroy action)"
+        required: false
+        default: ""
+        type: string
+
+# Two deploys at once would race on the same task definition family and
+# service. Queue them instead, and never cancel a run half way through -
+# an interrupted destroy leaves orphaned resources.
+concurrency:
+  group: aws-deploy-finsights
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  id-token: write   # needed only if you switch to OIDC
+
+jobs:
+  deploy:
+    name: "${{ inputs.action }}"
+    # Native arm64 runner: the images target ARM64 Fargate, so building here
+    # needs no QEMU emulation. Free for public repositories, and generally
+    # available since Aug 2025. If this repo ever becomes private on a plan
+    # without arm64 runners, switch to ubuntu-24.04 and add
+    # docker/setup-qemu-action - correct, but several times slower.
+    runs-on: ubuntu-24.04-arm
+    timeout-minutes: 45
+
+    # Uncomment to require a human approval click in addition to the button.
+    # Create the environment first under Settings -> Environments, and add
+    # yourself as a required reviewer.
+    # environment: production
+
+    defaults:
+      run:
+        # Every verb expects to be run from ModelPipeline/.
+        working-directory: ModelPipeline
+
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v4
+
+      - name: Guard the destroy action
+        if: inputs.action == 'destroy'
+        run: |
+          if [ "${{ inputs.confirm_destroy }}" != "DESTROY" ]; then
+            echo "::error::destroy requires confirm_destroy to be exactly DESTROY. Nothing was changed."
+            exit 1
+          fi
+          echo "Destroy confirmed."
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install boto3
+        run: |
+          pip install --quiet uv
+          uv pip install --system --quiet boto3
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-region: us-east-1
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          # OIDC alternative - delete the two lines above and uncomment this,
+          # after creating the role and the GitHub identity provider in IAM:
+          # role-to-assume: arn:aws:iam::908877262866:role/finsightsGithubDeployRole
+
+      - name: Report identity
+        run: aws sts get-caller-identity
+
+      # Only the actions that build images need a Docker builder.
+      - name: Set up Docker Buildx
+        if: inputs.action == 'up'
+        uses: docker/setup-buildx-action@v3
+
+      - name: Run the requested action
+        env:
+          # Deliberately NOT setting AWS_PROFILE. AwsSession detects the
+          # environment credentials configure-aws-credentials just exported and
+          # uses the default credential chain instead of a named profile.
+          AWS_DEFAULT_REGION: us-east-1
+        run: |
+          set -o pipefail
+          case "${{ inputs.action }}" in
+            status)       python -m deploy_aws.cli status ;;
+            preflight)    python -m deploy_aws.cli preflight ;;
+            up)           python -m deploy_aws.cli up ;;
+            up-no-build)  python -m deploy_aws.cli up --no-build ;;
+            down)         python -m deploy_aws.cli down ;;
+            smoke)        python -m deploy_aws.cli smoke ;;
+            logs-backend) python -m deploy_aws.cli logs --container backend --minutes 30 ;;
+            destroy)      python -m deploy_aws.cli destroy --yes ;;
+            *)            echo "::error::unknown action"; exit 1 ;;
+          esac
+
+      # Runs even on failure, so a run that timed out still tells you what
+      # state the account was left in - which is the thing you actually need
+      # to know before deciding whether to retry.
+      - name: Final state and cost posture
+        if: always() && inputs.action != 'destroy'
+        continue-on-error: true
+        env:
+          AWS_DEFAULT_REGION: us-east-1
+        run: |
+          python -m deploy_aws.cli status 2>&1 | tee status.txt
+          {
+            echo "### FinSights AWS state after \`${{ inputs.action }}\`"
+            echo ""
+            echo '```'
+            cat status.txt
+            echo '```'
+            echo ""
+            if grep -q "zero compute spend" status.txt; then
+              echo "**Cost: no compute spend.** Standing cost is ~\$0.06/month of ECR storage."
+            elif grep -q "charged while running" status.txt; then
+              echo "**Cost: billing now** at ~\$0.043/hour (1 vCPU / 3 GB, ARM64)."
+              echo "Run this workflow again with action \`down\` to stop it."
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Confirm teardown
+        if: always() && inputs.action == 'destroy'
+        continue-on-error: true
+        env:
+          AWS_DEFAULT_REGION: us-east-1
+        run: |
+          {
+            echo "### Destroy complete"
+            echo ""
+            echo "| Resource | Remaining |"
+            echo "| :-- | :-- |"
+            echo "| ECR repositories | \`$(aws ecr describe-repositories --query 'repositories[].repositoryName' --output text 2>/dev/null || echo none)\` |"
+            echo "| ECS clusters | \`$(aws ecs list-clusters --query 'clusterArns' --output text 2>/dev/null || echo none)\` |"
+            echo "| IAM roles | \`$(aws iam list-roles --query 'Roles[?starts_with(RoleName,\`finsights\`)].RoleName' --output text 2>/dev/null || echo none)\` |"
+            echo ""
+            echo "Cost is now zero. Run this workflow with \`up\` to rebuild everything from the repository."
+          } >> "$GITHUB_STEP_SUMMARY"

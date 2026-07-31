@@ -1,5 +1,31 @@
 # Complete Infrastructure Setup Guide
 
+> ## HISTORICAL RECORD - DO NOT FOLLOW AS A RUNBOOK
+>
+> This describes the infrastructure behind the FinSights ECS Fargate deployment that ran
+> **publicly** in AWS account **729472661729**, around **December 2025** - the only deployment
+> this system ever had that served real traffic.
+>
+> **That account is decommissioned**, so the resource identifiers here are dead. Three specific
+> claims below are also known to be wrong, and are left in place rather than quietly corrected:
+>
+> - "**completely fresh AWS account ... everything is automated**" is not true. The task
+>   definitions were always created by hand; `deploy-ecs.yml` can only *patch* an existing one,
+>   never create it. On a genuinely fresh account it fails at that step.
+> - The cluster named here is `finsights-cluster`, but `deploy-ecs.yml` actually targets
+>   `finsights-cluster-new`. **The two workflows do not compose**, and the teardown section
+>   deletes the wrong cluster - leaving the real one running and billing.
+> - "**Service Discovery: Free**" is wrong; the Route 53 private hosted zone underneath AWS
+>   Cloud Map bills monthly. The Fargate cost estimate is also overstated for the task size
+>   quoted.
+>
+> Kept deliberately as the record of what was built. Current account is **908877262866**, where
+> no deployment infrastructure yet exists. **Replacement documentation will be written only
+> after the new AWS pipeline works end to end.**
+>
+> Renamed and banner added 2026-07-30. See also
+> `ModelPipeline/finrag_docker_loc_tg1_aws/HISTORICAL_2025-12_ECS_DEPLOYMENT_GUIDE.md`.
+
 ## Overview
 
 This guide shows you how to deploy FinSights to a **completely fresh AWS account** using GitHub Actions workflows. Everything is automated via Infrastructure-as-Code.

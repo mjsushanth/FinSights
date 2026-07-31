@@ -8,6 +8,13 @@ External facts carry source URLs. No number here is invented.
 
 ---
 
+**Note on deployment history:** Lambda was researched extensively throughout this study but never
+deployed to production; ECS Fargate was the only deployment that ever served real traffic. Any
+Lambda-specific constraint discussed below (cold starts, package size, etc.) is historical reasoning
+from that research, not a live limitation of the running system.
+
+---
+
 ## 0. Executive answer
 
 | Option | Verdict | One-line reason |
@@ -970,8 +977,9 @@ already-dismissive "<2% of total" (`S3Vect_QueryCost.md:249`). **[I] arithmetic 
 | S3 → internet | first **100 GB/month free** (aggregated across all AWS services), then standard regional rates |
 
 Your query responses are ~9 KB per call, ~45 KB per user query. Reaching the 100 GB free-tier
-egress ceiling would take roughly **2.2 million user queries per month**. **[I]** Since serving runs
-on Sevalla (outside AWS), egress does apply in principle — and is irrelevant in practice.
+egress ceiling would take roughly **2.2 million user queries per month**. **[I]** Sevalla was
+investigated as a serving option but never deployed; production serving ran on ECS Fargate,
+inside AWS, so this egress path is same-region and moot.
 **There is no egress story here.**
 
 ### 10.5 What the upload job looks like operationally
