@@ -313,7 +313,7 @@ if __name__ == "__main__":
         print(f"\nTesting {phase} phase data loading...")
         df = load_sec_data(
             use_s3=True,
-            bucket_name='sentence-data-ingestion',
+            bucket_name='sentence-data-ingestion-mjs',
             phase=phase
         )
         print(f"Loaded data: {df.shape}")

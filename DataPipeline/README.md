@@ -1,5 +1,18 @@
 # FinSights - Data Pipeline
 
+> **2026-07-27 update**: the Airflow/Docker-based workflow described in
+> parts of this document (DAGs, `docker compose`, `SETUP_README.md`) has
+> been retired and moved to `legacy/` - see `legacy/README.md` for what
+> moved and why. Current setup is just `conda env create -f environment.yml`
+> (see `environment.yml`'s own header for usage). Active modules today are
+> `src_aws_etl/` (sentence-fact merge pipeline), `src_edgar_incremental/`
+> (edgartools-based fetching - see its `PLAN.md`), and `src_metrics/`
+> (KPI/numeric fact extraction - see its `PLAN.md` and
+> `LEGACY_MODULE_FINDINGS.md`). `CLOUD_SOURCE_OF_TRUTH.md` documents the
+> current cloud-first architecture rule all three follow. The sections
+> below describing the original Airflow/Docker/live-crawler design are
+> kept for historical context, not as current instructions.
+
 ### Data Acquisition:
 1. We first acquired bulk of our data (10-K filings) from an initial chosen dataset source - HuggingFace dataset.
     -  These are all our data engineering feature achievements [Data Engineering Feats](data_engineering_research/duckdb_data_engineering/Data_Engineering_README.md#L71) 
@@ -8,7 +21,7 @@
  
 2. Apart from that, there's a live data ingestion stage which implements a pipeline, ensuring reliable and automated retrieval of SEC filings for selected companies. 
    - Data is fetched directly from the SEC EDGAR database using a modular crawler (download_filings.py), which downloads 10-K filings.
-   - It supports configurable year ranges, multiple companies, and filing types defined in config/config.json. 
+   - It supports configurable year ranges, multiple companies, and filing types defined in `legacy/config/config.json` (this crawler, `download_filings.py`, now lives in `src_legacy_bs4_scraper/` - superseded by `src_edgar_incremental/` going forward).
    - The list of companies are stored in a CSV file (companies.csv) in AWS S3 bucket at the beginning of pipeline and stored locally for downstream tasks. 
    - The entire ingestion process is environment-driven through .env variables, reproducible with environment.yml.
 
@@ -23,7 +36,7 @@
 - Exports to Parquet files for downstream analytics
 
 ### Data Persistence on AWS S3:
-- We use an S3 bucket (sentence-data-ingestion) to store raw filings, processed Parquet files, and metadata.
+- We use an S3 bucket (sentence-data-ingestion-mjs) to store raw filings, processed Parquet files, and metadata.
 - Our clear directories are attached below, and we employ the classic ETL process of *Incremental Merge Jobs* with audit columns and a dedicated log file.
 - The source code this is exactly traced at `src_aws_etl/etl` folder. There are modular functions, a config loader service, and pre-flight checks.
 - Here is where, some discrepancies in external data schema from different sources are handled and schema harmonization is done before a final merge.
@@ -66,7 +79,8 @@
 
 
 #### SETUP:
-Refer to **SETUP_README.md** file for details about setting up the environment for running the AirFlow pipeline locally.
+Historical: see `legacy/SETUP_README.md` for the retired Airflow-based setup.
+Current setup is `conda env create -f environment.yml` (see the top-level note above).
 
 ### Data Versioning with DVC
 All intermediate datasets (raw, extracted, parquet) are tracked using DVC to ensure reproducibility and lineage. 
@@ -94,7 +108,7 @@ We implemented a two-phase automated data validation system using Great Expectat
 
 #### Technical Stack:
 - Great Expectations for schema generation and validation rules
-- Boto3 for S3 data access (bucket: `sentence-data-ingestion`)
+- Boto3 for S3 data access (bucket: `sentence-data-ingestion-mjs`)
 - PyArrow for Parquet handling
 - Configurable validation rules per phase in `config.py`
 - Ephemeral GE context for Docker/Airflow compatibility

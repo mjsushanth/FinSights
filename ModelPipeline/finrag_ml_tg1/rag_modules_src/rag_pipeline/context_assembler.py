@@ -377,7 +377,7 @@ class ContextAssembler:
         raise RuntimeError("Cannot find 'ModelPipeline' root in path tree")
     
     # Dimension table paths
-    DIM_COMPANIES_PATH = _model_root / "finrag_ml_tg1" / "data_cache" / "dimensions" / "finrag_dim_companies_21.parquet"
+    DIM_COMPANIES_PATH = _model_root / "finrag_ml_tg1" / "data_cache" / "dimensions" / "finrag_dim_companies_25.parquet"
     DIM_SECTIONS_PATH = _model_root / "finrag_ml_tg1" / "data_cache" / "dimensions" / "finrag_dim_sec_sections.parquet"
 
     

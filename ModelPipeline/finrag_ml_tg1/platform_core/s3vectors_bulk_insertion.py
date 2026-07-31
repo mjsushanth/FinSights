@@ -40,9 +40,12 @@ import random
 import json
 from typing import Optional, List, Dict, Any
 
+from concurrent.futures import ThreadPoolExecutor, as_completed
+
 import polars as pl
 import numpy as np
 import boto3
+from botocore.config import Config
 from botocore.exceptions import ClientError
 from tqdm import tqdm
 
@@ -79,6 +82,14 @@ from finrag_ml_tg1.loaders.ml_config_loader import MLConfig
 MAX_PAYLOAD_SIZE = 20 * 1024 * 1024  # 20 MiB (AWS hard limit for PutVectors)
 DEFAULT_BATCH_SIZE = 500              # AWS maximum vectors per request
 DEFAULT_MAX_RETRIES = 7               # Exponential backoff attempts
+
+# AWS S3 Vectors best-practice quota: up to 1,000 PutVectors requests/sec OR
+# 2,500 vectors/sec per index, whichever is hit first (docs recommend 5
+# concurrent 500-vector batches/sec to reach that ceiling). 8 workers gives
+# headroom for real-world per-request latency above the theoretical minimum
+# while staying well clear of the 1,000 req/s hard cap; the existing retry
+# logic (429/503 backoff) absorbs any transient overshoot.
+DEFAULT_MAX_WORKERS = 8
 
 
 # ============================================================================
@@ -166,7 +177,8 @@ class S3VectorsBulkInserter:
         cik_filter: Optional[List[int]] = None,
         year_filter: Optional[List[int]] = None,
         batch_size: int = DEFAULT_BATCH_SIZE,
-        max_retries: int = DEFAULT_MAX_RETRIES
+        max_retries: int = DEFAULT_MAX_RETRIES,
+        max_workers: int = DEFAULT_MAX_WORKERS
     ):
         """
         Initialize S3 Vectors bulk insertion pipeline.
@@ -180,7 +192,9 @@ class S3VectorsBulkInserter:
                         Example: [2021, 2022, 2023] for recent years only
             batch_size: Vectors per batch (AWS max = 500, don't exceed)
             max_retries: Exponential backoff retry attempts for throttling
-        
+            max_workers: Concurrent PutVectors requests in flight (AWS quota
+                        is 1,000 req/s or 2,500 vectors/s per index)
+
         Raises:
             RuntimeError: If MLConfig initialization fails
             FileNotFoundError: If Stage 3 cache doesn't exist
@@ -190,22 +204,25 @@ class S3VectorsBulkInserter:
         self.year_filter = year_filter
         self.batch_size = min(batch_size, 500)  # AWS hard limit
         self.max_retries = max_retries
-        
+        self.max_workers = max_workers
+
         # Load configuration
         self.config = MLConfig()
-        
+
         # Extract S3 Vectors configuration from MLConfig
         self.vector_bucket = "finrag-embeddings-s3vectors"
         self.index_name = "finrag-sentence-fact-embed-1024d"
         self.dimensions = self.config.s3vectors_dimensions(provider)
         self.region = self.config.region
-        
-        # Initialize S3 Vectors client
+
+        # Initialize S3 Vectors client. Pool size sized to max_workers so
+        # concurrent PutVectors calls (see run()) don't starve for connections.
         self.s3vectors_client = boto3.client(
             "s3vectors",
             region_name=self.region,
             aws_access_key_id=self.config.aws_access_key,
-            aws_secret_access_key=self.config.aws_secret_key
+            aws_secret_access_key=self.config.aws_secret_key,
+            config=Config(max_pool_connections=max_workers + 2)
         )
         
         # Tracking variables (set during run)
@@ -662,39 +679,46 @@ class S3VectorsBulkInserter:
         print(f"\n[Batch Insertion with Retry Logic]")
         num_batches = (total_rows + self.batch_size - 1) // self.batch_size
         print(f"  Total batches: {num_batches}")
+        print(f"  Concurrency: {self.max_workers} workers in flight "
+              f"(AWS quota: 1,000 PutVectors req/s or 2,500 vectors/s per index)")
         print(f"  Retry strategy: Exponential backoff (max {self.max_retries} attempts)")
-        
+
         self.total_inserted = 0
         self.failed_batches = 0
         self.shrunk_batches = 0
         batch_num = 0
-        
-        # Progress tracking with tqdm
+
+        def _process_batch(batch_number: int, batch_df: pl.DataFrame):
+            vectors_batch = self._convert_batch_to_s3vectors_format(batch_df)
+            try:
+                inserted, was_shrunk = self._put_vectors_with_retry(vectors_batch)
+                return batch_number, inserted, was_shrunk, None
+            except Exception as e:
+                return batch_number, 0, False, e
+
+        # Batches run concurrently (up to max_workers in flight) to approach
+        # the AWS per-index throughput ceiling instead of one blocking call at a time.
         with tqdm(total=total_rows, desc="Inserting", unit="vectors") as pbar:
-            for i in range(0, total_rows, self.batch_size):
-                batch_num += 1
-                
-                # Extract batch from DataFrame
-                batch_df = df_stage3[i:i + self.batch_size]
-                
-                # Convert to S3 Vectors format
-                vectors_batch = self._convert_batch_to_s3vectors_format(batch_df)
-                
-                try:
-                    # Insert with retry logic
-                    inserted, was_shrunk = self._put_vectors_with_retry(vectors_batch)
-                    
+            with ThreadPoolExecutor(max_workers=self.max_workers) as executor:
+                futures = {}
+                for i in range(0, total_rows, self.batch_size):
+                    batch_num += 1
+                    batch_df = df_stage3[i:i + self.batch_size]
+                    future = executor.submit(_process_batch, batch_num, batch_df)
+                    futures[future] = batch_num
+
+                for future in as_completed(futures):
+                    _, inserted, was_shrunk, error = future.result()
+
+                    if error is not None:
+                        print(f"\n  ❌ Batch {futures[future]} failed permanently: {error}")
+                        self.failed_batches += 1
+                        continue
+
                     self.total_inserted += inserted
                     if was_shrunk:
                         self.shrunk_batches += 1
-                    
                     pbar.update(inserted)
-                    
-                except Exception as e:
-                    print(f"\n  ❌ Batch {batch_num} failed permanently: {e}")
-                    self.failed_batches += 1
-                    # Continue to next batch (don't halt entire pipeline)
-                    continue
         
         # ====================================================================
         # STEP 4: SUMMARY AND RETURN

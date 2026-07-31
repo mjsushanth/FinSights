@@ -330,9 +330,23 @@ class SentenceExpander:
             # window_start = max(0, hit.sentence_pos - self.window_size)
             # window_end = min( hit.section_sentence_count - 1, hit.sentence_pos + self.window_size )
             
-            ## v2
-            window_start = max(1, hit.sentence_pos - self.window_size)
-            window_end = min(hit.section_sentence_count, hit.sentence_pos + self.window_size)
+            ## v3: section_sentence_count is a ROW COUNT (how many sentences survived
+            ## Stage 1 sampling for this section), not the max sentence_pos -- sentence_pos
+            ## is sparse/non-contiguous whenever sampling dropped sentences from the middle
+            ## of a section, so it can legitimately exceed section_sentence_count by a wide
+            ## margin (verified: cik=34088/2008/ITEM_15 has section_sentence_count=267 but
+            ## sentence_pos values ranging 1-940). Clamping window_end against it produced an
+            ## inverted (empty) range for any hit whose pos exceeded the count, silently
+            ## dropping the hit -- not just its neighbors -- from expansion entirely.
+            ## No upper clamp needed: the meta_df filter below only ever returns sentences
+            ## that actually exist, so an unbounded window_end is naturally safe.
+            ## Lower bound floors at 0, not 1 (v2 regressed this from v1 above): sentence_pos
+            ## is legitimately 0 for the first sentence of many sections (verified: e.g.
+            ## 0001318605_10-K_2022_section_8_0 is a real retrieved hit). Flooring at 1
+            ## pushed window_start above the hit's own position whenever pos=0, excluding
+            ## the anchor sentence from its own window ("CRITICAL: Core hit not found").
+            window_start = max(0, hit.sentence_pos - self.window_size)
+            window_end = hit.sentence_pos + self.window_size
 
             # Detect and log edge cases
             is_near_start = (hit.sentence_pos < self.window_size)

@@ -16,6 +16,53 @@ from state import set_backend_health, clear_chat_history
 from metrics import display_sidebar_stats
 
 
+# Mirrors the 25 rows of finrag_dim_companies_25.parquet (the dimension table the
+# backend actually loads). Held as a static string because the frontend is a pure
+# HTTP client of the backend - it has no AWS credentials and no data access, so it
+# cannot read the dimension table itself. If the universe changes, update here and
+# in the dimension table together.
+AVAILABLE_COMPANIES_MD = """
+Ask about any of these 25 companies. Use either the ticker or the company name.
+
+**Technology & Communications**
+- **AAPL** — Apple
+- **AMZN** — Amazon
+- **GOOGL** — Alphabet (Google)
+- **META** — Meta Platforms
+- **MSFT** — Microsoft
+- **NFLX** — Netflix
+- **NVDA** — NVIDIA
+- **ORCL** — Oracle
+- **TMUS** — T-Mobile US
+- **TSLA** — Tesla
+
+**Financial Services & Insurance**
+- **AGO** — Assured Guaranty
+- **GNW** — Genworth Financial
+- **IEP** — Icahn Enterprises
+- **MA** — Mastercard
+- **MBI** — MBIA
+- **RDN** — Radian Group
+- **V** — Visa
+
+**Healthcare**
+- **JNJ** — Johnson & Johnson
+- **LLY** — Eli Lilly
+- **UNH** — UnitedHealth Group
+
+**Industrials, Energy & Consumer**
+- **CAT** — Caterpillar
+- **COST** — Costco
+- **NOC** — Northrop Grumman
+- **WMT** — Walmart
+- **XOM** — Exxon Mobil
+
+---
+Filing coverage spans 2006-2025. Not every company has every year, and KPI
+metric coverage is narrower than the narrative text coverage.
+"""
+
+
 def render_sidebar(client: FinSightClient) -> None:
     """
     Render complete sidebar with all sections.
@@ -90,28 +137,21 @@ def render_sidebar(client: FinSightClient) -> None:
         - Phrase questions clearly
         
         **System Behavior:**
-        - Cost per query: ~$0.01-0.02
+        - Cost per query: ~$0.02-0.03
+        - Typical latency: 25-50 seconds
         - Answers cite source sections
         """)
         
-        st.divider()
-        
-        # ====================================================================
-        # 3.1 REDIRECT BUTTON
-        # ====================================================================
-        REDIRECT_URL = "https://public.tableau.com/app/profile/syeda.tooba.ali/viz/shared/4NSQ3B2HM"
-        BUTTON_TEXT = "Financial Dashboard"
-        
-        if st.button(BUTTON_TEXT, use_container_width=True, type="primary"):
-            st.markdown(f'<meta http-equiv="refresh" content="0; url={REDIRECT_URL}">', unsafe_allow_html=True)
-            # Alternative: Open in new tab        
         st.divider()
 
         # ====================================================================
         # 4. EXAMPLE QUERIES
         # ====================================================================
         st.markdown("### Example Queries")
-        
+
+        with st.expander("Available Companies (25)", expanded=False):
+            st.markdown(AVAILABLE_COMPANIES_MD)
+
         with st.expander("KPI Queries", expanded=False):
             st.markdown("""
             - "Show me Apple, Microsoft, Amazon, Alphabet, Google, and Tesla's financial performance from 2018 to 2022. I need their total sales, bottom line profits, operating cash flows, gross margins, total debt levels, shareholder equity, cost of goods sold, tax expenses, return on assets, and earnings per share."

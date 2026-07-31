@@ -1,4 +1,4 @@
 [core]
     remote = s3remote
 ['remote "s3remote"']
-    url = s3://sentence-data-ingestion/DVC/
+    url = s3://sentence-data-ingestion-mjs/DVC/

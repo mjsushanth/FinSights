@@ -1,201 +1,130 @@
-## Update: Better setup process!
-- **Preferred Setup Method:** Please use this, a dockerized setup for proper compatibility.
-- [Dockerized Setup Guide](./finrag_docker_loc_tg1/LOC_DOCKER_README.md)
-- The below process is a suitable setup but it just uses quick start scripts which are based off either command files or PS1 shell files. It does achieve all the automation with a single click process but we still prefer using Docker here because it containerizes the application cleanly.
+# FinSights - Setup and Startup
+
+**One click: double-click `ModelPipeline/finsights.command`.** It checks the
+environment, builds the Docker images if they are missing, starts backend and
+frontend, waits for both health checks, and opens the browser - all in a single
+terminal window.
+
+Everything below explains what that script does and how to run it by hand.
+
+---
 
 ## Prerequisites
-- Python 3.12 installed
-- Git (to clone the repository)
-- Windows: PowerShell | Mac/Linux: Terminal
-- Please ensure your respective python (3.12) is cleanly installed, and your PATH variables are set correctly.
 
-### Clone the Repository
+- **Docker Desktop.** That is the only real requirement. The images carry the
+  entire Python environment (interpreter, boto3, polars, FastAPI, Streamlit), so
+  there is no Python, venv, conda, or `uv` step for a normal run.
+- **AWS credentials** at `finrag_ml_tg1/.aws_secrets/aws_credentials.env`
+  (gitignored). The backend cannot reach Bedrock or S3 Vectors without them:
+
+  ```
+  AWS_ACCESS_KEY_ID=your_key_here
+  AWS_SECRET_ACCESS_KEY=your_secret_here
+  AWS_DEFAULT_REGION=us-east-1
+  ```
+
+  The file is passed to the container by Docker Compose `env_file` at runtime and
+  is deliberately excluded from the image, so credentials are never baked into a
+  layer.
+
+### Clone
+
 ```bash
 git clone https://github.com/Finsights-MLOps/FinSights.git
 cd FinSights/ModelPipeline
 ```
 
-### Configure AWS Credentials
-Create or update `finrag_ml_tg1/.aws_secrets/aws_credentials.env`:
-```
-AWS_ACCESS_KEY_ID=your_key_here
-AWS_SECRET_ACCESS_KEY=your_secret_here
-AWS_REGION=us-east-1
-```
+If the launcher is not executable after cloning:
 
-### Make Scripts Executable (Mac/Linux Only)
-- If your MAC command files are not executable in terminal, please run: 
 ```bash
-cd ModelPipeline
-chmod +x start_finrag.command
-chmod +x setup_finrag.command
+chmod +x finsights.command
 ```
-
-## Quick Setup (Automated)
-
-### Windows
-1. Navigate to `ModelPipeline/` folder
-2. **Double-click** `setup_finrag.bat`
-3. Wait 1-2 minutes for setup to complete
-4. UV will be installed automatically for fast dependency resolution
-5. Will automatically handle the issues of terminating Python processes and safely deleting old environment if the user wishes to delete, recreate. Graceful handling. ( Process killing, Rename Fallback, Cleanup utility. )
-
-### Mac/Linux
-1. Navigate to `ModelPipeline/` folder
-2. Make script executable: `chmod +x setup_finrag.sh`
-3. **Double-click** `setup_finrag.sh` (or run `./setup_finrag.sh`)
-4. Wait 1-2 minutes for setup to complete
-5. UV will be installed automatically for fast dependency resolution
-
-
-## Starting FinRAG
-1. After setup, just double-click `start_finrag.bat` (Windows) or `start_finrag.sh` (Mac/Linux).
-2. Give it roughly 20s. There's an intentional 8-second backend, 6-second frontend sleep.
-3. You should see like three terminals popping up and finally your browser would automatically open the streamlit interface through which communication can be done and queries sent.
-
-
-### Quick check:
-1. virtual environments MUST be in these exact locations:
-    - `ModelPipeline/finrag_ml_tg1/venv_ml_rag/`
-    - `ModelPipeline/serving/frontend/venv_frontend/`
-```
-ModelPipeline/
-├── finrag_ml_tg1/
-│   └── (no venv_ml_rag yet)
-└── serving/frontend/
-    └── (no venv_frontend yet)
-```
-
-2. UV auto-install - (need) 20x faster dependency installation than pip.
-3. Workflow 1: "Just check if UV is installed"
-4. Workflow 2: "I broke my backend environment" - Just re-run `setup_finrag` script.
-5. Workflow 3: "Fresh start everything/ New PC setup" - Just re-run `setup_finrag` script! `:)` 
 
 ---
 
+## The launcher
 
-### Essence of setup work:
+Double-click `finsights.command`, or run `./finsights.command`. It reports status
+first - Docker CLI, daemon, credentials, compose file, whether each image is
+built, and whether ports 8000 / 8501 are free or already served by the stack -
+then offers:
+
+| Option | What it does |
+| :-- | :-- |
+| 1 | Start the app; builds images if they are missing |
+| 2 | Restart with a rebuild, reusing valid cache |
+| 3 | Full clean rebuild (`--no-cache`), several minutes |
+| 4 | Stop the app (`docker compose down`) |
+| 5 | Stream logs (Ctrl+C returns to the menu) |
+| 6 | Refresh status |
+| q | Quit, leaving the stack as it is |
+
+If the Docker daemon is not running, the launcher offers to start Docker Desktop
+and waits for it.
+
+---
+
+## Manual equivalent
+
+```bash
+cd ModelPipeline/finrag_docker_loc_tg1
+docker compose up -d --build      # start
+docker compose ps                 # status
+docker compose logs -f            # logs
+docker compose down               # stop
+```
+
+Endpoints:
+
+- Frontend  <http://localhost:8501>
+- Backend health  <http://localhost:8000/health>
+- API docs  <http://localhost:8000/docs>
+
+Full Docker notes: [Dockerized Setup Guide](./finrag_docker_loc_tg1/LOC_DOCKER_README.md).
+
+**AWS/ECS deployment:** [ECS Fargate Design and Runbook](./finrag_docker_loc_tg1_aws/ECS_FARGATE_RUNBOOK.md)
+- the live deployment. Double-click `finsights_aws.command`, or run
+`python -m deploy_aws.cli up` from `ModelPipeline/`. `down` scales to zero so it stops
+billing; `destroy` removes everything including the images.
+Historical only: [Dec 2025 ECS record](./finrag_docker_loc_tg1_aws/HISTORICAL_2025-12_ECS_DEPLOYMENT_GUIDE.md) - a decommissioned account, not a runbook.
+
+---
+
+## What to expect from a query
+
+- **Cost:** $0.017-$0.06+ per query (real Bedrock spend, scales with query complexity).
+- **Latency:** 25-50 seconds. This is a deliberate cost-over-latency trade-off,
+  not a bug - see `finrag_ml_tg1/PIPELINE_LATENCY_ANALYSIS.md`.
+- Answers end with grouped, per-company source citations.
+
+---
+
+## Service shapes (for reference)
 
 **Backend (FastAPI)**
-- Code root: ModelPipeline/
-- Entrypoint: serving/backend/api_service:app
-- Command: uvicorn ... --host 0.0.0.0 --port 8000
-- Python deps for serving are in finrag_ml_tg1/environments/requirements_sevalla.txt
-- Needs AWS creds + LOG_LEVEL env vars.
+- Code root: `ModelPipeline/`
+- Entrypoint: `serving/backend/api_service:app`, port 8000
+- Deps: `finrag_ml_tg1/environments/requirements_app_backend.txt`
+- Needs AWS credentials plus `MODEL_PIPELINE_ROOT`
 
 **Frontend (Streamlit)**
-- Code under serving/frontend/
-- Command: streamlit run serving/frontend/app.py --server.port 8501 --server.address 0.0.0.0 --server.headless true
-- Reads BACKEND_URL env var, defaulting to localhost in code.
-
-**PowerShell / .bat helpers:**
-- Pick the right venv (venv_serving, venv_frontend),
-- Install a curated requirements file,
-- Then run exactly those commands.
-
-**What Nixpacks is good at:**
-- Simple repos where it can see requirements.txt at the build path root and there’s a single obvious web process.
-- Not for FinSights: Monorepo (FinSights) with deep sub-dirs (ModelPipeline, serving/frontend) etc. Multiple services (backend + frontend). Custom requirements file locations.
-
+- Code under `serving/frontend/`, port 8501
+- Deps: `serving/frontend/requirements.txt`
+- Reads `BACKEND_URL`, which Compose sets to `http://backend:8000`
 
 ---
 
----
+## Notes
 
-
-## Manual process for installing envs and running terminals:
-
-**Setup of 2 environments**
-```python
-# ============================================
-# ONE-TIME SETUP (WINDOWS)
-# ============================================
-
-## Backend Environment (Minimal):
-cd ModelPipeline\finrag_ml_tg1
-uv venv venv_backend
-.\venv_backend\Scripts\Activate.ps1
-uv pip install -r environments\requirements_app_backend.txt
-deactivate
-
-## Frontend Environment:
-cd ModelPipeline\serving\frontend
-uv venv venv_frontend
-.\venv_frontend\Scripts\Activate.ps1
-uv pip install -r requirements.txt
-deactivate
-
-
-# ============================================
-# RUN APPLICATION (Two Terminals)
-# ============================================
-
-## Terminal 1 - Backend:
-# Kill any process on port 8000
-Get-Process -Id (Get-NetTCPConnection -LocalPort 8000 -ErrorAction SilentlyContinue).OwningProcess -ErrorAction SilentlyContinue | Stop-Process -Force
-
-cd ModelPipeline\finrag_ml_tg1
-.\venv_backend\Scripts\Activate.ps1
-cd ..\serving
-uvicorn backend.api_service:app --reload --host 0.0.0.0 --port 8000
-
-## Terminal 2 - Frontend:
-# Kill any process on port 8501 (Streamlit default)
-Get-Process -Id (Get-NetTCPConnection -LocalPort 8501 -ErrorAction SilentlyContinue).OwningProcess -ErrorAction SilentlyContinue | Stop-Process -Force
-
-cd ModelPipeline\finrag_ml_tg1
-..\serving\frontend\venv_frontend\Scripts\Activate.ps1
-cd ..\serving
-streamlit run frontend\app.py
-```
-
--------------------------------------------------------------------------------------------------
-
-**FOR MAC USERS** - same commands, just minimal syntax changes.
-
-```python
-# ============================================
-# ONE-TIME SETUP (MAC/LINUX)
-# ============================================
-
-## Backend Environment (Minimal):
-cd ModelPipeline/finrag_ml_tg1
-uv venv venv_backend
-source venv_backend/bin/activate
-uv pip install -r environments/requirements_app_backend.txt
-deactivate
-
-## Frontend Environment:
-cd ModelPipeline/serving/frontend
-uv venv venv_frontend
-source venv_frontend/bin/activate
-uv pip install -r requirements.txt
-deactivate
-
-
-# ============================================
-# RUN APPLICATION (Two Terminals)
-# ============================================
-
-## Terminal 1 - Backend:
-# Kill any process on port 8000
-lsof -ti:8000 | xargs kill -9 2>/dev/null || true
-
-cd ModelPipeline/finrag_ml_tg1
-source venv_backend/bin/activate
-cd ../serving
-uvicorn backend.api_service:app --reload --host 0.0.0.0 --port 8000
-
-## Terminal 2 - Frontend:
-# Kill any process on port 8501 (Streamlit default)
-lsof -ti:8501 | xargs kill -9 2>/dev/null || true
-
-cd ModelPipeline/finrag_ml_tg1
-source ../serving/frontend/venv_frontend/bin/activate
-cd ../serving
-streamlit run frontend/app.py
-```
-
-
-
-
+- **No local data is needed.** In a container the app runs in `S3_STREAMING` mode
+  and reads its tables from S3 directly; `finrag_ml_tg1/data_cache/` is
+  intentionally empty. The `MODEL_PIPELINE_ROOT=/app` env var in
+  `backend.Dockerfile` is what selects that mode - do not remove it.
+- **Shut the stack down before quitting Docker Desktop** (launcher option 4).
+  Quitting Docker Desktop with containers still running has hung its shutdown
+  path on macOS.
+- **Retired 2026-07-30:** `setup_finrag.command` / `.ps1` / `.bat`,
+  `start_finrag.command` / `.ps1` / `.bat`, and `serving/sh files - outdated/`.
+  They created three virtualenvs that no longer exist, spawned multiple Terminal
+  windows via `osascript`, and one ran a global `pkill -9 python`.
+  `finsights.command` replaces all of them. They remain recoverable in git history.

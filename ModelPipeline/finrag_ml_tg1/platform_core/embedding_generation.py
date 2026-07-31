@@ -43,7 +43,64 @@ from finrag_ml_tg1.loaders.ml_config_loader import MLConfig
 import polars as pl
 import json
 from datetime import datetime
+from collections import deque
 import time
+import random
+from botocore.exceptions import ClientError
+
+# Matches the retry ceiling used in s3vectors_bulk_insertion.py::_put_vectors_with_retry
+DEFAULT_MAX_RETRIES = 7
+
+# Substring that identifies Bedrock's DAILY token cap inside a ThrottlingException.
+# Bedrock uses the same exception name AND the same HTTP 429 for two different
+# things: a transient per-minute throttle (retrying works) and the per-day token
+# cap (retrying cannot work until the rolling window frees capacity). The message
+# text is the ONLY discriminator the API exposes -- there is no distinct error
+# code, status, or Retry-After header. Observed verbatim on 2026-07-28 and
+# 2026-07-29: "Too many tokens per day, please wait before trying again."
+DAILY_CAP_MESSAGE_MARKER = 'tokens per day'
+
+
+class DailyTokenQuotaExhausted(Exception):
+    """Bedrock's per-day token cap is exhausted; not retryable within this run.
+
+    Raised instead of retrying so the run stops immediately rather than working
+    through the full backoff ladder against a wall that cannot move. Progress
+    already written to the checkpoint is unaffected -- re-run to resume.
+    """
+
+
+class GlobalRateLimiter:
+    """Sliding-window limiter over ALL invoke_model attempts (success + retry),
+    shared for the life of one pipeline run. NOT thread-safe -- this pipeline is
+    strictly sequential (one call in flight at a time); do not reuse across threads.
+
+    Added 2026-07-28: target_tpm pacing (below) only slows down AFTER a successful
+    call, so it never touched retry attempts -- and retries consume the account's
+    real RPM quota even when they fail. This gates every attempt, closing that gap.
+    """
+    def __init__(self, max_requests, window_seconds=60.0, clock=time.monotonic, sleep_fn=time.sleep):
+        self.max_requests = max_requests
+        self.window_seconds = window_seconds
+        self._clock = clock
+        self._sleep = sleep_fn
+        self._timestamps = deque()
+
+    def acquire(self):
+        while True:
+            now = self._clock()
+            while self._timestamps and now - self._timestamps[0] >= self.window_seconds:
+                self._timestamps.popleft()
+            if len(self._timestamps) < self.max_requests:
+                self._timestamps.append(now)
+                return
+            self._sleep(max(self.window_seconds - (now - self._timestamps[0]), 0.01))
+
+# Checkpoint: written every N batches during embedding generation so a mid-run crash
+# doesn't lose already-computed (already-paid-for) embeddings. Local-only, no mid-run
+# S3 sync -- see CLOUD_SOURCE_OF_TRUTH.md's stance on minimal, per-run scratch state.
+CHECKPOINT_EVERY_N_BATCHES = 50
+CHECKPOINT_PATH = Path.cwd().parent / 'data_cache' / '_scratch' / 'embedding_checkpoint.parquet'
 
 
 class EmbeddingGenerationPipeline:
@@ -72,21 +129,33 @@ class EmbeddingGenerationPipeline:
         max_tokens_per_sentence=1000,
         max_texts_per_batch=96,
         max_tokens_per_batch=128000,
-        batch_log_interval=40
+        batch_log_interval=40,
+        target_tpm=100000,
+        max_rpm=60
     ):
         """
         Initialize embedding generation pipeline.
-        
+
         Args:
             max_tokens_per_sentence: Filter outliers above this token count
             max_texts_per_batch: Cohere API limit (96 texts per batch)
             max_tokens_per_batch: Cohere v4 capacity (128K tokens)
             batch_log_interval: Print progress every N batches
+            target_tpm: Deliberate self-throttle ceiling, tokens/minute -- paces successful
+                calls only (see GlobalRateLimiter below for the request-count constraint)
+            max_rpm: Global rate limiter ceiling, requests/minute, gating every Bedrock call
+                attempt including retries. Account's real on-demand RPM quota for Cohere
+                Embed V4 is 100 (confirmed 2026-07-28 via Service Quotas console -- AWS's own
+                default is 1,000; a support request to raise it is pending). 60 leaves
+                headroom for sliding-window edge effects and any other concurrent usage of
+                this same script -- this limiter does not coordinate across processes.
         """
         self.max_tokens_per_sentence = max_tokens_per_sentence
         self.max_texts_per_batch = max_texts_per_batch
         self.max_tokens_per_batch = max_tokens_per_batch
         self.batch_log_interval = batch_log_interval
+        self.target_tpm = target_tpm
+        self.rate_limiter = GlobalRateLimiter(max_requests=max_rpm, window_seconds=60.0)
         
         # Load config internally
         self.config = MLConfig()
@@ -203,16 +272,45 @@ class EmbeddingGenerationPipeline:
             raise ValueError(f"Unknown mode: {mode}")
         
         filtered_ids = df_filtered['sentenceID'].to_list()
-        
+
         return df_filtered, filtered_ids
-    
+
+    def _load_checkpoint(self, current_filtered_ids):
+        """Load a prior partial-run checkpoint, if one exists and still matches
+        this run's filter scope. Guards against blindly reusing a checkpoint
+        left over from a differently-scoped run (different cik/year filters)."""
+        if not CHECKPOINT_PATH.exists():
+            return None
+
+        df = pl.read_parquet(CHECKPOINT_PATH)
+        df = df.filter(pl.col('sentenceID').is_in(current_filtered_ids))
+
+        if len(df) == 0:
+            return None
+
+        print(f"  Resuming: {len(df):,} sentences already embedded in checkpoint")
+        return df
+
+    def _write_checkpoint(self, all_sentence_ids, all_embeddings, embedding_id):
+        """Persist partial progress locally so a mid-run crash doesn't lose
+        already-computed (already-paid-for) embeddings. Full-file overwrite,
+        no accumulating directory -- see CLOUD_SOURCE_OF_TRUTH.md."""
+        CHECKPOINT_PATH.parent.mkdir(parents=True, exist_ok=True)
+        pl.DataFrame({
+            'sentenceID': all_sentence_ids,
+            'embedding_id': [embedding_id] * len(all_embeddings),
+            'embedding': pl.Series(all_embeddings, dtype=pl.List(pl.Float32)),
+        }).write_parquet(CHECKPOINT_PATH, compression='zstd')
+
     def _generate_embeddings_batch(self):
         """
         Generate embeddings with intelligent batching and outlier handling
         
         Returns: tuple of (df_vectors, embedding_id, skipped_ids)
         """
-        bedrock = self.config.get_bedrock_client()
+        # max_attempts=1: disable botocore's hidden internal retry so our own
+        # rate limiter and retry loop count real physical requests accurately.
+        bedrock = self.config.get_bedrock_client(max_attempts=1)
         model_id = self.config.bedrock_model_id
         input_type = self.config.bedrock_input_type
         dimensions = self.config.bedrock_dimensions
@@ -234,12 +332,23 @@ class EmbeddingGenerationPipeline:
         if len(df_skipped) > 0:
             skipped_pct = len(df_skipped) / len(self.df_filtered) * 100
             print(f"  ⚠️  Skipped {len(df_skipped):,} outliers (>{self.max_tokens_per_sentence} tokens, {skipped_pct:.2f}%)")
-        
+
+        # Resume from checkpoint, if one matches this run's filter scope
+        checkpoint_df = self._load_checkpoint(self.filtered_ids)
+        if checkpoint_df is not None:
+            done_ids = set(checkpoint_df['sentenceID'].to_list())
+            df_valid = df_valid.filter(~pl.col('sentenceID').is_in(list(done_ids)))
+            all_embeddings = checkpoint_df['embedding'].to_list()
+            all_sentence_ids = checkpoint_df['sentenceID'].to_list()
+            embedding_id = checkpoint_df['embedding_id'][0]  # reuse -- don't regenerate mid-run
+        else:
+            all_embeddings = []
+            all_sentence_ids = []
+            embedding_id = f"bedrock_cohere_v4_{dimensions}d_{datetime.now().strftime('%Y%m%d_%H%M')}"
+
         print(f"  Embedding: {len(df_valid):,} sentences")
-        
+
         # Prepare for batching
-        all_embeddings = []
-        all_sentence_ids = []
         sentences_data = df_valid.select(['sentenceID', 'sentence', 'sentence_token_count']).to_dicts()
         
         current_batch = []
@@ -269,10 +378,20 @@ class EmbeddingGenerationPipeline:
                     batch_time = time.perf_counter() - b_start
                     batch_times.append(batch_time)
 
+                    # Deliberate self-throttle: enforce a minimum wall-time per batch based on
+                    # its token count, so sustained throughput stays under target_tpm regardless
+                    # of how fast the API actually responds.
+                    min_batch_time = current_batch_tokens / self.target_tpm * 60
+                    if batch_time < min_batch_time:
+                        time.sleep(min_batch_time - batch_time)
+
                     all_embeddings.extend(batch_embeddings)
                     batches_processed += 1
                     total_tokens += current_batch_tokens
-                    
+
+                    if batches_processed % CHECKPOINT_EVERY_N_BATCHES == 0:
+                        self._write_checkpoint(all_sentence_ids, all_embeddings, embedding_id)
+
                     # Progress every n batches
                     if batches_processed % self.batch_log_interval == 0:
                         avg = sum(batch_times) / len(batch_times)
@@ -299,23 +418,32 @@ class EmbeddingGenerationPipeline:
             batch_time = time.perf_counter() - b_start
             batch_times.append(batch_time)
 
+            min_batch_time = current_batch_tokens / self.target_tpm * 60
+            if batch_time < min_batch_time:
+                time.sleep(min_batch_time - batch_time)
+
             all_embeddings.extend(batch_embeddings)
             batches_processed += 1
             total_tokens += current_batch_tokens
+            self._write_checkpoint(all_sentence_ids, all_embeddings, embedding_id)
 
         elapsed = time.perf_counter() - t0
         print(f"  ✓ Completed: {len(all_embeddings):,} embeddings in {batches_processed} batches "
               f"| time {elapsed:.1f}s | avg/batch {elapsed/max(1,batches_processed):.2f}s")
 
-        embedding_id = f"bedrock_cohere_v4_{dimensions}d_{datetime.now().strftime('%Y%m%d_%H%M')}"
         df_vectors = pl.DataFrame({
             'sentenceID': all_sentence_ids,
             'embedding_id': [embedding_id] * len(all_embeddings),
             'embedding': pl.Series(all_embeddings, dtype=pl.List(pl.Float32))
         })
 
-        cost = total_tokens / 1000 * self.config.get_cost_per_1k()
+        cost = total_tokens / 1000 * self.config.get_cost_per_1k('cohere_1024d')
         print(f"  Tokens: {total_tokens:,} | Cost: ${cost:.4f}")
+
+        budget = self.config.cfg['costs']['embedding_budget_usd']
+        alert_pct = self.config.cfg['costs']['alert_threshold_pct']
+        if cost >= budget * (alert_pct / 100):
+            print(f"  ⚠️  BUDGET ALERT: ${cost:.2f} has reached {alert_pct}% of ${budget:.2f} budget")
 
         # Store for summary
         self.total_tokens = total_tokens
@@ -325,9 +453,23 @@ class EmbeddingGenerationPipeline:
         return df_vectors, embedding_id, skipped_ids
     
     def _call_bedrock_api(self, bedrock, model_id, batch, input_type, dimensions):
-        """Single Bedrock API call (internal helper)"""
+        """
+        Single Bedrock API call with exponential backoff retry (internal helper).
+
+        Mirrors s3vectors_bulk_insertion.py::_put_vectors_with_retry's error
+        classification and backoff strategy:
+        - Daily token cap (429 whose message contains 'tokens per day') -> HARD STOP,
+          raise DailyTokenQuotaExhausted without retrying (added 2026-07-29)
+        - 429 TooManyRequestsException / 503 ServiceUnavailableException / 5xx -> retry
+        - Any other 4xx -> fail fast (bad request won't fix itself on retry)
+
+        self.rate_limiter.acquire() gates every attempt (first try AND every retry) against
+        the account's real RPM ceiling -- added 2026-07-28 because retries themselves consume
+        RPM budget even when they fail, and the account's on-demand RPM quota for this model
+        is far below AWS's default (see GlobalRateLimiter docstring).
+        """
         texts = [item['text'] for item in batch]
-        
+
         body = json.dumps({
             "texts": texts,
             "input_type": input_type,
@@ -336,26 +478,106 @@ class EmbeddingGenerationPipeline:
             "max_tokens": 128000,
             "truncate": "RIGHT"
         })
-        
-        response = bedrock.invoke_model(
-            body=body,
-            modelId=model_id,
-            accept='*/*',
-            contentType='application/json'
-        )
-        
-        result = json.loads(response['body'].read())
-        return result['embeddings']['float']
+
+        attempt = 0
+        delay = 0.5  # Start with 500ms
+
+        while attempt < DEFAULT_MAX_RETRIES:
+            self.rate_limiter.acquire()
+            try:
+                response = bedrock.invoke_model(
+                    body=body,
+                    modelId=model_id,
+                    accept='*/*',
+                    contentType='application/json'
+                )
+                result = json.loads(response['body'].read())
+                return result['embeddings']['float']
+
+            except ClientError as e:
+                error_code = e.response.get('Error', {}).get('Code', 'Unknown')
+                error_msg = e.response.get('Error', {}).get('Message', '')
+                http_status = e.response.get('ResponseMetadata', {}).get('HTTPStatusCode', 500)
+
+                # HARD STOP: daily token cap, checked BEFORE the retry classification
+                # below. Both this and an ordinary throttle arrive as
+                # ThrottlingException/429, so the status-based rules further down
+                # cannot tell them apart and would retry this to exhaustion (~16s of
+                # backoff, 7 pointless requests) before failing anyway.
+                #
+                # Deliberately a narrow substring match that FALLS THROUGH to the
+                # transient path if it does not hit: should AWS ever reword the
+                # message, behaviour degrades to exactly the pre-fix retry-then-crash
+                # -- never to something worse. Do NOT broaden this into "treat all
+                # 429s as fatal"; that would abort recoverable runs on ordinary
+                # throttles, which is a far worse failure mode than the one it fixes.
+                if DAILY_CAP_MESSAGE_MARKER in error_msg.lower():
+                    print(f"\n  {'=' * 66}")
+                    print(f"  HARD STOP - daily token quota exhausted")
+                    print(f"  {'=' * 66}")
+                    print(f"  This is NOT a transient throttle and NOT a code bug.")
+                    print(f"  AWS message: {error_msg}")
+                    print(f"  Retrying cannot clear a per-day cap, so this run stops now")
+                    print(f"  instead of spending {DEFAULT_MAX_RETRIES} attempts on it.")
+                    print(f"  Work already embedded is preserved in the checkpoint")
+                    print(f"  (written every {CHECKPOINT_EVERY_N_BATCHES} batches):")
+                    print(f"    {CHECKPOINT_PATH}")
+                    print(f"  Re-run once the rolling 24h window frees capacity; the run")
+                    print(f"  will resume from the checkpoint and skip completed work.")
+                    print(f"  {'=' * 66}\n")
+                    raise DailyTokenQuotaExhausted(error_msg) from e
+
+                # Classify by HTTP status, not error-code name -- AWS services name the same
+                # concept differently (Bedrock InvokeModel: 'ThrottlingException'; s3vectors
+                # PutVectors: 'TooManyRequestsException'; confirmed via botocore service models
+                # 2026-07-28). Bedrock's real InvokeModel error shapes also include
+                # ModelNotReadyException (429) and ModelTimeoutException (408) -- both
+                # transient/retryable in spirit but wouldn't match a name-based check. Retry on
+                # 408/429 (too-many-requests / not-ready family) or any 5xx; fail fast on other
+                # 4xx (bad request, access denied, not found, model processing error).
+                is_retryable_client = http_status in (408, 429)
+                is_client_error = 400 <= http_status < 500
+                is_server_error = http_status >= 500
+
+                if is_client_error and not is_retryable_client:
+                    print(f"  X Client error (non-retryable): {error_code}")
+                    raise  # bad request/model id/dims won't fix itself on retry
+
+                if is_retryable_client or is_server_error:
+                    attempt += 1
+                    if attempt >= DEFAULT_MAX_RETRIES:
+                        print(f"  X Max retries ({DEFAULT_MAX_RETRIES}) exceeded")
+                        raise
+                    jitter = random.random() * 0.25
+                    sleep_time = min(delay + jitter, 4.0)
+                    print(f"  Retry {attempt}/{DEFAULT_MAX_RETRIES} ({error_code}), waiting {sleep_time:.2f}s...")
+                    time.sleep(sleep_time)
+                    delay *= 2
+                    continue
+
+                raise  # unknown ClientError shape
+
+        raise RuntimeError("Retry logic error - exhausted retries without return")
     
     def _merge_vectors_table(self):
-        """Merge new vectors with existing (table exists from data prep)"""
-        # Load existing (guaranteed to exist)
-        existing_vectors = pl.read_parquet(
-            self.vectors_uri,
-            storage_options=self.config.get_storage_options()
-        )
-        
+        """Merge new vectors with existing (created by data_preparation.py's
+        _initialize_vectors_table(), but that step is a separate, unenforced
+        prerequisite -- so a missing table here degrades to an empty seed
+        rather than crashing after the (already-paid-for) embeddings above."""
         print(f"\n[Merging Vectors]")
+        try:
+            existing_vectors = pl.read_parquet(
+                self.vectors_uri,
+                storage_options=self.config.get_storage_options()
+            )
+        except Exception as e:
+            msg = str(e).lower()
+            if "not found" in msg or "no such key" in msg or "404" in msg:
+                print(f"  No existing vectors table found at {self.vectors_uri}")
+                print(f"  Seeding from this run's output instead of merging")
+                existing_vectors = self.df_new_vectors.clear()
+            else:
+                raise  # auth/permission/real errors must not be swallowed
         print(f"  Existing: {len(existing_vectors):,} rows")
         print(f"  New: {len(self.df_new_vectors):,} rows")
         
@@ -516,7 +738,12 @@ class EmbeddingGenerationPipeline:
         
         # Step 6: Save results
         self._save_results()
-        
+
+        # Clean finish -- clear the scratch checkpoint so a later, differently-scoped
+        # run doesn't need to reason about leftover state (the load-side filter guard
+        # in _load_checkpoint would skip it anyway, but don't let it linger).
+        CHECKPOINT_PATH.unlink(missing_ok=True)
+
         # Print summary
         self._print_summary()
         

@@ -40,6 +40,7 @@ from metrics import (
     display_query_metadata,
     display_error_message
 )
+from components.answer_render import render_answer
 
 
 def render_chat_message(message: Dict[str, Any]) -> None:
@@ -57,6 +58,11 @@ def render_chat_message(message: Dict[str, Any]) -> None:
         if message.get("error", False):
             # Error message styling
             st.markdown(f"[WARNING] {content}")
+        elif role == "assistant":
+            # Splits the narrative from the DATA SOURCES block and renders the
+            # citations as chips. Falls back to plain markdown if the answer has
+            # no parseable sources section.
+            render_answer(content)
         else:
             # CHANGED: Use st.write instead of st.markdown to avoid LaTeX parsing
             # st.write handles text more naturally and doesn't trigger LaTeX
@@ -110,12 +116,18 @@ def handle_user_input(client: FinSightClient) -> None:
         with st.chat_message("user"):
             st.markdown(prompt)
         
-        # Process query with loading indicator
+        # Process query with loading indicator. The wait is 25-50s by design (the
+        # cost-over-latency trade-off), so the spinner names the pipeline stages
+        # instead of just saying "processing" - it sets the right expectation
+        # without claiming any stage has finished.
         with st.chat_message("assistant"):
-            with st.spinner("[Searching..!] Processing your question..."):
+            with st.spinner(
+                "Extracting entities, retrieving filings, synthesising - "
+                "typically 25-50 seconds..."
+            ):
                 # Get model_key from session state
                 model_key = st.session_state.get("model_key")
-                
+
                 # Call backend
                 result = client.query(
                     question=prompt,
@@ -123,16 +135,14 @@ def handle_user_input(client: FinSightClient) -> None:
                     include_rag=True,
                     model_key=model_key
                 )
-            
+
             # Handle response
             if result.get("success"):
                 # Success - display answer
                 answer = result.get("answer", "")
                 metadata = result.get("metadata", {})
-                
-                # markdown -- issues? lets attempt.
-                # st.markdown(answer) / st.text, st.write
-                st.markdown(answer)
+
+                render_answer(answer)
                 
                 # Add to history
                 add_assistant_message(

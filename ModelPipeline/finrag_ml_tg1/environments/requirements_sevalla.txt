@@ -1,5 +1,8 @@
-# ModelPipeline/sevalla_assets/requirements-sevalla.txt
-# Minimal production dependencies for Sevalla deployment
+# ModelPipeline/finrag_ml_tg1/environments/requirements_sevalla.txt
+# Minimal dependencies prepared for a planned Sevalla deployment.
+# NOTE: Sevalla was never actually deployed to production - this experiment
+# was thoroughly studied and documented but abandoned. ECS Fargate was the
+# only deployment target that ever served real traffic.
 
 # ============================================================================
 # CORE DATA PROCESSING (MANDATORY)

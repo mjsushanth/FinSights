@@ -175,6 +175,12 @@ cython_debug/
 config/
 datasets/
 
+# Exception: src_metrics' config/ holds real, meaningful data (the GAAP
+# tag registry and domain-rule YAML files) - not a throwaway folder like
+# the ones the blanket rule above was meant for.
+!DataPipeline/src_metrics/config/
+!DataPipeline/src_metrics/config/**
+
 
 # ============================================
 # ============================================
@@ -192,6 +198,11 @@ datasets/
 # Large Embedding Cache Files
 ModelPipeline/finrag_ml_tg1/data_cache/embeddings/
 ModelPipeline/finrag_ml_tg1/data_cache/stage3_s3vectors/
+# Stage 2 meta table. Untracked 2026-07-29: it grows with every embedding run
+# (33.9 -> 62.0 MB so far) and GitHub warns above 50 MB. The authoritative copy
+# lives in S3 at ML_EMBED_ASSETS/, per DataPipeline/CLOUD_SOURCE_OF_TRUTH.md.
+# Regenerate locally with platform_core/data_preparation.py or pull from S3.
+ModelPipeline/finrag_ml_tg1/data_cache/meta_embeds/
 
 # Virtual Environments
 ModelPipeline/finrag_ml_tg1/venv_ml_rag
@@ -225,3 +236,89 @@ ModelPipeline/finrag_docker_loc_tg1/secrets.env
 # Claude Tools
 .claude/
 CLAUDE.md
+
+# ============================================
+# Bulky / generated artifacts (keep out of git)
+# ============================================
+
+# DataPipeline data_cache - large untracked source assets (folder itself mirrors
+# ModelPipeline's data_cache pattern). Superseded OD_MS_DataBackups_Bulk/ (removed 2026-07-26).
+DataPipeline/data_cache/full_corpus/
+DataPipeline/data_cache/samples/sec_finrag_1M_sample.parquet
+DataPipeline/data_cache/samples/sec_finrag_1M_sample_filtered.parquet
+DataPipeline/data_cache/reference/
+
+# Graphify: everything generated is ignored, only the human-readable report is
+# tracked. Deny-then-allow rather than listing artifacts, because the old
+# path-anchored patterns missed anything nested: `graphify .` writes a dated
+# subdirectory (graphify-out/2026-07-30/) whose graph.json is 2.1MB, and
+# cost.json / manifest.json / .graphify_* had no rule at all.
+graphify-out/**
+!graphify-out/GRAPH_REPORT.md
+
+# macOS filesystem noise
+.DS_Store
+
+# Revival scratch workspace (throwaway inspection/upload scripts)
+ModelPipeline/revival_scratch/
+
+# src_edgar_incremental scratch/test-run outputs (manifests, intermediate
+# parquets from experimental runs) - pipeline code is tracked, outputs are not
+DataPipeline/src_edgar_incremental/manifests/
+
+# DataPipeline's own copy of the production fact table + the incremental
+# batches that fed it - regenerate via src_edgar_incremental/, don't hand-edit
+# (see data_cache/README.md). Backups live in S3, not git, for these.
+DataPipeline/data_cache/stage1_facts/
+DataPipeline/data_cache/incremental_batches/
+
+# Same reasoning, for the KPI/numeric fact table - regenerate via
+# src_metrics/run_pipeline.py, S3 is the source of truth.
+DataPipeline/data_cache/metrics_fact/
+# Bulk data purged from git history 2026-07-29 (see GIT_HISTORY_CLEANUP_PLAN.md).
+# All of this is regenerable or backed up to S3 / the Seagate archive at
+# FinSights_Backup_20260729/. The .gitkeep files stay tracked to preserve layout.
+ModelPipeline/finrag_ml_tg1/data_cache/stage1_facts/
+ModelPipeline/finrag_ml_tg1/data_cache/analysis_exports/
+ModelPipeline/finrag_ml_tg1/data_cache/qa_manual_exports/
+DataPipeline/data_cache/samples/
+DataPipeline/src_aws_etl/data_exports_testing/
+
+# ============================================
+# Audit 2026-07-29: any data cache / table / JSON output is ignored regardless of
+# size (policy: volume/size never justifies tracking a regenerable data file).
+# Dimension/reference lookup tables - small (3-25KB) but still data_cache OUTPUT,
+# not source. Source of truth: DATA_MERGE_ASSETS/DIMENSION_TABLES/ in S3
+# (previously kept tracked deliberately; that decision is superseded).
+# ============================================
+DataPipeline/data_cache/dimensions/
+ModelPipeline/finrag_ml_tg1/data_cache/dimensions/
+
+# KPI fact table cache - ModelPipeline's copies (DataPipeline's own copy already
+# ignored above via data_cache/metrics_fact/). Regenerate via
+# platform_core/data_preparation.py or pull from S3.
+ModelPipeline/finrag_ml_tg1/data_cache/metrics_fact/
+ModelPipeline/finrag_ml_tg1/rag_modules_src/metric_pipeline/data/
+
+# Scratch/trial data - throwaway by name and by convention.
+ModelPipeline/finrag_ml_tg1/data_cache/trial_data_incr/
+
+# MLflow run-tracking store for the production pipeline (synthesis_pipeline/
+# mlflow_tracker.py) - regenerated on every run, never meant to be committed.
+# Separate from MLFlow_POC/, which has its own nested .gitignore.
+ModelPipeline/mlruns/
+
+# src_metrics_legacy - superseded pipeline (see DataPipeline/CLAUDE.md); the code
+# stays as reference, its output tables don't.
+DataPipeline/src_metrics_legacy/*.parquet
+DataPipeline/src_metrics_legacy/metrics_output/
+
+# One-off manual data exports from ad hoc research (csv/xlsx dumps) - the SQL
+# scripts and notebooks in the rest of data_engineering_research/ stay tracked
+# as genuine research reference; only the raw table exports are cache-shaped.
+DataPipeline/data_engineering_research/duckdb_data_engineering/manual_export_analysis/*.csv
+DataPipeline/data_engineering_research/duckdb_data_engineering/manual_export_analysis/*.xlsx
+
+# Microsoft Office lock/temp files (e.g. ~$Finance_RAG_HLD_v1.xlsx) - created
+# automatically while a file is open, accidental to commit, never source.
+~$*

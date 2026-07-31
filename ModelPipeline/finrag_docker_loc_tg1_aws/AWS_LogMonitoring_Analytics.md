@@ -29,8 +29,8 @@
 - Detailed query analytics tables
 
 **Execution Schedule**:
-- (in progress) enabling and working on a Lambda biweekly; schedule using EventBridge Cron triggering Lambda.
-- Lambda calls SageMaker API to execute notebook, Result gets saved to S3 or emailed.
+- (never implemented) a Lambda biweekly schedule using EventBridge Cron triggering Lambda was researched but not built.
+- Planned design: Lambda calls SageMaker API to execute notebook, Result gets saved to S3 or emailed.
 
 **What we monitor**:
 - The system monitors: **Query & Token Analysis Plots + Tables, Overall query history, Model Usage Distribution Analysis, Efficiency, Volume/Reliability, LLM-Cost Analytics** in our plots and tables.

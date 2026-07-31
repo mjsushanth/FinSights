@@ -45,7 +45,7 @@ class EmbeddingRuntimeConfig:
     @classmethod
     def from_ml_config(cls, embedding_cfg_dict: dict):
         """
-        embedding_cfg_dict -> embedding.bedrock config tree from ml_config.yaml
+        embedding_cfg_dict -> the `embedding` config tree from ml_config.yaml
         """
         provider = embedding_cfg_dict.get("default_provider")
 
@@ -58,12 +58,23 @@ class EmbeddingRuntimeConfig:
         default_model_key = bedrock_cfg["default_model"]
         model_cfg = bedrock_cfg["models"][default_model_key]
 
+        # ------------------------------------------------------------------
+        # input_type: QUERY side. Cohere v3/v4 are asymmetric dual encoders.
+        # This class embeds USER QUERIES, so it must use 'search_query'.
+        # It previously read model_cfg["input_type"], which is the CORPUS
+        # value ('search_document') -- that silently turned retrieval into
+        # passage-similarity. Deliberately does NOT fall back to model_cfg.
+        # See EMBEDDING_INPUT_TYPE_ASYMMETRY.md.
+        # ------------------------------------------------------------------
+        spec = embedding_cfg_dict.get("spec", {})
+        query_input_type = spec.get("input_type_query", "search_query")
+
         return cls(
             provider=provider,
             region=region,
             model_id=model_cfg["model_id"],
             dimensions=model_cfg["dimensions"],
-            input_type=model_cfg["input_type"],
+            input_type=query_input_type,
         )
 
 

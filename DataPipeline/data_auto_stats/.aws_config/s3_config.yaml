@@ -1,6 +1,6 @@
 # AWS S3 Bucket Configuration
 s3:
-  bucket_name: sentence-data-ingestion
+  bucket_name: sentence-data-ingestion-mjs
   region: us-east-1  
 
   # Base path for all data assets

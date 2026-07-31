@@ -23,8 +23,8 @@ env:
   AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
   AWS_REGION_NAME: ${{ secrets.AWS_REGION || 'us-east-1' }}
   AWS_DEFAULT_REGION: ${{ secrets.AWS_REGION || 'us-east-1' }}
-  AWS_BUCKET_ARN: 'arn:aws:s3:::sentence-data-ingestion'
-  S3_BUCKET_NAME: 'sentence-data-ingestion'
+  AWS_BUCKET_ARN: 'arn:aws:s3:::sentence-data-ingestion-mjs'
+  S3_BUCKET_NAME: 'sentence-data-ingestion-mjs'
   S3_CONFIG_FILE_KEY: 'CONFIG/companies.csv'
   S3_INGESTION_BUCKET_NAME: 'INGESTION_ASSETS'
   LOCAL_DATA_PATH: ${{ github.workspace }}/DataPipeline/config/companies.csv

@@ -414,8 +414,8 @@ class QueryLogger:
         Download context and response exports from S3 to local directory.
         
         Syncs files from:
-            s3://sentence-data-ingestion/DATA_MERGE_ASSETS/LOGS/FINRAG/contexts/ → local/exports/contexts/
-            s3://sentence-data-ingestion/DATA_MERGE_ASSETS/LOGS/FINRAG/responses/ → local/exports/responses/
+            s3://sentence-data-ingestion-mjs/DATA_MERGE_ASSETS/LOGS/FINRAG/contexts/ → local/exports/contexts/
+            s3://sentence-data-ingestion-mjs/DATA_MERGE_ASSETS/LOGS/FINRAG/responses/ → local/exports/responses/
         
         Skips files that are already up-to-date locally (timestamp check).
         

@@ -174,15 +174,33 @@ class MLConfig:
                     # Fallback
                     provider = f"cohere_{dims}d"
             else:
-                # Direct API provider fallback
-                provider = 'cohere_768d'
-        
+                # Non-bedrock transport (e.g. cohere_direct).
+                # P0 FIX 2026-07-29: this used to be hardcoded 'cohere_768d'.
+                # Flipping the transport would then resolve the 768-d path,
+                # find nothing, and seed a FRESH table -- silently orphaning
+                # every vector already generated, with no error or warning.
+                # Now reads data_ml.embeddings.canonical_slot (cohere_1024d).
+                # NOTE: dormant today (default_provider == 'bedrock'), so this
+                # cannot change any currently-resolved path.
+                provider = self.cfg['data_ml']['embeddings'].get(
+                    'canonical_slot', 'cohere_1024d'
+                )
+
         d = self.cfg['data_ml']['embeddings'][provider]
         return f"{d['path']}/{d['filename']}"
 
 
-    def embeddings_metadata_path(self, provider='cohere_768d'):
-        """Embedding metadata JSON path"""
+    def embeddings_metadata_path(self, provider=None):
+        """Embedding metadata JSON path.
+
+        provider=None resolves to data_ml.embeddings.canonical_slot, matching
+        embeddings_path(). It previously defaulted to the literal 'cohere_768d',
+        which is the same landmine fixed there: this project has exactly one
+        embedding table (cohere_1024d) and a 768-d default silently pointed at a
+        slot that has never held data.
+        """
+        if provider is None:
+            provider = self.cfg['data_ml']['embeddings']['canonical_slot']
         d = self.cfg['data_ml']['embeddings'][provider]
         return f"{d['path']}/{d['metadata_file']}"
     
@@ -221,11 +239,63 @@ class MLConfig:
         model_key = self.bedrock_default_model_key
         return self.cfg['embedding']['bedrock']['models'][model_key]['batch_size']
     
+    # ---------- input_type: asymmetric encoder roles ----------
+    # Cohere v3/v4 are asymmetric dual encoders. The corpus and the query MUST
+    # use different input_type values. See EMBEDDING_INPUT_TYPE_ASYMMETRY.md.
+
     @property
-    def bedrock_input_type(self):
-        """Get input_type for default Bedrock model"""
+    def embedding_spec(self):
+        """Pinned embedding-space identity (embedding.spec). {} if absent."""
+        return self.cfg['embedding'].get('spec', {})
+
+    @property
+    def document_input_type(self):
+        """
+        input_type for CORPUS ingest. Must be 'search_document'.
+        Prefers embedding.spec; falls back to the legacy per-model value so
+        older configs keep working.
+        """
+        spec_val = self.embedding_spec.get('input_type_document')
+        if spec_val:
+            return spec_val
         model_key = self.bedrock_default_model_key
         return self.cfg['embedding']['bedrock']['models'][model_key]['input_type']
+
+    @property
+    def query_input_type(self):
+        """
+        input_type for USER QUERIES and variant queries. Must be 'search_query'.
+
+        NOTE: deliberately does NOT fall back to the document value. Doing so
+        is exactly the bug this property exists to fix -- QueryEmbedderV2 was
+        borrowing 'search_document' from the model block and embedding user
+        questions as if they were corpus passages.
+        """
+        return self.embedding_spec.get('input_type_query', 'search_query')
+
+    @property
+    def bedrock_input_type(self):
+        """
+        DEPRECATED ALIAS -- kept so existing callers do not break.
+        This is the DOCUMENT-side value (platform_core/embedding_generation.py
+        is the legitimate consumer). For query embedding use query_input_type.
+        """
+        return self.document_input_type
+
+    def assert_input_types_differ(self):
+        """
+        Guard against silently reintroducing the symmetric-encoder bug.
+        Cheap; call at pipeline construction.
+        """
+        doc, qry = self.document_input_type, self.query_input_type
+        if doc == qry:
+            raise ValueError(
+                f"document_input_type and query_input_type are both '{doc}'. "
+                "Cohere v3/v4 are asymmetric encoders: the corpus must use "
+                "'search_document' and queries must use 'search_query'. "
+                "See EMBEDDING_INPUT_TYPE_ASYMMETRY.md."
+            )
+        return True
     
     def get_bedrock_model_config(self, model_key=None):
         """Get full config for a specific Bedrock model"""
@@ -263,9 +333,35 @@ class MLConfig:
             return self.cfg['embedding'][provider]['batch_size']
     
     @property
+    def cohere_direct_config(self):
+        """Cohere direct-transport config block (embedding.cohere_direct)."""
+        return self.cfg['embedding'].get('cohere_direct', {})
+
+    @property
+    def cohere_key_env_name(self):
+        """
+        Resolve WHICH env var holds the Cohere key, per cohere_direct.use_key.
+        Returns the variable NAME (not the secret), or None if unconfigured.
+        """
+        cd = self.cohere_direct_config
+        if not cd:
+            return None
+        which = cd.get('use_key', 'trial')
+        return cd.get('api_key_env_prod') if which == 'prod' else cd.get('api_key_env_trial')
+
+    @property
     def cohere_api_key(self):
-        """Cohere API key from environment (for direct API access)"""
-        return os.getenv('COHERE_API_KEY')
+        """
+        Cohere API key VALUE from environment, for the direct transport.
+
+        NOTE: this project has NO 'COHERE_API_KEY' variable. The real names are
+        cohere_direct_apiprod_{trialk1,k1,k2} and live in
+        .aws_secrets/aws_credentials.env (gitignored). This property previously
+        read 'COHERE_API_KEY' and therefore always returned None.
+        Selection is driven by embedding.cohere_direct.use_key (trial | prod).
+        """
+        var = self.cohere_key_env_name
+        return os.getenv(var) if var else None
     
     @property
     def openai_api_key(self):
@@ -295,27 +391,48 @@ class MLConfig:
         return self.cfg['embedding']['filtering']['exclude_sections']
     
     # ========== Retrieval Configuration ==========
-    
-    @property
-    def retrieval_top_k(self):
-        """Number of top results to retrieve"""
-        return self.cfg['retrieval']['top_k']
-    
+
+    # REMOVED 2026-07-29: retrieval_top_k. It read retrieval.top_k, which does
+    # not exist in ml_config.yaml, so every call raised KeyError -- it can never
+    # have worked, and it had zero callers. Deliberately deleted rather than
+    # repointed: retrieval defines FOUR distinct top-k values (top_k_filtered=30,
+    # top_k_global=15, top_k_filtered_variants=15, top_k_for_expansion=20), so
+    # any single "top_k" would be a guess that silently returns the wrong bound
+    # to a future caller. Use get_retrieval_config(), which exposes all four.
+
+    # All three properties below read retrieval.* keys that do not exist, so each
+    # raised KeyError on every call; none had any callers. Fixed 2026-07-29 using
+    # one rule: repoint where exactly one correct key exists, remove where none does.
+
     @property
     def context_window(self):
-        """Number of sentences to retrieve around target (±N)"""
-        return self.cfg['retrieval']['context_window']
-    
+        """Number of sentences to retrieve around target (±N).
+
+        Repointed from the non-existent retrieval.context_window to the real key
+        retrieval.window_size (=3). Confirmed correct against the live consumer,
+        sentence_expander.py:142, which reads window_size and expands
+        sentence_pos +/- window_size.
+        """
+        return self.cfg['retrieval']['window_size']
+
+    # REMOVED 2026-07-29: priority_sections. It read retrieval.priority_sections,
+    # which exists nowhere in ml_config.yaml -- not under retrieval, not under any
+    # other block. Unlike context_window there is no correct key to repoint to, so
+    # inventing one would fabricate behaviour. Section preference is handled in
+    # rag_pipeline/metadata_filters.py, not via config.
+
     @property
-    def priority_sections(self):
-        """High-priority sections for retrieval"""
-        return self.cfg['retrieval']['priority_sections']
-    
-    @property
-    def recent_years_threshold(self):
-        """Filter to filings after this year"""
-        return self.cfg['retrieval']['recent_years_threshold']
-    
+    def recent_year_threshold(self):
+        """Filter to filings from this year onward.
+
+        Renamed from recent_years_threshold (plural), which read a plural key that
+        does not exist; the real key is retrieval.recent_year_threshold, singular.
+        Value lowered 2015 -> 2006 (the corpus minimum year) on 2026-07-29, which
+        clears the 23.8%-unreachable finding in RETRIEVAL_IMPROVEMENT_STUDY.md.
+        The knob is retained for high-scale production tuning -- see ml_config.yaml.
+        """
+        return self.cfg['retrieval']['recent_year_threshold']
+
     # ========== Cost Tracking ==========
     
     @property
@@ -341,11 +458,11 @@ class MLConfig:
     def get_s3_client(self):
         """Create boto3 S3 client (uses IAM role if available, otherwise explicit credentials)"""
         import boto3
-        
+
         # If using IAM role, let boto3 auto-detect credentials
         if self._aws_creds_source == "IAM_ROLE":
             return boto3.client('s3', region_name=self.region)
-        
+
         # Otherwise use explicit credentials
         return boto3.client(
             's3',
@@ -353,21 +470,48 @@ class MLConfig:
             aws_secret_access_key=self.aws_secret_key,
             region_name=self.region
         )
-    
-    def get_bedrock_client(self):
-        """Create Bedrock runtime client (uses IAM role if available, otherwise explicit credentials)"""
+
+    def get_s3vectors_client(self):
+        """Create boto3 S3 Vectors client (uses IAM role if available, otherwise explicit credentials)"""
         import boto3
-        
+
+        if self._aws_creds_source == "IAM_ROLE":
+            return boto3.client('s3vectors', region_name=self.region)
+
+        return boto3.client(
+            's3vectors',
+            aws_access_key_id=self.aws_access_key,
+            aws_secret_access_key=self.aws_secret_key,
+            region_name=self.region
+        )
+
+    def get_bedrock_client(self, max_attempts=None):
+        """Create Bedrock runtime client (uses IAM role if available, otherwise explicit credentials)
+
+        max_attempts: if set, overrides botocore's own hidden retry-on-429 (legacy mode default
+        is 5 attempts). Pass max_attempts=1 when the caller has its own retry/rate-limiting
+        logic that needs to count real physical requests accurately -- otherwise botocore
+        silently multiplies each logical call by up to 5x underneath it (found 2026-07-28
+        during the Bin 2 throttle-storm investigation). Left as None (botocore's default) for
+        callers -- e.g. the LLM synthesis path -- that have no retry logic of their own and
+        rely on this as their only resilience to transient errors; do not change that default.
+        """
+        import boto3
+        from botocore.config import Config
+
+        bedrock_config = Config(retries={'max_attempts': max_attempts}) if max_attempts else None
+
         # If using IAM role, let boto3 auto-detect credentials
         if self._aws_creds_source == "IAM_ROLE":
-            return boto3.client('bedrock-runtime', region_name=self.bedrock_region)
-        
+            return boto3.client('bedrock-runtime', region_name=self.bedrock_region, config=bedrock_config)
+
         # Otherwise use explicit credentials
         return boto3.client(
             service_name='bedrock-runtime',
             region_name=self.bedrock_region,
             aws_access_key_id=self.aws_access_key,
-            aws_secret_access_key=self.aws_secret_key
+            aws_secret_access_key=self.aws_secret_key,
+            config=bedrock_config
         )
     
     def get_storage_options(self):
@@ -636,10 +780,10 @@ class MLConfig:
         
         # Fallback if not in YAML (use known path)
         if not dim_config:
-            return "DATA_MERGE_ASSETS/DIMENSION_TABLES/finrag_dim_companies_21.parquet"
-        
+            return "DATA_MERGE_ASSETS/DIMENSION_TABLES/finrag_dim_companies_25.parquet"
+
         path = dim_config.get('path', 'DATA_MERGE_ASSETS/DIMENSION_TABLES')
-        filename = dim_config.get('companies', {}).get('filename', 'finrag_dim_companies_21.parquet')
+        filename = dim_config.get('companies', {}).get('filename', 'finrag_dim_companies_25.parquet')
         
         return f"{path}/{filename}"
 

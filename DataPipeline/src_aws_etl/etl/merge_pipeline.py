@@ -5,6 +5,7 @@ Merges base data (historical or previous final) with incremental data
 
 import os
 import sys
+import shutil
 from pathlib import Path
 from datetime import datetime
 import polars as pl
@@ -149,19 +150,29 @@ class MergePipeline:
 
             incr_df = incr_df.with_columns([
                 pl.col('cik').cast(pl.Int32).alias('cik_int'),
-                
+
                 (pl.col('sentenceID') + pl.col('sentence'))
                     .map_elements(lambda x: hashlib.md5(x.encode()).hexdigest(), return_dtype=pl.String)
                     .alias('row_hash'),
-                
-                # Placeholder for text analysis features ()
-                pl.lit(None).cast(pl.Boolean).alias('has_numbers'),
-                pl.lit(None).cast(pl.Boolean).alias('has_comparison'),
-                pl.lit(None).cast(pl.Boolean).alias('likely_kpi'),
-                
-                # Placeholder for company metadata ()
-                pl.lit(None).cast(pl.List(pl.String)).alias('tickers'),
             ])
+
+            # Placeholder for text analysis features / company metadata - only
+            # injected if the incremental source doesn't already provide them.
+            # Newer incremental sources (e.g. src_edgar_incremental) compute
+            # these for real; only fill with None for older sources that never
+            # populated them at all.
+            placeholder_defaults = {
+                'has_numbers': pl.lit(None).cast(pl.Boolean),
+                'has_comparison': pl.lit(None).cast(pl.Boolean),
+                'likely_kpi': pl.lit(None).cast(pl.Boolean),
+                'tickers': pl.lit(None).cast(pl.List(pl.String)),
+            }
+            missing_cols = [
+                expr.alias(name) for name, expr in placeholder_defaults.items()
+                if name not in incr_df.columns
+            ]
+            if missing_cols:
+                incr_df = incr_df.with_columns(missing_cols)
             
             # Ensure column order matches base
             print("  Reordering columns...")
@@ -178,14 +189,30 @@ class MergePipeline:
             
             print(f"  {base_label}: {len(base_df):,} rows")
             print(f"  Incremental: {len(incr_df):,} rows")
-            
+
+            # Replace on the exact (cik_int, report_year) key before
+            # concatenating - NOT just sentenceID dedup. An incremental batch
+            # that re-supplies a company-year already in base (e.g. a fresh
+            # full-history rebuild for one company, or a newer pass at a
+            # year already covered) will only PARTIALLY collide by
+            # sentenceID if its sentence-splitting differs at all from
+            # whatever produced the base rows - sentenceID-only dedup then
+            # leaves the non-colliding remainder behind as stale orphan rows
+            # mixed in with the new ones. Removing every base row whose
+            # (cik_int, report_year) the incremental data touches, before
+            # concatenating, avoids that regardless of splitting differences.
+            replaced_keys = incr_df.select(['cik_int', 'report_year']).unique()
+            base_df = base_df.join(replaced_keys, on=['cik_int', 'report_year'], how='anti')
+
             # Concatenate
             merged_df = pl.concat([base_df, incr_df])
-            
-            # Deduplicate (incremental overwrites base)
+
+            # Deduplicate on sentenceID as a final safety net (should be a
+            # no-op given the replacement above; catches any real leftover
+            # ID collisions instead of silently dropping data).
             print(f"\n Deduplicating on sentenceID...")
             merged_df = merged_df.unique(subset=['sentenceID'], keep='last')
-            
+
             self.stats['duplicates_removed'] = len(base_df) + len(incr_df) - len(merged_df)
             self.stats['final_rows'] = len(merged_df)
             
@@ -240,12 +267,22 @@ class MergePipeline:
             
             # Upload to S3 using instance S3 client
             self.s3.upload_file(tmp_path, self.config.bucket, self.config.final_path)
-            
+            print(f"  ✓ Written: {self.config.final_path}")
+
+            # ================================================================
+            # STEP 7b: SYNC LOCAL DATA_CACHE
+            # ================================================================
+            # Cloud is the source of truth; local data_cache/ copies are a
+            # brief, automatic mirror of it - not a separate thing someone
+            # has to remember to update by hand after every merge.
+            print("\n" + "=" * 70)
+            print("STEP 7b: SYNC LOCAL DATA_CACHE")
+            print("=" * 70)
+            self.sync_local_data_cache(tmp_path)
+
             # Clean up temp file
             os.remove(tmp_path)
-            
-            print(f"  ✓ Written: {self.config.final_path}")
-            
+
             # ================================================================
             # STEP 8: LOG SUCCESS
             # ================================================================
@@ -283,7 +320,26 @@ class MergePipeline:
             import traceback
             traceback.print_exc()
             return False
-    
+
+    def sync_local_data_cache(self, written_local_path):
+        """Copies the just-uploaded final table to the two local data_cache
+        mirrors - DataPipeline's own copy and ModelPipeline's RAG-serving
+        copy. Best-effort: a sync failure is logged but does not fail the
+        merge, since S3 (already written above) remains the real result."""
+        filename = Path(self.config.final_path).name
+        project_root = Path(__file__).parent.parent.parent  # DataPipeline/
+        targets = [
+            project_root / "data_cache" / "stage1_facts" / filename,
+            project_root.parent / "ModelPipeline" / "finrag_ml_tg1" / "data_cache" / "stage1_facts" / filename,
+        ]
+        for target in targets:
+            try:
+                target.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copyfile(written_local_path, target)
+                print(f"  ✓ Synced: {target}")
+            except Exception as e:
+                print(f"  Warning: local sync failed for {target} - {e}")
+
     def write_log(self):
         """Append merge results to CSV log file on S3"""
         print("\n Writing log entry...")

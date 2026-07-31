@@ -91,7 +91,8 @@ Example: `ModelPipeline\finrag_ml_tg1\rag_modules_src\synthesis_pipeline\models.
  ┃ ┣ 📜 11_ITest_AnsScoring.ipynb              # Answer quality evaluation: ROUGE-L, BERTScore, factual accuracy metrics
  ┃ ┗ 📜 12_ITest_Func_BussToMetric.ipynb       # Tests structured KPI extraction from business-level queries
  ┃
- ┗ 📂 03_LambdaRefactor_Tests/                  # AWS Lambda deployment architecture and abstraction layer tests
+ ┗ 📂 03_LambdaRefactor_Tests/                  # Lambda abstraction-layer tests. Lambda was NEVER deployed;
+   ┃                                            # the DataLoader/S3 streaming work it produced is what ECS uses.
    ┣ 📜 16_DataLoaderFactory_Tests.ipynb        # Tests DataLoader factory pattern for environment-agnostic initialization
    ┗ 📜 17_MockLambda_S3Loader_T1.ipynb         # Validates Lambda-compatible S3 data loading with mock AWS environment
 ```
@@ -138,8 +139,10 @@ User Raw Query
 
 
 ### Data Dependencies:
-- Stage 2 Meta Table: finrag_fact_sentences_meta_embeds.parquet (~73MB)
-- Stage 3 S3 Vectors Table: finrag_s3vectors_cohere_1024d.parquet (~360MB)
+- Stage 2 Meta Table (bulk/rich): finrag_fact_sentences_meta_embeds.parquet, 614,647 embedded rows (~62MB)
+- Stage 3 S3 Vectors Table (lean, join-ready): finrag_embeddings_s3vectors_cohere_1024d.parquet, 614,647 rows (~2.2GB)
+- Design intent (HLD): keep the lean vector table separate from the rich meta table so
+  metadata queries never load embeddings - confirmed 2026-07-29, matches current build.
 - Dimension Tables: Companies, Sections (small)
 - Metric Data: downloaded_data.json (KPI lookup)
 
@@ -161,10 +164,12 @@ User Raw Query
 - ENVIRONMENT 2: venv_serving (MINIMAL - New for Deployment)
 ```
   Location: finrag_ml_tg1/venv_serving/  (NEW!)
-  Uses: environments/requirements-sevalla.txt
+  Uses: environments/requirements_sevalla.txt
   Size: ~500MB
   Purpose: Backend + Frontend serving ONLY
-  When: Running start_finrag, testing deployment, Sevalla cloud
+  When: Testing deployment (local runs now go through Docker via ModelPipeline/finsights.command)
+  NOTE: originally cut for Sevalla, which was studied and coded against but NEVER deployed.
+        The only deployment that ever served traffic was AWS ECS Fargate (Dec 2025, old account).
 ```
 
 

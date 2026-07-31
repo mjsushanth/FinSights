@@ -1,187 +1,224 @@
 # FinSights
 
-#### Course Project (MLOps IE7374) - FinSights.
-<!-- - Building an AI-powered financial analysis pipeline for structured KPI extraction and explainable reporting from 10-K filings SEC(Securities and Exchange Commission). -->
+#### Course Project (MLOps IE7374) — FinSights.
 
-- FinSights is a production-grade financial document intelligence system. The system processes SEC 10-K filings to enable sophisticated question-answering capabilities for financial analysts and portfolio managers through a hybrid retrieval architecture.
-- **The Problem**: Financial analysts spend countless hours manually parsing dense SEC 10-K filings to extract key performance indicators and answer strategic questions. With thousands of companies filing annually, this manual process is time-consuming, error-prone, and doesn't scale.
-- **Our Solution**: FinSights combines structured KPI extraction with semantic retrieval-augmented generation (RAG) to provide, assembles multi-sourced data to deliver accurate, context-aware answers to complex financial queries. It promises cost-effectiveness, scalability, and true grounding for insights by citing actual filing IDs.
-- FinSights' goal is to make dense financial documents easily explainable and interpretable. 
+A production-grade financial document intelligence system. FinSights turns SEC 10-K filings into an
+answerable corpus, then answers analyst questions against it with citations back to the exact filing sentences.
 
-### Quick Redirect (Setup):
-- Setup Instructions: **[Setup Instructions](ModelPipeline/README.md#L38)** 
-- There are 2 setup options, preferred one being dockerized setup for local installation. **[Quick Start with Docker! (RECOMMENDED)](ModelPipeline/finrag_docker_loc_tg1/LOC_DOCKER_README.md)** and [Quick Start with Command/Ps1 Scripts](ModelPipeline/SETUP_README.md)
-- Cloud deployment / CICD instructions are also here: **[AWS Cloud Deployment Guide](ModelPipeline/finrag_docker_loc_tg1_aws/ECS_DEPLOYMENT_GUIDE.md)** → Step-by-step ECS deployment instructions.
+- **The problem.** Analysts spend hours parsing dense 10-K filings to pull KPIs and answer strategic
+  questions. Manual reading does not scale across companies, years, and sections.
+- **The approach.** Two supply lines feed one answer: *structured* KPI extraction from parsed financial
+  tables, and *semantic* retrieval over sentence-level embeddings. An LLM synthesises them into a grounded
+  response that cites real `sentenceID`s — not a summary of a summary.
+- **The scope, stated honestly.** 25 companies, 614,647 embedded sentences (1024-d, 2006–2025). The upstream
+  ETL universe is much larger; the embedded corpus is what the system can actually answer about.
+
+### Quick Redirect (Setup)
+
+- **[Setup Instructions](ModelPipeline/README.md#L38)** — start here.
+- Two setup paths. Preferred: **[Docker, local (RECOMMENDED)](ModelPipeline/finrag_docker_loc_tg1/LOC_DOCKER_README.md)**.
+  Alternative: [command/PS1 launcher scripts](ModelPipeline/SETUP_README.md).
+- **Cloud deployment (current).** One command brings the whole stack up on AWS ECS Fargate and one takes it
+  back to zero: **[ECS Fargate Runbook](ModelPipeline/finrag_docker_loc_tg1_aws/ECS_FARGATE_RUNBOOK.md)**.
+- **Cloud deployment (historical).** The Dec 2025 public deployment ran on an account since decommissioned.
+  Preserved as a record, **not** a runbook:
+  [ECS record](ModelPipeline/finrag_docker_loc_tg1_aws/HISTORICAL_2025-12_ECS_DEPLOYMENT_GUIDE.md) ·
+  [infrastructure record](HISTORICAL_2025-12_INFRASTRUCTURE_SETUP_GUIDE.md).
 
 ### Full Model Readme at:
-- Please check the file [ModelPipeline README](ModelPipeline/README.md). Our core resources can be read in the Key Resource section, or the [Documentation Index](ModelPipeline/finrag_ml_tg1/DOCUMENTATION_INDEX.md).
+
+- [ModelPipeline README](ModelPipeline/README.md). Every document is indexed in the
+  [Documentation Index](ModelPipeline/finrag_ml_tg1/DOCUMENTATION_INDEX.md).
 
 ## Architecture Diagram:
+
 <p align="center">
   <img src="FinSights Architecture Diagram.png" width="800" alt="FinSights Architecture Diagram">
 </p>
 <p align="center"><em>FinSights Architecture Diagram</em></p>
 
+---
 
+## Service Architecture
 
-## High level Conceptual Flow:
+Three-tier SOA — presentation, application, business logic — collapsed into **one** ECS Fargate task so the
+tier boundary is a function call and a loopback socket rather than a network hop you pay for.
+
 ```
-┌─────────────────────────────────────────────────────────────────┐
-│ DATA ENGINEERING LAYER                                          │
-│ SEC Edgar API → Sentence Extraction → S3 Storage (1M samples)  │
-└─────────────────────────────────────────────────────────────────┘
-                              ↓
-┌─────────────────────────────────────────────────────────────────┐
-│ EMBEDDING & INDEXING LAYER                                      │
-│ Cohere Embed v4 → S3 Vectors (200K+ 1024-d) → Metadata Filters │
-└─────────────────────────────────────────────────────────────────┘
-                              ↓
-┌─────────────────────────────────────────────────────────────────┐
-│ RAG ORCHESTRATION LAYER                                         │
-│ Entity Extraction → Query Variants → Triple Retrieval Paths    │
-│ (Filtered + Global + Variants) → Context Assembly              │
-└─────────────────────────────────────────────────────────────────┘
-                              ↓
-┌─────────────────────────────────────────────────────────────────┐
-│ SYNTHESIS & SERVING LAYER                                       │
-│ Dual Supply Lines (KPI + Semantic) → LLM (Claude Bedrock)      │
-│ → Citation Headers → Structured Response                        │
-└─────────────────────────────────────────────────────────────────┘
+                                    ┌───────────────┐
+                                    │    BROWSER    │   anyone, unauthenticated
+                                    └───────┬───────┘   (the RAG UI is the product)
+                                            │ tcp/8501 — the only door in
+════════════════════════════════════════════▼══════════════════════════════════════
+  ECS FARGATE TASK · ARM64 ·  1 vCPU / 3072 MiB  ·  awsvpc: ONE network namespace
+───────────────────────────────────────────────────────────────────────────────────
+  ┌───────────────────────────────┐                  ┌───────────────────────────┐
+  │ PRESENTATION — Streamlit      │  localhost:8000  │ APPLICATION — FastAPI     │
+  │ :8501  session state, UI comps│ ───────────────► │ :8000  NO ingress rule    │
+  │ pure HTTP client, no ML code  │  $0 · no ALB     │ Pydantic request/response │
+  │ 146 MiB, flat                 │  no DNS, no hop  │ 213 MiB idle → 1,220 peak │
+  └───────────────────────────────┘                  └─────────────┬─────────────┘
+                                                                   │ Python call,
+                                                                   │ same process
+  ┌────────────────────────────────────────────────────────────────▼─────────────┐
+  │ BUSINESS LOGIC — RAGOrchestrator.answer_query()                              │
+  │                                                                              │
+  │   EntityAdapter.extract()  →  companies · years · metrics · sections · risk  │
+  │        ├── SUPPLY LINE 1   MetricPipeline      → structured KPI block        │
+  │        └── SUPPLY LINE 2   QueryEmbedderV2     → 1024-d query vector         │
+  │                                                                              │
+  │   triple retrieval   filtered ∪ global ∪ variants  →  dedupe on sentenceID   │
+  │        →  ±3-sentence window expansion, edge-safe                            │
+  │        →  citation-headed context assembly (company | FY | doc | section)    │
+  │        →  LLM synthesis  →  cited answer + one row in the cost ledger        │
+  └────────────────────────────────────────────────────────────────┬─────────────┘
+════════════════════════════════════════════════════════════════════▼══════════════
+  IAM task role, delivered over the container credential endpoint 169.254.170.2
+  — no access keys in the image, none in the task definition, none in the repo.
+
+  ┌─────────────────────┐  ┌──────────────────────┐  ┌──────────────────────────┐
+  │ Bedrock             │  │ S3 Vectors           │  │ S3                       │
+  │ Claude Haiku 4.5    │  │ 614,647 × 1024-d     │  │ corpus parquet (read)    │
+  │ Cohere Embed v4     │  │ metadata pushdown    │  │ query logs (write, and   │
+  │ InvokeModel only    │  │ QueryVectors only    │  │ only under LOGS/FINRAG/) │
+  └─────────────────────┘  └──────────────────────┘  └──────────────────────────┘
 ```
 
-### Service Architecture:
-- Three-Tier SOA / Client-Server / MVC / Microservices Lite.
-```
-┌─────────────────────────────────────────────────────────────┐
-│                    PRESENTATION TIER                        │
-│  ┌────────────────────────────────────────────────────┐     │
-│  │  Streamlit Frontend (Port 8501) /                  │     │
-│  │  Entry-HTTP contract, session management, UI comps,│     │  
-│  │  Talk to FastAPI client, display logic, etc.       │     │ 
-└─────────────────────────────────────────────────────────────┘
-                           ↓ HTTP POST /query
-┌─────────────────────────────────────────────────────────────┐
-│                    APPLICATION TIER                         │
-│  │  FastAPI Backend (Port 8000)                       │     │
-└─────────────────────────────────────────────────────────────┘
-                           ↓ Python function call
-┌─────────────────────────────────────────────────────────────┐
-│                    BUSINESS LOGIC TIER                      │
-│  ┌────────────────────────────────────────────────────┐     │
-│  │  Model Pipeline, ML Orchestrator                   │     │
-└─────────────────────────────────────────────────────────────┘
-                           ↓ API calls
-┌─────────────────────────────────────────────────────────────┐
-│                    EXTERNAL SERVICES                        │
-│  ├─ AWS S3, Cohere, Bedrock (Claude models)                 │
-└─────────────────────────────────────────────────────────────┘
-```
-- Data Pipeline Setup: https://github.com/Finsights-MLOps/FinSights/blob/main/DataPipeline/SETUP_README.md
-- Data Pipeline Documentation: https://github.com/Finsights-MLOps/FinSights/blob/main/DataPipeline/README.md
+<p align="center">
+  <img src="ModelPipeline/finrag_docker_loc_tg1_aws/diagrams/D2-request-path.png" width="950"
+       alt="Request path and the namespace boundary">
+</p>
+<p align="center"><em>The request path, and why the backend has no door to the internet.
+Full diagram set and the reasoning behind each choice:
+<a href="ModelPipeline/finrag_docker_loc_tg1_aws/SYSTEMS_WALKTHROUGH.md">Systems Walkthrough</a>.</em></p>
 
+---
 
-## Project Overview:
+## Project Overview
 
-1. For background, and Business HLD (High-Level Design) please feel free to skim through [Scoping](design_docs/Project_Scoping_IE7374_FinSights.pdf) and [Design](design_docs/Finance_RAG_HLD_v1.xlsx)(excel). They explain the business problem, solution approach, and high-level architecture.  
-    - The Excel file contains dataset initial understanding, cloud cost estimates, tool research, and algorithm analysis—essential reference for developers.
+Read top to bottom for the arc, or jump straight to a link.
 
-2. The DataPipeline module hosts the live SEC(Securities and Exchange Commission) data ingestion process. It's a step in **Data Preprocessing**, to handle crawl-download-parse and upload final structured filings to AWS S3 buckets. Main contents are the `DataPipeline/src` and it's related `DataPipeline/dag` which orchestrates it.
+**Design and data engineering**
 
-3. For initial data engineering, please refer to `DataPipeline/data_engineering_research` 
-    - Here, [Data Engineering](DataPipeline/data_engineering_research/duckdb_data_engineering/Data_Engineering_README.md) and other README files document strategy, key technical achievements, data quality approach, sampling strategies, etc. `duckdb_data_engineering/sql` has DuckDB SQL scripts for number of operations. 
-    - Files in `data_engineering_research/exploratory_research` has [Research](DataPipeline/data_engineering_research/exploratory_research/Research_README.md#L5) and massive sets of EDA, experiment scripts with polars, EDA-charts - [EDA Notes](DataPipeline/data_engineering_research/exploratory_research/polars_eda_research/Master_EDA_Notes.pdf) etc. 
+1. Business framing, cost estimates, tool research and algorithm analysis live in
+   [Scoping](design_docs/Project_Scoping_IE7374_FinSights.pdf) and [HLD](design_docs/Finance_RAG_HLD_v1.xlsx) (Excel).
+   The Excel sheet is the most useful single reference for a new developer.
+2. `DataPipeline/src` + `DataPipeline/dag` run live SEC EDGAR ingestion — crawl, download, parse, upload
+   structured filings to S3, orchestrated by Airflow. See [DataPipeline README](DataPipeline/README.md).
+3. `DataPipeline/src_aws_etl/` is where bulk historical data and incremental live data merge, with archival
+   and log management. `DataPipeline/src_metrics/` extracts the raw financial numbers from each filing.
+4. `DataPipeline/data_auto_stats/` handles schema validation, data-quality gates, anomaly detection and
+   alerting via Great Expectations.
+5. Exploratory work is preserved, not discarded:
+   [DuckDB analytics](DataPipeline/data_engineering_research/duckdb_data_engineering/Data_Engineering_README.md),
+   [Polars EDA + research](DataPipeline/data_engineering_research/exploratory_research/Research_README.md),
+   and the [Master EDA Notes](DataPipeline/data_engineering_research/exploratory_research/polars_eda_research/Master_EDA_Notes.pdf).
+   The authoritative view of what is in the cloud is [CLOUD_SOURCE_OF_TRUTH](DataPipeline/CLOUD_SOURCE_OF_TRUTH.md).
 
-4. `src_aws_etl/` has the code, tests, configs, and requirements for the AWS S3 based ETL pipeline (Merge, Archive, Logs). Main code files are in `src_aws_etl/etl/`. 
-    - Here is where bulk historical data and live data merge meaningfully and cleanly. Archival of older data and log management is also handled here.
+**Embedding and index**
 
-5. `src_metrics/` has the code, tests, configs, and requirements for the Data Ingestion pipeline, here we collect and process all the financial metrics(RAW numbers) from the 10-K SEC(Securities and Exchange Commission).
+6. `ModelPipeline/finrag_ml_tg1/platform_core/` builds Stage 2 (sentence + embedding metadata) and Stage 3
+   (the S3 Vectors index): token-aware batching, outlier pre-filtering, embedding lineage per row.
+7. Feature-engineering rationale — why sentence grain, why these metadata fields — is in
+   [ML_FEAT_ENG_DESIGN](ModelPipeline/finrag_ml_tg1/ML_FEAT_ENG_DESIGN.md).
+8. Vectors live in **S3 Vectors**, not a managed vector DB. Parquet as cold storage, S3 Vectors as the hot
+   query layer, ~99% cheaper than a managed baseline: [S3Vect_QueryCost](ModelPipeline/finrag_ml_tg1/S3Vect_QueryCost.md).
 
-6. Following that, `data_auto_stats/` has a really good collection of modules for schema validation, data quality checks, automated testing and stat-generation using `great_expectations` and `anamoly detection and alerts`.
+**Retrieval and synthesis**
 
-7. The `ModelPipeline/` contains the complete ML serving infrastructure with production-grade RAG implementation. The core orchestrator (`finrag_ml_tg1/rag_modules_src/synthesis_pipeline/orchestrator.py`) coordinates entity extraction, KPI lookup, semantic retrieval, and LLM synthesis through a clean `answer_query()` interface.
-    - Key modules include EntityAdapter for company/year extraction, MetricPipeline for structured KPI queries, RAGPipeline for vector-based semantic search, and BedrockClient for Claude-powered synthesis. Full implementation details in [ModelPipeline README](ModelPipeline/README.md).
+9. `rag_modules_src/entity_adapter/` is the semantic front end: company aliases and tickers → CIK, multi-year
+   and range parsing, metric mapping, section and risk-topic detection, all with fuzzy fallbacks.
+10. Two supply lines run per query — structured KPI lookup and 1024-d semantic retrieval — then merge. Triple
+    retrieval (filtered / global / LLM-generated variants) is deduplicated on `sentenceID`.
+11. `rag_modules_src/synthesis_pipeline/orchestrator.py` exposes the whole thing as one `answer_query()` call.
+    YAML prompt templates keep prompts out of code. Every answer carries citations and a cost row.
+12. Full technical chronology, Parts 1–13, including every evaluation and refactor:
+    **[IMPLEMENTATION_GUIDE](ModelPipeline/finrag_ml_tg1/IMPLEMENTATION_GUIDE.md)**.
 
-8. The `ModelPipeline/serving/` layer implements a three-tier service architecture separating concerns between presentation (Streamlit frontend), application (FastAPI backend), and business logic (ML orchestrator). Backend wraps the ML pipeline with RESTful HTTP endpoints while frontend provides a stateless chat interface.
-    - Setup is automated via `setup_finrag` scripts with UV package manager for fast dependency resolution. One-click startup through `start_finrag` scripts launches both services with automatic browser opening. See [Setup Instructions](ModelPipeline/SETUP_README.md) for complete deployment guide.
-    - Update! The above quick redirect and links, easily point to 2 better, stronger approaches.
-    - We have complete automated CI-CD setup workflows that show how the applications required Dockerized images deploy on ECS serverless Fargate. And once that's done, you can quickly access the public serving frontend URL or IP, which makes it much easier to access the frontend application.
-    - Secondly, we also have the proper edge deployment, which says the same dockerization approach can spin up on the local machine and you can access the front-end application through your machine. It will still connect the relative cloud services components, inference services, data services to the cloud, such as S3 and AWS Bedrock.
+**Serving and deployment**
 
-9. System achieves $0.017 - $0.025 per query cost efficiency through Parquet-based vector storage (99% savings vs managed databases), processes complex multi-company queries, and maintains comprehensive logging and audit trails across all tiers for production-grade observability.
-    - Architecture supports independent scaling of frontend and backend services, demonstrates MLOps best practices including dependency injection, contract-driven development with Pydantic validation, and separation of ML inference from HTTP serving logic.
+13. `ModelPipeline/serving/` separates presentation, application and business logic cleanly — the frontend
+    holds no ML code, the backend holds no display logic: [SERVING_DESIGN](ModelPipeline/serving/SERVING_DESIGN.md).
+14. Local Docker and cloud Fargate share the same two images. Local still talks to real S3 and real Bedrock,
+    so behaviour does not diverge between environments.
+15. `ModelPipeline/deploy_aws/` is the infrastructure control plane written as ordinary Python: a frozen
+    config object, cached boto3 clients, least-privilege IAM built from code, and `up` / `down` / `destroy`
+    verbs. Destroy-and-rebuild is the integration test — [DEPLOY_LEDGER](ModelPipeline/deploy_aws/DEPLOY_LEDGER.md).
+16. Deployment is **manual by design**. `.github/workflows/aws-deploy-manual.yml` triggers only on
+    `workflow_dispatch` — a button in the Actions tab, never an automatic push-to-prod.
+17. Double-click launchers for people who do not want a terminal: `ModelPipeline/finsights.command` (local)
+    and `ModelPipeline/finsights_aws.command` (cloud).
 
+**Cost, latency and evidence**
+
+18. Cost is ~$0.014–$0.06+ per query, scaling with complexity. Idle infrastructure cost at `down` is ~$0.06/month
+    (ECR storage only) because nothing is left running.
+19. Latency is **9.6–14s** for simple and moderate queries, **50s+** for multi-year and cross-company
+    comparisons, and has reached ~4 minutes on very large KPI-heavy questions. The pipeline itself is a near-constant
+    5–8s; the rest is LLM generation time: [PIPELINE_LATENCY_ANALYSIS](ModelPipeline/finrag_ml_tg1/PIPELINE_LATENCY_ANALYSIS.md).
+20. Claims here are backed by measurement, not assertion. Constructor timing, `tracemalloc` traces, container
+    memory under load, cross-provider embedding determinism, token-level cost accounting, and the studies that
+    **failed**, are all recorded in
+    **[EMPIRICAL_METHODS_AND_FINDINGS](ModelPipeline/finrag_ml_tg1/investigation_analysis/EMPIRICAL_METHODS_AND_FINDINGS.md)**
+    and [TECHNIQUES_THAT_UNDERPERFORMED_HERE](ModelPipeline/finrag_ml_tg1/investigation_analysis/TECHNIQUES_THAT_UNDERPERFORMED_HERE.md).
+21. Memory discipline is a design constraint, not an afterthought: lazy Polars scans, deliberate eager reads
+    where they are correct, and a documented history of kernel crashes that shaped it —
+    [TechNotes_MemoryExp_Handling](ModelPipeline/finrag_ml_tg1/TechNotes_MemoryExp_Handling.md).
+22. MLOps requirement mapping and environment rationale:
+    [LLMOPS_TECHNICAL_COMPLIANCE](ModelPipeline/finrag_ml_tg1/LLMOPS_TECHNICAL_COMPLIANCE.md).
 
 ## Project Structure:
+
 ```
 📦 FinSights/
- ┣ 📂 DataPipeline/                          # SEC data ingestion & ETL orchestration
- ┃ ┣ 📂 dag/                                 # Airflow DAGs for workflow automation
- ┃ ┣ 📂 src/                                 # SEC Edgar SDK ingestion + financial metrics extraction
- ┃ ┣ 📂 src_aws_etl/                         # S3 merge strategies (incremental + historical), archival, logging
- ┃ ┣ 📂 data_auto_stats/                     # Great Expectations validation, anomaly detection
- ┃ ┣ 📂 data_engineering_research/           # DuckDB analytics, Polars EDA, SQL exploration
- ┃ ┣ 📜 docker-compose.yaml                  # Container orchestration
- ┃ ┗ 📜 environment.yml                      # Conda environment spec
+ ┣ 📂 DataPipeline/                       # SEC ingestion, ETL, data quality
+ ┃ ┣ 📂 dag/                              # Airflow DAGs
+ ┃ ┣ 📂 src/  📂 src_edgar_incremental/    # EDGAR SDK ingestion, incremental crawl
+ ┃ ┣ 📂 src_metrics/                      # Financial KPI extraction from filings
+ ┃ ┣ 📂 src_aws_etl/                      # S3 merge (historical + incremental), archival, logs
+ ┃ ┣ 📂 data_auto_stats/                  # Great Expectations, anomaly detection, alerts
+ ┃ ┣ 📂 data_engineering_research/        # DuckDB analytics, Polars EDA, SQL exploration
+ ┃ ┗ 📜 CLOUD_SOURCE_OF_TRUTH.md          # What actually exists in S3
  ┃
- ┣ 📂 ModelPipeline/                         # LLM/RAG infrastructure & validation (finrag_ml_tg1/)
- ┃ ┣ 📂 platform_core/             # Embedding generation, S3 Vectors provisioning, Gold test curation
- ┃ ┃ ┣ 📜 01_Stage2_EmbeddingGen.ipynb       # Stage 2 meta table + embedding pipeline
- ┃ ┃ ┣ 📜 02_EmbeddingAnalytics.ipynb        # Vector-metadata parity, staleness audits
- ┃ ┃ ┣ 📜 03_S3Vector_TableProvisioning.ipynb
- ┃ ┃ ┣ 📜 04_S3Vector_BulkIngestion.ipynb
- ┃ ┃ ┣ 📜 05_GoldP1P2_TestSuite.ipynb        # Anchor-based validation tests
- ┃ ┃ ┣ 📜 06_GoldP3_HeuristicEng_Curation.ipynb
- ┃ ┃ ┗ 📜 07-09 (Cost, Architecture, Tests)
+ ┣ 📂 ModelPipeline/                      # ALL active ML and serving work
+ ┃ ┣ 📂 finrag_ml_tg1/                    # The Python ML package
+ ┃ ┃ ┣ 📂 platform_core/                  # Stage 2 embeddings, S3 Vectors provisioning + ingestion
+ ┃ ┃ ┣ 📂 rag_modules_src/                # Query-time RAG components
+ ┃ ┃ ┃ ┣ 📂 entity_adapter/               # NL → companies, years, metrics, sections, risk topics
+ ┃ ┃ ┃ ┣ 📂 metric_pipeline/              # Supply line 1: structured KPI lookup
+ ┃ ┃ ┃ ┣ 📂 rag_pipeline/                 # Supply line 2: retrieval, expansion, context assembly
+ ┃ ┃ ┃ ┣ 📂 synthesis_pipeline/           # orchestrator.py, LLM synthesis, citation validation
+ ┃ ┃ ┃ ┣ 📂 prompts/                      # YAML prompt templates
+ ┃ ┃ ┃ ┗ 📂 utilities/ 📂 constants/       # Logging, errors, shared helpers
+ ┃ ┃ ┣ 📂 loaders/                        # MLConfig service, DataLoader strategies
+ ┃ ┃ ┣ 📂 investigation_analysis/         # Measurement scripts + findings (the evidence base)
+ ┃ ┃ ┣ 📂 validation_notebooks/ 📂 tests/  # Gold test suites, unit + integration tests
+ ┃ ┃ ┣ 📂 .aws_config/                    # ml_config.yaml — 200+ model/retrieval parameters
+ ┃ ┃ ┗ 📂 .aws_secrets/                   # Credentials (gitignored, never read by tooling)
  ┃ ┃
- ┃ ┣ 📂 rag_modules_src/                     # Production RAG components (query-time execution)
- ┃ ┃ ┣ 📂 entity_adapter/                    # Entity extraction, fuzzy matching, metric mapping
- ┃ ┃ ┣ 📂 metric_pipeline/                   # Structured KPI extraction
- ┃ ┃ ┣ 📂 rag_pipeline/                      # Retrieval, context assembly, provenance tracking
- ┃ ┃ ┣ 📂 synthesis_pipeline/                # LLM response generation, citation validation
- ┃ ┃ ┣ 📂 prompts/                           # YAML prompt templates
- ┃ ┃ ┗ 📂 utilities/                         # Logging, error handling, shared helpers
- ┃ ┃
- ┃ ┣ 📂 loaders/                             # MLConfig service, data loading utilities
- ┃ ┣ 📂 data_cache/                          # Local Parquet mirrors, analysis exports
- ┃ ┣ 📂 .aws_config/                         # AWS service configurations
- ┃ ┣ 📂 .aws_secrets/                        # Credentials (gitignored)
- ┃ ┗ 📜 ml_config.yaml                       # 200+ model/retrieval parameters
+ ┃ ┣ 📂 serving/                          # backend/ FastAPI :8000  ·  frontend/ Streamlit :8501
+ ┃ ┣ 📂 deploy_aws/                       # AWS control plane as Python
+ ┃ ┃ ┣ 📜 config.py  📜 aws_session.py     # Frozen config object, cached boto3 clients
+ ┃ ┃ ┣ 📜 policies.py  📜 taskdef.py       # Least-privilege IAM, ECS task definition builder
+ ┃ ┃ ┣ 📜 provisioner.py  📜 images.py     # Idempotent provisioning, ECR build + push
+ ┃ ┃ ┗ 📜 service.py  📜 cli.py            # Service lifecycle, up/down/status/smoke/destroy
+ ┃ ┣ 📂 finrag_docker_loc_tg1/            # Local Docker build context
+ ┃ ┣ 📂 finrag_docker_loc_tg1_aws/        # Cloud build context, runbook, diagrams/, study_notes/
+ ┃ ┣ 📜 finsights.command                 # Double-click launcher — local
+ ┃ ┗ 📜 finsights_aws.command             # Double-click launcher — AWS
  ┃
- ┣ 📂 design_docs/                           # Architecture diagrams, flow charts
- ┃
- ┣ 📜 README.md                              # Project overview & navigation
- ┣ 📜 ARCHITECTURE.md                        # Directory structure + pipeline flows
- ┣ 📜 IMPLEMENTATION_GUIDE.md                # Parts 1-10 technical deep-dive
- ┗ 📜 LLMOPS_TECHNICAL_COMPLIANCE.md         # MLOps requirement mapping
-
+ ┣ 📂 Edgar-Sentences-SDK/                # HuggingFace dataset SDK (complete, read-only)
+ ┣ 📂 design_docs/                        # Scoping PDF, HLD workbook, flow assets
+ ┣ 📂 graphify-out/                       # Queryable knowledge graph of the repo
+ ┣ 📂 .github/workflows/                  # CI + the manual aws-deploy-manual.yml button
+ ┗ 📜 README.md                           # You are here
 ```
-
-## DVC : 
-Data version Control has been implemented in this Repo, and the data is stored on an s3 Bucket managed by our team. The metadata is stored in the .dvc folder.
-The DVC is to control the versions of the data used in the ingestion pipeline ,so if any data is lost / manipulated with , we can retreive the version needed.
-
-## MLFlow (for experiment tracking) : 
-The FinRAG synthesis pipeline integrates MLflow for comprehensive experiment tracking, enabling systematic monitoring of query performance, cost analysis, and model comparison across different configurations.
-
-#### Integration files
-```
-📦 FinSights/
- ┣ 📂 DataPipeline/                          
- ┣ 📂 ModelPipeline/                         
- ┃ ┣ 📂 rag_modules_src/
- ┃ ┃ ┣ 📂 synthesis_pipeline/                
- ┃ ┃ ┃ ┣ 📜 main.py              # CLI entry point
- ┃ ┃ ┃ ┣ 📜 mlflow_tracker.py    # Experiment management, run lifecycle, logging APIs
- ┃ ┃ ┃ ┣ 📜 mlflow_utils.py      # Metric extraction + integration helpers
- ┃ ┃ ┃ ┣ 📜 supply_lines.py      # Added 2 lines for metric_result
-```
-Details in [ModelPipeline MLFLOW_README](ModelPipeline/MLFLOW_README.md).
 
 ### Source Dataset Links:
+
 1. Primary: https://huggingface.co/datasets/khaihernlow/financial-reports-sec
-2. Live Ingestion metrics: https://www.sec.gov/search-filings/edgar-application-programming-interfaces
-3. SEC EDGAR API (company_tickers.json), State Street SPDR ETF holdings for S&P 500 constituents
-2. Potentially used: EdgarTools https://github.com/dgunning/edgartools
-4. Primary datasets' source citation: https://zenodo.org/records/5589195
-
-
+2. Primary dataset citation: https://zenodo.org/records/5589195
+3. Live ingestion metrics: https://www.sec.gov/search-filings/edgar-application-programming-interfaces
+4. SEC EDGAR API (`company_tickers.json`); State Street SPDR ETF holdings for S&P 500 constituents
+5. Potentially used: EdgarTools — https://github.com/dgunning/edgartools
+</content>

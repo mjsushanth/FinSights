@@ -40,77 +40,127 @@ Usage:
     display_sidebar_stats()
 """
 
+import html
+import re
 import streamlit as st
 from typing import Dict, Any, Optional
+
+# Strips the trailing release date and version from a Bedrock model name, e.g.
+# "claude-haiku-4-5-20251001-v1" -> "claude-haiku-4-5". The full id stays in the
+# tooltip so nothing is actually hidden.
+_MODEL_TAIL = re.compile(r"-\d{6,8}-v\d+$")
+
+
+def shorten_model_id(model_id: str) -> str:
+    """
+    Reduce a Bedrock model id to a readable name.
+
+    Bedrock ids look like "us.anthropic.claude-haiku-4-5-20251001-v1:0". The ":0"
+    is a version and "us."/"anthropic." are routing/vendor prefixes. Splitting on
+    ":" alone returns the version, which previously rendered as "Model: 0".
+    """
+    if not model_id:
+        return "Unknown"
+    name = model_id.split(":")[0].split(".")[-1] or model_id
+    return _MODEL_TAIL.sub("", name) or name
+
+
+def _stat_tile(label: str, value: str, tooltip: str = "", accent: str = "") -> str:
+    """One compact stat tile. Values are escaped - some originate from the model."""
+    title = f' title="{html.escape(tooltip)}"' if tooltip else ""
+    cls = f"fs-stat fs-stat-{accent}" if accent else "fs-stat"
+    return (
+        f'<div class="{cls}"{title}>'
+        f'<div class="fs-stat-l">{html.escape(label)}</div>'
+        f'<div class="fs-stat-v">{html.escape(value)}</div>'
+        "</div>"
+    )
+
+
+def _pill(label: str, on: bool) -> str:
+    """A boolean capability pill, used for the KPI / RAG supply-line flags."""
+    state = "on" if on else "off"
+    mark = "active" if on else "not used"
+    return (
+        f'<span class="fs-pill fs-pill-{state}" title="{html.escape(label)}: {mark}">'
+        f'<span class="fs-pill-dot"></span>{html.escape(label)}'
+        "</span>"
+    )
 
 
 def display_query_metadata(metadata: Dict[str, Any]) -> None:
     """
-    Display query metadata in an expandable section.
-    
-    Shows LLM info (tokens, cost, model) and context info (KPI/RAG flags).
-    
+    Display query metadata: an always-visible stat strip plus a details expander.
+
+    The strip carries the four numbers worth glancing at (model, tokens, cost,
+    latency). The expander holds the fuller breakdown - token split, supply-line
+    flags, context size - so detail is available without crowding the answer.
+
     Args:
         metadata: Metadata dict from backend response
     """
-    with st.expander("[+] Query Details", expanded=False):
-        # Create two columns for better layout
-        col1, col2 = st.columns(2)
-        
-        # Left column: LLM metadata
-        with col1:
-            st.markdown("**[LLM] Information**")
-            
-            llm = metadata.get("llm", {})
-            
-            # Model
-            model_id = llm.get("model_id", "Unknown")
-            # Shorten model ID for display
-            model_display = model_id.split(":")[-1] if ":" in model_id else model_id
-            st.text(f"Model: {model_display}")
-            
-            # Tokens
-            input_tokens = llm.get("input_tokens", 0)
-            output_tokens = llm.get("output_tokens", 0)
-            total_tokens = llm.get("total_tokens", 0)
-            
-            st.text(f"Input Tokens: {input_tokens:,}")
-            st.text(f"Output Tokens: {output_tokens:,}")
-            st.text(f"Total Tokens: {total_tokens:,}")
-            
-            # Cost
-            cost = llm.get("cost", 0.0)
-            st.text(f"Cost: ${cost:.4f}")
-        
-        # Right column: Context metadata
-        with col2:
-            st.markdown("**[Context] Information**")
-            
-            ctx = metadata.get("context", {})
-            
-            # KPI/RAG flags
-            kpi_included = ctx.get("kpi_included", False)
-            rag_included = ctx.get("rag_included", False)
-            
-            kpi_status = "[YES]" if kpi_included else "[NO]"
-            rag_status = "[YES]" if rag_included else "[NO]"
-            
-            st.text(f"KPI Lookup: {kpi_status}")
-            st.text(f"RAG Search: {rag_status}")
-            
-            # Context length
-            context_length = ctx.get("context_length", 0)
-            sentence_count = ctx.get("sentence_count", 0)
-            
-            st.text(f"Context Length: {context_length:,} chars")
-            if sentence_count > 0:
-                st.text(f"Sentences: {sentence_count}")
-        
-        # Processing time (full width at bottom)
-        processing_time_ms = metadata.get("processing_time_ms")
+    llm = metadata.get("llm", {}) or {}
+    ctx = metadata.get("context", {}) or {}
+
+    model_id = llm.get("model_id", "Unknown")
+    input_tokens = llm.get("input_tokens", 0) or 0
+    output_tokens = llm.get("output_tokens", 0) or 0
+    total_tokens = llm.get("total_tokens", 0) or 0
+    cost = llm.get("cost", 0.0) or 0.0
+    processing_time_ms = metadata.get("processing_time_ms")
+
+    # ---- Always-visible stat strip -------------------------------------------
+    tiles = [
+        _stat_tile("Model", shorten_model_id(model_id), tooltip=str(model_id), accent="model"),
+        _stat_tile("Tokens", f"{total_tokens:,}",
+                   tooltip=f"{input_tokens:,} in  /  {output_tokens:,} out"),
+        _stat_tile("Cost", f"${cost:.4f}", tooltip="Bedrock input + output token cost",
+                   accent="cost"),
+    ]
+    if processing_time_ms:
+        tiles.append(_stat_tile("Latency", f"{processing_time_ms / 1000:.1f}s",
+                                tooltip=f"{processing_time_ms:,.0f} ms end to end"))
+
+    st.markdown(f'<div class="fs-stats">{"".join(tiles)}</div>', unsafe_allow_html=True)
+
+    # ---- Details expander ----------------------------------------------------
+    with st.expander("Query details", expanded=False):
+        kpi_included = bool(ctx.get("kpi_included", False))
+        rag_included = bool(ctx.get("rag_included", False))
+        context_length = ctx.get("context_length", 0) or 0
+        sentence_count = ctx.get("sentence_count", 0) or 0
+
+        st.markdown(
+            '<div class="fs-det-h">Supply lines</div>'
+            f'<div class="fs-pills">{_pill("KPI lookup", kpi_included)}'
+            f'{_pill("RAG search", rag_included)}</div>',
+            unsafe_allow_html=True,
+        )
+
+        rows = [
+            ("Model id", str(model_id)),
+            ("Input tokens", f"{input_tokens:,}"),
+            ("Output tokens", f"{output_tokens:,}"),
+            ("Total tokens", f"{total_tokens:,}"),
+            ("Cost", f"${cost:.4f}"),
+            ("Context length", f"{context_length:,} chars"),
+        ]
+        if sentence_count > 0:
+            rows.append(("Sentences retrieved", f"{sentence_count:,}"))
         if processing_time_ms:
-            st.markdown("---")
-            st.text(f"[TIME] Processing: {processing_time_ms:,.0f}ms ({processing_time_ms/1000:.1f}s)")
+            rows.append(("Processing time",
+                         f"{processing_time_ms:,.0f} ms  ({processing_time_ms / 1000:.1f}s)"))
+
+        body = "".join(
+            f'<div class="fs-det-row"><span class="fs-det-k">{html.escape(k)}</span>'
+            f'<span class="fs-det-v">{html.escape(v)}</span></div>'
+            for k, v in rows
+        )
+        st.markdown(
+            '<div class="fs-det-h">Run detail</div>'
+            f'<div class="fs-det">{body}</div>',
+            unsafe_allow_html=True,
+        )
 
 
 def display_sidebar_stats() -> None:

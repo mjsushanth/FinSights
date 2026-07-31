@@ -67,6 +67,7 @@ data/*.parquet
 data/*.csv
 data/*.xlsx
 artifacts/embeddings/*.parquet
+artifacts/embeddings/*.json
 artifacts/faiss_index/*.index
 artifacts/faiss_index/*.pkl
 

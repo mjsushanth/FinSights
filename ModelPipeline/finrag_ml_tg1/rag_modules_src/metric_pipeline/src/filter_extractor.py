@@ -33,7 +33,7 @@ logger = logging.getLogger(__name__)
 # MODULE-LEVEL PATH CONSTANT
 # ============================================================================
 # This path is relative to ModelPipeline root
-DEFAULT_COMPANY_DIM_PATH = Path("finrag_ml_tg1/data_cache/dimensions/finrag_dim_companies_21.parquet")
+DEFAULT_COMPANY_DIM_PATH = Path("finrag_ml_tg1/data_cache/dimensions/finrag_dim_companies_25.parquet")
 
 
 class FilterExtractor:

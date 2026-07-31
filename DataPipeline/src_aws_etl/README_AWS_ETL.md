@@ -19,11 +19,13 @@ This directory contains the AWS ETL pipeline code - It interacts with the files 
 ```
 
 ## Requirements:
-1. The subfolder src_aws_etl/ contains a requirements.txt file. Please install the dependencies. 
-2. Instructions with step wise commands are present as comments in the requirements.txt file itself.
-3. After recent considerations, we now provide `local_env_config/finrag_aws_etl_env.yml` - a conda environment file. NBoth pip and mamba/conda approach are compatible in this module.
-4. The credentials for AWS S3 access should be configured in `.aws_secrets/aws_credentials.env`, the example file given is `.aws_secrets/aws_credentials.env.example`.
-5. To run, just execute `python etl/merge_pipeline.py`. However, this integrates into an earlier DAG on the data ingestion pipeline so that automatically calls this execution,
+1. Single environment for all of DataPipeline (src_aws_etl, src_edgar_incremental,
+   src_metrics): `conda env create -f ../environment.yml && conda activate finsight-venv`.
+   (2026-07-27: the old per-module `requirements.txt` and `local_env_config/`
+   conda file were retired to `../legacy/` - use the shared environment.yml instead.)
+2. The credentials for AWS S3 access should be configured in `.aws_secrets/aws_credentials.env`, the example file given is `.aws_secrets/aws_credentials.env.example`.
+3. To run, just execute `python etl/merge_pipeline.py` (or, going forward, hand off from
+   `src_edgar_incremental/run_pipeline.py`'s Stage 6 push - no DAG/scheduler needed).
 
 ## Merge Strategy:
 1. If exists: merge final + incremental

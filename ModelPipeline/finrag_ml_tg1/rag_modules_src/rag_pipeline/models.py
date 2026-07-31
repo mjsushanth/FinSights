@@ -266,7 +266,7 @@ class RetrievalConfig:
     variant_count: int = 3
     window_size: int = 3  # ±3 sentences
     min_similarity: float = 0.3  # Filter very weak hits
-    recent_year_threshold: int = 2015  # For global time-relaxed calls
+    recent_year_threshold: int = 2006  # For global time-relaxed calls (corpus min year)
     
     def __repr__(self) -> str:
         return (

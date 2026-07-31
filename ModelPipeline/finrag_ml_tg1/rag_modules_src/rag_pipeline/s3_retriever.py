@@ -620,8 +620,11 @@ class S3VectorsRetriever:
                 sampled_global.extend(backfill)
                 logger.debug(f"    Backfilled {len(backfill)} from global")
         
-        # Combine final result
-        sampled_hits = sampled_filtered + sampled_global
+        # Combine final result -- re-sort globally by distance. The two lists above
+        # are each individually sorted, but concatenation alone does not produce a
+        # globally-sorted list; any caller that treats list position as rank
+        # (e.g. retrieval telemetry) would get silently wrong ranks otherwise.
+        sampled_hits = sorted(sampled_filtered + sampled_global, key=lambda h: h.distance)
         
         logger.info(
             f"    Proportional sampling: {len(hits)} → {len(sampled_hits)} hits\n"

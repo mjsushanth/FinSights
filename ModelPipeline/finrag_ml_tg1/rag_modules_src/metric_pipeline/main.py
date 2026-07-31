@@ -45,7 +45,7 @@ def main():
     
     # Set paths relative to ModelPipeline root
     metrics_data_path = model_root / "finrag_ml_tg1/rag_modules_src/metric_pipeline/data/KPI_FACT_DATA_EDGAR.parquet"
-    company_dim_path = model_root / "finrag_ml_tg1/data_cache/dimensions/finrag_dim_companies_21.parquet"
+    company_dim_path = model_root / "finrag_ml_tg1/data_cache/dimensions/finrag_dim_companies_25.parquet"
     
     # Check if files exist
     if not metrics_data_path.exists():

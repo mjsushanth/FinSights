@@ -70,15 +70,23 @@ class PreflightChecker:
         print("=" * 70)
         
         all_good = True
-        
-        # Check 1: Historical file
+
+        # Check 1: Historical file - only required for a bootstrap run (no
+        # final file yet). Once a final file exists, every subsequent run is
+        # an incremental update against that final, and historical is never
+        # read (see merge_pipeline.py's base_path selection) - so requiring
+        # it unconditionally blocked legitimate incremental-only runs.
+        final_exists, _ = self.file_exists(self.config.final_path)
         print("\n✓ Check 1: Historical data")
-        exists, size = self.file_exists(self.config.hist_path)
-        if exists:
-            print(f"  Found: {self.config.hist_path} ({size:.2f} MB)")
+        if final_exists:
+            print("  Skipped - final fact table already exists, this is an incremental run")
         else:
-            print(f"  MISSING: {self.config.hist_path}")
-            all_good = False
+            exists, size = self.file_exists(self.config.hist_path)
+            if exists:
+                print(f"  Found: {self.config.hist_path} ({size:.2f} MB)")
+            else:
+                print(f"  MISSING: {self.config.hist_path}")
+                all_good = False
         
         # Check 2: Incremental file
         print("\n✓ Check 2: Incremental data")

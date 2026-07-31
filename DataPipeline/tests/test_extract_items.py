@@ -6,7 +6,7 @@ import pandas as pd
 import pytest
 from bs4 import BeautifulSoup
 
-import src.extract_and_convert as ec
+import src_legacy_bs4_scraper.extract_and_convert as ec
 
 
 def test_convert_json_to_parquet(tmp_path, monkeypatch):

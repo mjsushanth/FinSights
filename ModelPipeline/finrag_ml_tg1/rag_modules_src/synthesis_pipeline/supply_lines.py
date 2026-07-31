@@ -22,7 +22,8 @@ ContextAssembler.__init__() will accept data_loader parameter
 from pathlib import Path
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Any, Dict, List, Tuple
+from time import perf_counter
+from typing import Any, Dict, List, Optional, Tuple
 
 from finrag_ml_tg1.rag_modules_src.entity_adapter.entity_adapter import EntityAdapter
 from finrag_ml_tg1.rag_modules_src.metric_pipeline.src.pipeline import MetricPipeline
@@ -30,6 +31,7 @@ from finrag_ml_tg1.rag_modules_src.utilities.supply_line_formatters import (
     format_analytical_compact,
 )
 from finrag_ml_tg1.rag_modules_src.utilities.query_embedder_v2 import ( QueryEmbedderV2, EmbeddingRuntimeConfig )
+from finrag_ml_tg1.rag_modules_src.utilities.retrieval_telemetry import build_retrieval_telemetry
 
 from finrag_ml_tg1.rag_modules_src.rag_pipeline.metadata_filters import MetadataFilterBuilder
 from finrag_ml_tg1.rag_modules_src.rag_pipeline.variant_pipeline import VariantPipeline
@@ -42,6 +44,7 @@ from finrag_ml_tg1.rag_modules_src.rag_pipeline.sentence_expander import (
 from finrag_ml_tg1.rag_modules_src.rag_pipeline.context_assembler import (
     ContextAssembler,
 )
+from finrag_ml_tg1.rag_modules_src.rag_pipeline.reranker import CohereReranker
 
 from finrag_ml_tg1.loaders.ml_config_loader import MLConfig
 
@@ -59,6 +62,7 @@ class RAGComponents:
     retriever: S3VectorsRetriever
     expander: SentenceExpander
     assembler: ContextAssembler
+    reranker: Optional[CohereReranker] = None
 
 
 def init_rag_components() -> RAGComponents:
@@ -116,7 +120,19 @@ def init_rag_components() -> RAGComponents:
     
     # 8) Context assembler - NOW receives DataLoader
     assembler = ContextAssembler(data_loader=data_loader, config=config)
-    
+
+    # 9) Reranker (optional, OFF by default -- retrieval_cfg['enable_reranking']).
+    # No client is constructed and no AWS credential path exercised at all when
+    # disabled, so a misconfigured rerank block cannot break the flag-off path.
+    reranker = None
+    if retrieval_cfg.get("enable_reranking"):
+        reranker = CohereReranker(
+            retrieval_config=retrieval_cfg,
+            region=config.region,
+            aws_access_key_id=config.aws_access_key,
+            aws_secret_access_key=config.aws_secret_key,
+        )
+
     return RAGComponents(
         adapter=adapter,
         metric_pipeline=metric_pipeline,
@@ -126,6 +142,7 @@ def init_rag_components() -> RAGComponents:
         retriever=retriever,
         expander=expander,
         assembler=assembler,
+        reranker=reranker,
     )
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -171,7 +188,7 @@ def run_supply_line_1_kpi(
 def run_supply_line_2_rag(
     query: str,
     rag: RAGComponents,
-) -> Tuple[str, Any, Any, List[Any], str]:
+) -> Tuple[str, Any, Any, List[Any], str, Dict[str, Any]]:
     """
     Supply Line 2 wiring.
 
@@ -202,30 +219,58 @@ def run_supply_line_2_rag(
         bundle:         RetrievalBundle from S3VectorsRetriever
         unique_sents:   list of expanded unique sentence records
         context_str:    raw context text (without the header wrapper)
+        telemetry:      retrieval provenance dict (see utilities/retrieval_telemetry.py)
     """
+    timings_ms: Dict[str, float] = {}
+
     # Step 1: Entity extraction
+    t0 = perf_counter()
     entities = rag.adapter.extract(query)
+    timings_ms["entities"] = (perf_counter() - t0) * 1000
 
     # Step 2: Query embedding
+    t0 = perf_counter()
     base_embedding = rag.embedder.embed_query(query, entities)
+    timings_ms["embed"] = (perf_counter() - t0) * 1000
 
     # Step 3: Metadata filters
     filtered_filters = rag.filter_builder.build_filters(entities)
     global_filters = rag.filter_builder.build_global_filters(entities)
 
     # Steps 4–5: S3 retrieval (with variants internal to retriever)
+    t0 = perf_counter()
     bundle = rag.retriever.retrieve(
         base_embedding=base_embedding,
         base_query=query,
         filtered_filters=filtered_filters,
         global_filters=global_filters,
     )
+    timings_ms["retrieve"] = (perf_counter() - t0) * 1000
 
     # Steps 6–7: Sentence expansion + dedup
+    t0 = perf_counter()
     unique_sents = rag.expander.expand_and_deduplicate(bundle.union_hits)
+    timings_ms["expand"] = (perf_counter() - t0) * 1000
+
+    # Step 8 (optional): Cross-encoder reranking. Pruning only -- ContextAssembler
+    # re-sorts into document order regardless, so a reranker that only reordered
+    # would have zero effect on the final context. See rag_pipeline/reranker.py.
+    reranked_sents = None
+    final_sents = unique_sents
+    if rag.reranker is not None:
+        t0 = perf_counter()
+        reranked_sents = rag.reranker.rerank(query, unique_sents)
+        timings_ms["rerank"] = (perf_counter() - t0) * 1000
+        final_sents = reranked_sents
 
     # Step 10: Context assembly
-    context_str = rag.assembler.assemble(unique_sents)
+    t0 = perf_counter()
+    context_str = rag.assembler.assemble(final_sents)
+    timings_ms["assemble"] = (perf_counter() - t0) * 1000
+
+    telemetry = build_retrieval_telemetry(
+        query, bundle, unique_sents, timings_ms, reranked_sents=reranked_sents,
+    )
 
     # Very lean header: just tell the LLM what this block is
     header_lines = [
@@ -237,7 +282,7 @@ def run_supply_line_2_rag(
 
     context_block = "\n".join(header_lines) + context_str + "\n"
 
-    return context_block, entities, bundle, unique_sents, context_str
+    return context_block, entities, bundle, unique_sents, context_str, telemetry
 
 
 
@@ -276,6 +321,7 @@ def build_combined_context(
         "kpi_entities": None,
         "rag_entities": None,
         "retrieval_bundle": None,
+        "retrieval_stats": None,
         "metric_result": None, # Updated by SR
     }
 
@@ -292,10 +338,11 @@ def build_combined_context(
 
     # RAG side
     if include_rag:
-        rag_block, rag_entities, rag_bundle, _, _ = run_supply_line_2_rag(query, rag)
+        rag_block, rag_entities, rag_bundle, _, _, retrieval_stats = run_supply_line_2_rag(query, rag)
         meta["rag_block"] = rag_block
         meta["rag_entities"] = rag_entities
         meta["retrieval_bundle"] = rag_bundle
+        meta["retrieval_stats"] = retrieval_stats
         if rag_block:
             if pieces:
                 pieces.append("")  # blank line between KPI and RAG
@@ -332,7 +379,7 @@ def init_rag_components(model_root: Path) -> RAGComponents:
     bedrock_client = config.get_bedrock_client()
 
     # Dimension paths
-    dim_companies = model_root / "finrag_ml_tg1/data_cache/dimensions/finrag_dim_companies_21.parquet"
+    dim_companies = model_root / "finrag_ml_tg1/data_cache/dimensions/finrag_dim_companies_25.parquet"
     dim_sections = model_root / "finrag_ml_tg1/data_cache/dimensions/finrag_dim_sec_sections.parquet"
 
     # Metric JSON path -- JSON outdated, use parquet.

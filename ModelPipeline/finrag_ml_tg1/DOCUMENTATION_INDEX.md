@@ -5,7 +5,8 @@
 | Category | Resource | Path | Description |
 |----------|----------|------|-------------|
 | **Getting Started** | | | |
-| | AWS Cloud Deployment Guide | [ECS_DEPLOYMENT_GUIDE.md](../finrag_docker_loc_tg1_aws/ECS_DEPLOYMENT_GUIDE.md) | Step-by-step ECS deployment with GitHub Actions |
+| | **AWS ECS Fargate Deployment (LIVE)** | [ECS_FARGATE_RUNBOOK.md](../finrag_docker_loc_tg1_aws/ECS_FARGATE_RUNBOOK.md) | **The working deployment.** Architecture and rationale, measured task sizing, cost model, least-privilege IAM, and the up/down/destroy runbook. Verified end to end 2026-07-31 |
+| | AWS Cloud Deployment (HISTORICAL) | [HISTORICAL_2025-12_ECS_DEPLOYMENT_GUIDE.md](../finrag_docker_loc_tg1_aws/HISTORICAL_2025-12_ECS_DEPLOYMENT_GUIDE.md) | Record of the Dec 2025 ECS deployment on the now-decommissioned account. NOT a runbook - superseded by the runbook above |
 | | Quick Start with Docker | [LOC_DOCKER_README.md](../finrag_docker_loc_tg1/LOC_DOCKER_README.md) | Recommended local setup using Docker Compose |
 | | Quick Start with Scripts | [SETUP_README.md](../SETUP_README.md) | Command/PowerShell script-based installation |
 | **Core Documentation** | | | |

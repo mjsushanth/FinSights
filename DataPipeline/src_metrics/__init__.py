@@ -1,1 +1,1 @@
-"""Scripts module for SEC data processing pipeline."""
+"""KPI/numeric fact extraction for FinSights' hybrid RAG - see PLAN.md."""

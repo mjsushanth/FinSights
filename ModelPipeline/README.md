@@ -12,14 +12,14 @@ Our [Documentation index](finrag_ml_tg1/DOCUMENTATION_INDEX.md) provides a compl
 ---
 
 ## Philosophy & Design Principles
-- Choose best cloud production over Local-Prototypes: **AWS infrastructure (S3 storage, S3 Vectors, Bedrock, Lambda)**. 
+- Choose best cloud production over Local-Prototypes: **AWS infrastructure (S3 storage, S3 Vectors, Bedrock, ECS Fargate)**. 
 - Cost-conscious architecture: Cost-tracking analytical queries at multiple modules, and Cost-logging at every LLM call!
 - Proper LLM validation: Sets of Automated Gold-Validation with Self@, Hit@, MMR@, Median distance and other concepts. Complete heuristic-NLP based approach for curation of a **Business-realistic Gold evaluation suite** (P3 Gold Standards)
 - Validation at every layer: 5-stage S3 Vectors tests, staleness audits, parity checks, Chained-Integration test notebooks, Isolation tests.
 - Real world data over toy datasets. And, tons of algorithmic strong features!
 
 ## (Some) Technical Highlights
-- **Embedding Infrastructure**: 400K+ Cohere v4 1024-d vectors in S3 Vectors, $0.017 - $0.04 per query.
+- **Embedding Infrastructure**: 400K+ Cohere v4 1024-d vectors in S3 Vectors, $0.017-$0.06+ per query depending on complexity. Simple, single-entity queries with little retrieved context sit near the $0.017 floor; queries that fan out across ten-plus companies, six to eight sections, multiple domains, and many KPI-triggering keywords pull in far more retrieval calls and assembled context, pushing cost to $0.04-$0.06 and sometimes higher. Both ends have been observed in practice - cost scales with retrieved-context volume and entity fan-out, not a fixed per-query rate.
 - **Hybrid Retrieval**: Semantic search (query variants + metadata filters) + structured KPI extraction
 - **Context Engineering**: Edge-safe window expansion (±3 sentences), provenance tracking, chronological assembly
 - **Evaluation Framework**: 31-question Gold P3 suite spanning factoid → multi-hop reasoning, Self, Hit@k, MRR, distance metrics; then, LLM-Eval (BERTScore, BLEURT, ROUGE-L, Cosine). 
@@ -35,7 +35,8 @@ Our [Documentation index](finrag_ml_tg1/DOCUMENTATION_INDEX.md) provides a compl
   - Do setup with just click-install, and Run batch/sh files - launches streamlit.
 
 ### CI/CD Process (or) Cloud Deployment Starts here:
-1. **[AWS Cloud Deployment Guide](./finrag_docker_loc_tg1_aws/ECS_DEPLOYMENT_GUIDE.md)** → Step-by-step ECS deployment instructions. It explains how GitHub Actions workflow (`deploy-ecs.yml`) automatically deploys your FinSights application to AWS ECS.
+1. **[ECS Fargate Design and Runbook](./finrag_docker_loc_tg1_aws/ECS_FARGATE_RUNBOOK.md)** → **START HERE.** The live, working AWS deployment: architecture and why it is shaped that way, measured task sizing, the full cost model, the IAM least-privilege policy, and the `up` / `down` / `destroy` verbs. Deployed and verified end to end on account 908877262866 on 2026-07-31. One command: `python -m deploy_aws.cli up` from `ModelPipeline/`, or double-click `finsights_aws.command`.
+2. **[Historical ECS Deployment Record](./finrag_docker_loc_tg1_aws/HISTORICAL_2025-12_ECS_DEPLOYMENT_GUIDE.md)** → HISTORICAL RECORD, not a runbook. Documents the `deploy-ecs.yml` GitHub Actions workflow and the ECS Fargate deployment that ran publicly in Dec 2025 on AWS account 729472661729, now decommissioned. The resource identifiers in it are dead and the workflow cannot be replayed as written. Kept as the record of what was built and what broke. Replacement documentation follows once the new AWS pipeline works end to end.
 
 ### **Documentation**
 - **[ARCHITECTURE.md](finrag_ml_tg1/ARCHITECTURE.md)** → Directory structure + pipeline flow diagrams
