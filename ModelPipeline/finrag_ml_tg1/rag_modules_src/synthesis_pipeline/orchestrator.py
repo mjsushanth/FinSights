@@ -27,16 +27,19 @@ Does NOT:
 from pathlib import Path
 from typing import Dict, Optional
 import logging
+import threading
 import time
 
 from finrag_ml_tg1.loaders.ml_config_loader import MLConfig
 from finrag_ml_tg1.rag_modules_src.synthesis_pipeline.supply_lines import (
     init_rag_components,
-    build_combined_context
+    build_combined_context,
+    RAGComponents,
 )
 from finrag_ml_tg1.rag_modules_src.prompts.prompt_loader import PromptLoader
 from finrag_ml_tg1.rag_modules_src.synthesis_pipeline.bedrock_client import (
-    create_bedrock_client_from_config
+    create_bedrock_client_from_config,
+    BedrockClient,
 )
 from finrag_ml_tg1.rag_modules_src.synthesis_pipeline.models import (
     create_success_response,
@@ -45,6 +48,67 @@ from finrag_ml_tg1.rag_modules_src.synthesis_pipeline.models import (
 from finrag_ml_tg1.rag_modules_src.synthesis_pipeline.query_logger import QueryLogger
 
 logger = logging.getLogger(__name__)
+
+
+# ============================================================================
+# PROCESS-LEVEL COMPONENT CACHE (Tier 1 latency, task #19, 2026-08-01)
+#
+# init_rag_components() built a fresh object graph on every call to
+# answer_query() - ~825ms of constructors plus, critically, a fresh
+# DataLoader whose own memoisation (see data_loader_strategy.py) never
+# survived past that one request. Every component in RAGComponents was
+# verified construct-then-read-only (no `self.x = ...` outside __init__ in
+# any of the 7 members), and boto3 clients are documented thread-safe for
+# concurrent calls on a shared client - so the whole graph is safe to build
+# once per process and reuse. See TIER1_LATENCY_DESIGN.md section 1.2-1.3.
+# ============================================================================
+
+_INIT_LOCK = threading.Lock()
+_LOG_LOCK = threading.Lock()
+
+_RAG_COMPONENTS: Optional[RAGComponents] = None
+_PROMPT_LOADER: Optional[PromptLoader] = None
+_QUERY_LOGGER: Optional[QueryLogger] = None
+_LLM_CLIENTS: Dict[Optional[str], BedrockClient] = {}
+
+
+def _get_rag_components() -> RAGComponents:
+    """Build the RAG object graph once per process (double-checked locking)."""
+    global _RAG_COMPONENTS
+    if _RAG_COMPONENTS is None:
+        with _INIT_LOCK:
+            if _RAG_COMPONENTS is None:
+                _RAG_COMPONENTS = init_rag_components()
+    return _RAG_COMPONENTS
+
+
+def _get_prompt_loader() -> PromptLoader:
+    global _PROMPT_LOADER
+    if _PROMPT_LOADER is None:
+        with _INIT_LOCK:
+            if _PROMPT_LOADER is None:
+                _PROMPT_LOADER = PromptLoader()
+    return _PROMPT_LOADER
+
+
+def _get_query_logger() -> QueryLogger:
+    global _QUERY_LOGGER
+    if _QUERY_LOGGER is None:
+        with _INIT_LOCK:
+            if _QUERY_LOGGER is None:
+                _QUERY_LOGGER = QueryLogger()
+    return _QUERY_LOGGER
+
+
+def _get_llm_client(config: MLConfig, model_key: Optional[str]) -> BedrockClient:
+    """One cached client per distinct model_key (model_key varies per request)."""
+    if model_key not in _LLM_CLIENTS:
+        with _INIT_LOCK:
+            if model_key not in _LLM_CLIENTS:
+                _LLM_CLIENTS[model_key] = create_bedrock_client_from_config(
+                    config, model_key
+                )
+    return _LLM_CLIENTS[model_key]
 
 
 def answer_query(
@@ -140,26 +204,29 @@ def answer_query(
     # ========================================================================
     
     try:
-        # Config service (external service pattern)
+        # Config service (external service pattern) - already a singleton
         config = MLConfig()
         logger.debug("MLConfig loaded")
-        
-        # RAG components (entity adapter, embedder, retriever, assembler)
-        rag_components = init_rag_components()
+
+        # RAG components (entity adapter, embedder, retriever, assembler).
+        # Cached at process level - see _get_rag_components() above.
+        rag_components = _get_rag_components()
         logger.debug("RAG components initialized")
-        
-        # Prompt loader (YAML-based system + query templates)
-        prompt_loader = PromptLoader()
+
+        # Prompt loader (YAML-based system + query templates). Cached.
+        prompt_loader = _get_prompt_loader()
         logger.debug("PromptLoader initialized")
-        
-        # Bedrock client (AWS API wrapper with cost tracking)
-        llm_client = create_bedrock_client_from_config(config, model_key)
+
+        # Bedrock client (AWS API wrapper with cost tracking). One cached
+        # client per distinct model_key.
+        llm_client = _get_llm_client(config, model_key)
         logger.debug(f"BedrockClient initialized: {llm_client.model_id}")
-        
-        # Query logger (persistent logging)
-        query_logger = QueryLogger()
+
+        # Query logger (persistent logging). Cached - writes are serialised
+        # via _LOG_LOCK below since it now persists across concurrent requests.
+        query_logger = _get_query_logger()
         logger.debug("QueryLogger initialized (Always-S3 mode)")
-        
+
     except Exception as e:
         logger.error(f"Initialization failed: {e}", exc_info=True)
         
@@ -204,11 +271,12 @@ def answer_query(
         
         # Log the error
         try:
-            exports = query_logger.log_query(
-                result=result,
-                export_context=False,
-                export_response=export_response
-            )
+            with _LOG_LOCK:
+                exports = query_logger.log_query(
+                    result=result,
+                    export_context=False,
+                    export_response=export_response
+                )
             result['exports'] = exports
         except Exception as log_error:
             logger.error(f"Logging failed: {log_error}")
@@ -240,14 +308,15 @@ def answer_query(
         )
         
         result = error_response.to_dict()
-        
-        exports = query_logger.log_query(
-            result=result,
-            export_context=export_context,  # Save context for debugging
-            export_response=export_response
-        )
+
+        with _LOG_LOCK:
+            exports = query_logger.log_query(
+                result=result,
+                export_context=export_context,  # Save context for debugging
+                export_response=export_response
+            )
         result['exports'] = exports
-        
+
         return result
     
     # ========================================================================
@@ -276,14 +345,15 @@ def answer_query(
         )
         
         result = error_response.to_dict()
-        
-        exports = query_logger.log_query(
-            result=result,
-            export_context=export_context,  # Save context to debug what was sent
-            export_response=export_response
-        )
+
+        with _LOG_LOCK:
+            exports = query_logger.log_query(
+                result=result,
+                export_context=export_context,  # Save context to debug what was sent
+                export_response=export_response
+            )
         result['exports'] = exports
-        
+
         return result
     
     # ========================================================================
@@ -334,14 +404,15 @@ def answer_query(
         )
         
         result = error_response.to_dict()
-        
-        exports = query_logger.log_query(
-            result=result,
-            export_context=export_context,
-            export_response=export_response
-        )
+
+        with _LOG_LOCK:
+            exports = query_logger.log_query(
+                result=result,
+                export_context=export_context,
+                export_response=export_response
+            )
         result['exports'] = exports
-        
+
         return result
     
     # ========================================================================
@@ -349,13 +420,18 @@ def answer_query(
     # ========================================================================
     
     try:
-        # Log to Parquet + export files
-        exports = query_logger.log_query(
-            result=result,
-            export_context=export_context,
-            export_response=export_response
-        )
-        
+        # Log to Parquet + export files. Locked: query_logger is now a
+        # process-wide cached instance (see _get_query_logger()), and its
+        # _append_to_log() is an unsynchronised S3 download-modify-reupload -
+        # concurrent requests without this lock would race and silently lose
+        # a log row. See TIER1_LATENCY_DESIGN.md section 1.4.
+        with _LOG_LOCK:
+            exports = query_logger.log_query(
+                result=result,
+                export_context=export_context,
+                export_response=export_response
+            )
+
         ## -- exports is a dict returned by log_query(), which contains 'log_file'.
         # Add export paths to result
         result['exports'] = exports

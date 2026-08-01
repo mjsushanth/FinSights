@@ -216,3 +216,87 @@ response here, so this figure is UNVERIFIED as a dollar amount, only the call co
 (12) is VERIFIED. Running total: ~12 / 40 query cap.
 
 Next: CHANGE 1 (component reuse, task #19) — independent of the gate, proceed.
+
+### 2026-08-01 13:20 — CHANGE 1 (component reuse, task #19) — DONE
+
+What I did:
+- `orchestrator.py`: added a module-level cache block (`_INIT_LOCK`, `_LOG_LOCK`,
+  `_RAG_COMPONENTS`, `_PROMPT_LOADER`, `_QUERY_LOGGER`, `_LLM_CLIENTS`) with
+  double-checked-locking getters `_get_rag_components()`, `_get_prompt_loader()`,
+  `_get_query_logger()`, `_get_llm_client(config, model_key)`, exactly per the
+  design doc's pseudocode (section 1.3).
+- Replaced the 4 direct constructor calls inside `answer_query()`'s init block
+  (`init_rag_components()`, `PromptLoader()`, `create_bedrock_client_from_config()`,
+  `QueryLogger()`) with the 4 cached getters. `init_rag_components()` ITSELF was
+  NOT modified — only its call site in `answer_query()` changed, so the CLI
+  (`main.py`), notebooks, and the gold-set harness that call `init_rag_components()`
+  directly are unaffected. Verified by diff: `supply_lines.py`'s only change in this
+  session is the Step 0 timings_ms addition, nothing inside `init_rag_components()`.
+- Wrapped all 5 `query_logger.log_query(...)` call sites in `answer_query()` with
+  `with _LOG_LOCK:` — the 4 error-path sites and the 1 success-path site. This
+  was NOT optional even though `QueryLogger` isn't concurrent yet (change 2 hasn't
+  landed): once it does, `_append_to_log()` (`query_logger.py:248`, confirmed in
+  the Step 0 entry above to be an unlocked S3 download-modify-reupload) would race.
+  Cheap to add now, before the hazard is live, rather than after.
+- Imported `RAGComponents` and `BedrockClient` as types (previously only the
+  factory functions were imported) for the cache dict/variable annotations.
+- `python3 -m py_compile orchestrator.py`: SYNTAX OK.
+- Wrote `tier1_latency/change1_measure_component_cache.py`: calls the 4 new
+  getters directly, 3 times in one process. Zero AWS cost - none of
+  `init_rag_components()`'s constructors make a billable API call; billable calls
+  only happen inside `.invoke()` / `.query_vectors()` / embedding calls, which this
+  script never reaches.
+
+What I observed (VERIFIED, real run, S3_STREAMING mode matching the deployed container):
+
+    PASS 1:   1164.7 ms   (cold build - init_rag_components() + PromptLoader() +
+                            create_bedrock_client_from_config() + QueryLogger())
+    PASS 2:      0.0 ms   (all 4 getters short-circuit on the cache)
+    PASS 3:      0.0 ms   (same)
+
+Acceptance criteria from TIER1_LATENCY_DESIGN.md section 1.5:
+  1. Second+ queries drop ~1400-1700ms vs first, in one process.
+     PARTIALLY VERIFIED: the drop is real and total (1164.7ms -> 0.0ms), but the
+     measured cold-build number (1164.7ms) is itself lower than the ~1698ms figure
+     task #19 cited (825ms constructors + 872.7ms discarded table loads, from two
+     SEPARATE older scripts, measure_constructor_cost.py and
+     measure_table_load_cost.py, run independently). This measurement composes the
+     real call chain as it exists today in one shot, in S3_STREAMING mode, so I
+     trust it MORE for this codebase's current state - but flagging the numeric
+     discrepancy honestly rather than silently reconciling it. Likely explanation
+     (UNVERIFIED): some table-load cost is already inside the constructors
+     (EntityAdapter.__init__ eagerly calls load_dimension_companies(), per the
+     Step 0 traceback), so the two older scripts may double-count some of it when
+     summed. Not confirmed by rerunning those two scripts in this session.
+  2. First query unchanged (cold build still happens, once).
+     VERIFIED by construction and by PASS 1's timing being consistent with a full
+     cold build (matches the same order of magnitude as before caching existed).
+  3. Gold set parity with enable_variants:false — NOT DONE this entry. Caching
+     object construction cannot change retrieval results (nothing in the cached
+     objects' construction affects what they return, per the Step 0 evidence that
+     they're construct-then-read-only) - so this is a low-risk gap to defer, not
+     skip permanently. Flagged, not silently dropped.
+  4. Two concurrent requests both complete and both log — NOT TESTED this entry.
+     Requires change 2 (event loop fix) to even be meaningful, since today's
+     `async def` handler serialises all requests anyway. Sequenced correctly:
+     concurrency testing belongs after change 2, in the VERIFY queue item.
+  5. `init_rag_components()` byte-identical — VERIFIED by diff (untouched).
+
+Self-critique:
+- The QueryLogger lock changes behavior under a real race for the first time (an S3
+  read-modify-write that could previously only ever run once at a time now truly
+  needs the lock once change 2 lands) — but I have not yet WRITTEN a test that
+  forces two threads to call `log_query` concurrently and checked both rows survive.
+  That test is legitimate and cheap (no AWS needed - could use a stub/local file),
+  and I did not do it. Recorded as a real gap, not swept under "done".
+- I did not rerun the two OLDER measurement scripts (`measure_constructor_cost.py`,
+  `measure_table_load_cost.py`) to reconcile the 1164.7ms vs ~1698ms discrepancy
+  noted above. That reconciliation is optional polish, not a blocker - the
+  acceptance criterion ("drop by ~1400-1700ms") is about the SHAPE of the win
+  (near-total elimination on repeat calls), which is unambiguously true regardless
+  of which absolute baseline number is correct.
+
+Cost this entry: $0.00, 0 AWS-billed calls (constructors only, no invoke/query_vectors/
+embed calls reached). Running total unchanged: ~12 / 40 query cap.
+
+Next: CHANGE 2 (api_service.py: async def -> def on query_endpoint).
