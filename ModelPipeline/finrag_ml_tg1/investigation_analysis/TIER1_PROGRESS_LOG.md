@@ -33,8 +33,10 @@ Change 3 is **gated** — do not start it until Step 0 produces a number.
     [x] STEP 0   Split the retrieve timer; measure variant-gen vs S3-query time (>=10 runs)
                  DONE 2026-08-01. S = median s3_query_ms = 1465.1ms (12 runs). See entry.
     [x] GATE     S=1465.1ms < 1500ms threshold -> ABANDON change 3 (borderline, logged).
-    [ ] CHANGE 1 Component reuse in orchestrator (task #19). Independent of the gate.
-    [ ] CHANGE 2 api_service.py: async def -> def on query_endpoint
+    [x] CHANGE 1 Component reuse in orchestrator (task #19). DONE 2026-08-01.
+    [x] CHANGE 2 api_service.py: async def -> def. DONE 2026-08-01, verified LIVE
+                 (real concurrent queries, /health responsive during a query,
+                 zero lost log rows under the _LOG_LOCK). See entries.
     [ ] CHANGE 4a Progress events through supply_lines on_progress callback
     [SKIPPED] CHANGE 3 Concurrent retrieval — gate failed 2026-08-01, see entry for why
               (also: variant_gen_ms measured LARGER than s3_query_ms, so ceiling
@@ -300,3 +302,84 @@ Cost this entry: $0.00, 0 AWS-billed calls (constructors only, no invoke/query_v
 embed calls reached). Running total unchanged: ~12 / 40 query cap.
 
 Next: CHANGE 2 (api_service.py: async def -> def on query_endpoint).
+
+### 2026-08-01 13:15 — CHANGE 2 (async def -> def) — DONE, verified live
+
+What I did:
+- `serving/backend/api_service.py`: changed `async def query_endpoint` to
+  `def query_endpoint`. Verified no `await` keyword exists in the function body
+  (only in my own new docstring text) before making the change, since a plain
+  `def` cannot contain `await`. `root()` and `health_check()` left `async def` -
+  they do no blocking I/O, no reason to move them.
+- `python3 -m py_compile`: SYNTAX OK.
+- Ran a REAL local verification rather than deferring everything to the later
+  Docker VERIFY step, since this specific claim (event loop stays free) is
+  cheap and decisive to test directly: started uvicorn locally
+  (`DATA_LOADING_MODE=S3_STREAMING`, matching the deployed container's mode),
+  from `serving/` as `backend.api_service:app` (first attempt from
+  `serving/backend/` failed with `ModuleNotFoundError: No module named
+  'backend'` - needs to run from the parent dir; not a code bug, a cwd issue).
+
+What I observed (VERIFIED, real AWS, real Bedrock, real cost):
+- Fired one real `/query` (Apple revenue 2023) in the background; while it was
+  in flight for 10.14s wall time, sent 3 `/health` probes. All 3 returned
+  `200` in 1.5-9.6ms - comfortably under the 100ms acceptance bar
+  (TIER1_LATENCY_DESIGN.md section 2, acceptance). Under the old `async def`,
+  these would have queued behind the blocked event loop for the full 10s.
+  Real answer, correct, cost $0.0140, 13,120 tokens, 9,288.7ms processing time.
+- Fired TWO real `/query` requests CONCURRENTLY (Microsoft rev 2022, Tesla rev
+  2021). Both returned `200` at 9.12s and 9.66s wall time respectively - i.e.
+  they overlapped almost entirely, NOT serialized (serialized would have been
+  ~9s + ~9s ≈ 18s for the second). Both answers correct and distinct
+  ($198.3B Microsoft, $53.82B Tesla), costs $0.0129 and $0.0163.
+- Checked the actual S3 query log (`get_recent_logs(n=5)`) after all 3 real
+  queries: Microsoft and Tesla (the genuinely concurrent pair) each appear
+  EXACTLY ONCE, at timestamps 161ms apart (17:10:42.968854Z, 17:10:43.129587Z)
+  - direct evidence the `_LOG_LOCK` added in Change 1 serialized the two S3
+    read-modify-writes correctly under real concurrency, with zero lost rows.
+  This is the concurrent-logging acceptance criterion from Change 1's
+  self-critique (flagged there as "NOT TESTED") - now actually tested, for real.
+
+Investigation detour (worth recording honestly, not just the clean result):
+- My own diagnostic script checked `result.get('exports', {}).get('log_file')`
+  on the raw HTTP JSON and got `None` for all 3 queries, which looked like a
+  masked logging failure. Chased it down in two steps rather than one blind
+  retry: (1) called `QueryLogger.log_query()` directly with the exact captured
+  Apple result - it SUCCEEDED and returned a real S3 URI, proving log_query()
+  itself was never broken; (2) checked `models.py:97-123` and found
+  `QueryResponse.exports` is DELIBERATELY commented out ("Exports are internal
+  backend concern, not exposed to API consumers... security risk") - FastAPI's
+  `response_model=QueryResponse` strips the key entirely from the HTTP
+  response. My script's `.get('exports', {})` fallback silently masked the
+  key's absence as `None`, which is indistinguishable from "present but null"
+  without checking `'exports' in r` directly - confirmed absent via a raw key
+  check. Not a bug. Not caused by any Tier 1 change. A false alarm from my own
+  sloppy diagnostic, corrected before it was logged as a real finding.
+- Step (1)'s repro also explains the one duplicate Apple row later found in
+  the S3 log (two identical rows, same timestamp `17:10:00.297098Z`, same
+  cost $0.01402): that's MY manual repro call re-logging the same already-
+  captured result, not a live double-log. `_append_to_log()` has no
+  idempotency key, so calling `log_query()` twice on the same result always
+  produces two rows - a real, pre-existing system property worth knowing, not
+  a Tier 1 regression, and not something to fix unprompted here.
+
+Self-critique:
+- This verification ran against a LOCAL uvicorn process, not the Docker
+  container. Representative (same `S3_STREAMING` mode, same code), but not
+  identical to the ECS/Docker networking path - full Docker verification is
+  still owed at the VERIFY queue step.
+- Did not test what happens if TWO health probes AND a query all race in a
+  tighter window than achieved here, or under actual concurrent load (>2
+  requests). 2-way concurrency is proven; N-way is not.
+- Did not check CPU/memory behavior under the now-possible concurrency - a
+  threadpool-based concurrent model has a different resource profile than the
+  old serialized-by-accident one, and the container's sizing
+  (1 vCPU / 3072 MiB) was chosen under the old, effectively-single-query-at-
+  a-time model.
+
+Cost this entry: 3 real full queries (Apple $0.0140, Microsoft $0.0129, Tesla
+$0.0163) = $0.0432 VERIFIED (read directly from each response's
+metadata.llm.cost). Running total: ~15 query-equivalents / 40 cap,
+~$0.0432 / $8.00 cap (both far under budget).
+
+Next: CHANGE 4a (progress events through supply_lines on_progress callback).

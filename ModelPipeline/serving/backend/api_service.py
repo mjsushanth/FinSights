@@ -161,10 +161,18 @@ async def health_check():
 
 
 @app.post("/query", response_model=QueryResponse, tags=["Query"])
-async def query_endpoint(request: QueryRequest):
+def query_endpoint(request: QueryRequest):
     """
     Main query endpoint - processes user questions.
-    
+
+    Deliberately a sync `def`, not `async def` (Tier 1 Change 2, 2026-08-01):
+    answer_query() is fully synchronous and blocks for ~9.6s+ with zero
+    `await` points. Under `async def`, that blocks the entire event loop for
+    the whole call - one query in flight per container, /health unanswerable
+    during a query, streaming structurally impossible. Under plain `def`,
+    FastAPI runs this in its threadpool instead, so the event loop stays
+    free. See TIER1_LATENCY_DESIGN.md section 0.4 / Change 2.
+
     This endpoint:
     1. Validates the request (Pydantic does this automatically)
     2. Calls the orchestrator with validated parameters
