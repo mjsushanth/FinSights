@@ -94,9 +94,17 @@ class RetrievalBundle:
     filtered_hits: List[S3Hit]
     global_hits: List[S3Hit]
     union_hits: List[S3Hit]  # Deduplicated by sentence_id
-    
+
     base_query: str = ""
     variant_queries: List[str] = field(default_factory=list)
+
+    # Sub-stage timing split (Tier 1 latency investigation, 2026-08-01).
+    # The pre-existing "retrieve" timer in supply_lines.py measures this whole
+    # call, which conflates an LLM rephrase + 3 embeddings (variant_gen_ms)
+    # with the actual QueryVectors calls (s3_query_ms). See
+    # TIER1_LATENCY_DESIGN.md section 0.1.
+    variant_gen_ms: float = 0.0
+    s3_query_ms: float = 0.0
     
     def __repr__(self) -> str:
         return (

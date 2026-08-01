@@ -57,6 +57,7 @@ USAGE:
 
 from typing import List, Dict, Any, Optional
 from collections import defaultdict
+from time import perf_counter
 import logging
 
 import boto3
@@ -202,7 +203,8 @@ class S3VectorsRetriever:
         # ════════════════════════════════════════════════════════════════════
         variant_queries = []
         variant_embeddings = []
-        
+
+        _t0 = perf_counter()
         if self.enable_variants:
             logger.info("→ Generating variants via VariantPipeline...")
             try:
@@ -217,10 +219,12 @@ class S3VectorsRetriever:
                 variant_queries, variant_embeddings = [], []
         else:
             logger.info("→ Variants disabled (enable_variants=false)")
-        
+        variant_gen_ms = (perf_counter() - _t0) * 1000
+
         # ════════════════════════════════════════════════════════════════════
         # STEP 2: BASE QUERY RETRIEVAL (variant_id=0)
         # ════════════════════════════════════════════════════════════════════
+        _t0 = perf_counter()
         logger.info("→ Retrieving base query (filtered + global)...")
         base_hits = self._retrieve_for_embedding(
             embedding=base_embedding,
@@ -252,7 +256,8 @@ class S3VectorsRetriever:
                 )
                 all_hits.extend(var_hits)
                 logger.info(f"  ✓ Variant {i}: {len(var_hits)} hits")
-        
+        s3_query_ms = (perf_counter() - _t0) * 1000
+
         # ════════════════════════════════════════════════════════════════════
         # STEP 4: DEDUPLICATION
         # ════════════════════════════════════════════════════════════════════
@@ -279,7 +284,9 @@ class S3VectorsRetriever:
             global_hits=global_hits,
             union_hits=union_hits,
             base_query=base_query,
-            variant_queries=variant_queries
+            variant_queries=variant_queries,
+            variant_gen_ms=variant_gen_ms,
+            s3_query_ms=s3_query_ms,
         )
     
     def _retrieve_for_embedding(

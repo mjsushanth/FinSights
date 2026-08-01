@@ -246,6 +246,11 @@ def run_supply_line_2_rag(
         global_filters=global_filters,
     )
     timings_ms["retrieve"] = (perf_counter() - t0) * 1000
+    # Sub-stage split (additive - "retrieve" above is unchanged for existing
+    # consumers). See TIER1_LATENCY_DESIGN.md section 0.1: the old figure
+    # attributed to "S3 Vectors" was actually variant-gen + S3 queries combined.
+    timings_ms["retrieve_variant_gen"] = bundle.variant_gen_ms
+    timings_ms["retrieve_s3_query"] = bundle.s3_query_ms
 
     # Steps 6–7: Sentence expansion + dedup
     t0 = perf_counter()
