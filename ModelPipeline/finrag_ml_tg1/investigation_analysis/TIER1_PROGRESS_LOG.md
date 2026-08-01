@@ -45,7 +45,10 @@ Change 3 is **gated** — do not start it until Step 0 produces a number.
     [x] CHANGE 4b Token streaming. DONE 2026-08-01, verified live in a real
                  browser (screenshots of live stage updates + token streaming +
                  final citation-chip render) plus direct SSE curl test. See entries.
-    [ ] VERIFY   Local Docker end-to-end, both containers, real AWS, real query
+    [x] VERIFY   Local Docker end-to-end. DONE 2026-08-01: rebuilt both images,
+                 real containers, TTFB=4.3ms vs TOTAL=8.96s proving no uvicorn
+                 buffering, real browser test against the containerized
+                 Streamlit, S3_STREAMING confirmed, clean teardown. See entry.
     [ ] WRITEUP  Findings into tier1_latency/ notebook + a summary entry here
 
 Out of scope for autonomous runs — do NOT do these:
@@ -651,3 +654,121 @@ of work (image builds, container networking) from the Python-level changes
 done so far this run. Evaluating whether to continue into it now or
 checkpoint here, given four major changes have now landed and been verified
 live in this single session.
+
+### 2026-08-01 13:44 — VERIFY (Docker end-to-end) — DONE
+
+What I did:
+- Resolved a real ambiguity before touching anything: two Docker directories
+  exist, `finrag_docker_loc_tg1/` and `finrag_docker_loc_tg1_aws/`. Checked
+  mtimes, git log, and `finsights.command` (the official launcher) rather
+  than guessing - `finrag_docker_loc_tg1/` is canonical (mtime Jul 31 06:51,
+  last touched by commit `983443f`, multi-stage build with a working
+  python-urllib healthcheck; `_aws` is the older, Jul 30 23:26 single-stage
+  build whose compose file still has a curl-based healthcheck that cannot
+  work on its own slim runtime - confirmed by that directory's own code
+  comment explaining why it was changed in the other one). Used
+  `finrag_docker_loc_tg1/` for all of this. Did not touch either directory.
+- Docker Desktop's daemon was not running (expected on a fresh session, not a
+  bug). Started it (`open -a Docker`, an already-installed app - not a new
+  install) and polled `docker info` until ready (~20s).
+- Existing images were 2 days old, predating every Tier 1 change (Step 0
+  through Change 4b all touch files inside this build's context). Rebuilt
+  both with `docker compose build` - picked up all source changes correctly
+  since the build context is `ModelPipeline/` (the parent of the compose
+  file), which contains every file touched this run.
+- `docker compose up -d`: both containers reached `healthy` within seconds.
+
+Verification performed against the REAL container stack (not a local bare
+uvicorn/streamlit process, per this session's own rule that UI/serving
+changes need real verification):
+
+  1. `GET /health` via the host-mapped port: 200, 2.3ms.
+  2. Direct curl to `POST /query/stream` through the real container (Google
+     revenue 2020): 5 correctly-ordered stage events, 176 real token deltas,
+     exactly 1 replace + 1 done, logged exactly once in the real S3 log.
+  3. Rigorous, quantitative proof against design doc section 4c's first
+     concern ("uvicorn does not buffer the SSE response") - a second real
+     query (IBM revenue 2018) with `curl -w`:
+         TTFB (first byte)  = 0.004343s
+         TOTAL               = 8.959013s
+     TTFB is ~2000x smaller than TOTAL. If uvicorn were buffering the
+     response until completion, these would be equal. This is VERIFIED, not
+     inferred - a live container was actually measured, not assumed correct
+     by architecture alone.
+  4. Container logs: `[DEBUG] Container detected -> S3_STREAMING mode`
+     confirmed post-rebuild (matches task #2's original requirement,
+     re-verified after every Tier 1 code change).
+  5. Real browser test against the actual containerized Streamlit
+     (localhost:8501, container-to-container via Docker's `backend:8000`
+     DNS, not a bare local process) - typed "What was Meta revenue in 2021?",
+     submitted via a freshly-read element ref (see self-critique below).
+     Screenshot mid-stream showed the live `st.status` label
+     "retrieve (4182 ms)" updating in real time. Final screenshot showed:
+     complete narrative answer, TWO correctly-rendered citation chips
+     (KPI Snapshot + a real "META - FY21 - Item 7" filing chip), correct
+     metadata (claude-haiku-4-5, 14,321 tokens, $0.0151, 8.2s), and the
+     sidebar's TOTAL QUERIES/TOTAL COST counters updating 0->1 / $0->$0.0151.
+     This directly satisfies design doc section 4c's third concern
+     ("Streamlit's rerun cycle does not restart the request mid-stream") -
+     it visibly did not: one clean answer, no restart, no stuck state.
+     Checked the S3 log again: this query too landed exactly once.
+  6. Captured real resource usage before teardown:
+     `docker stats`: backend 11.71% CPU, 1.257 GiB memory (after 3 real
+     streaming queries + healthchecks); frontend 0.13% CPU, 158.1 MiB.
+  7. `docker compose down`: clean stop and removal of both containers plus
+     the bridge network. Nothing left running.
+
+Design doc section 4d acceptance criteria - final status across all of
+Tier 1 (not just this entry):
+  1. First stage event reaches quickly - VERIFIED (curl + browser, both
+     bare-metal and containerized).
+  2. Tokens appear progressively - VERIFIED (176 real deltas this entry).
+  3. Final answer same shape/quality as non-streaming - VERIFIED for
+     rendering fidelity (same citation-chip component); NOT byte-identical
+     A/B tested against non-streaming for the same query, because
+     `semantic_variants.temperature: 0.7` already makes repeat calls to the
+     same query nondeterministic - noted honestly, not glossed over.
+  4. cost/tokens in `done` match reality - VERIFIED repeatedly, cross-checked
+     against the real S3 log every time.
+  5. Query lands in log exactly once - VERIFIED for every real query fired
+     this entire run (7 total across all entries: Amazon, Netflix, Google,
+     IBM, Meta, plus the earlier Microsoft/Tesla concurrency pair) - zero
+     duplicates, zero losses, in every single check.
+  6. `/query` and the CLI still work unchanged - VERIFIED by construction
+     (neither touched) and by the earlier live concurrency test.
+
+Self-critique:
+- Same interaction lesson as the Change 4b browser test repeated itself
+  initially: my first click attempt used a coordinate from a screenshot
+  taken one action earlier, and the sidebar had expanded in between,
+  shifting the layout. Caught it faster this time (one bad click, not two)
+  because I already knew to re-`read_page` for a fresh ref before clicking
+  again rather than trying a different guessed coordinate. Worth stating
+  plainly: this is now a confirmed pattern for this UI, not a one-off - any
+  future Streamlit interaction in this app should read-then-click by ref as
+  the default, never coordinate-then-click.
+- Memory observation, not yet acted on: 1.257 GiB after 3 queries in one
+  session is a real number worth carrying forward, not a red flag on its
+  own. The ECS task in the live architecture is sized at 1 vCPU / 3072 MiB;
+  1.257 GiB (~1287 MiB) leaves headroom but is not trivially far from it,
+  and Change 1's caching means the RAG object graph plus a growing set of
+  cached BedrockClient instances now persist for the life of the process
+  rather than being rebuilt-and-freed per request. This is exactly the kind
+  of thing the container's sizing assumption should eventually be re-checked
+  against under sustained real load - flagged, not sized/fixed here, since
+  container resizing was never one of the 3 approved Tier 1 changes.
+- Did not test N-way concurrent SSE streams through the container (only
+  ever one streaming request in flight during this container test, same gap
+  already flagged in the Change 4b entry for the bare-metal test).
+- Did not test an actual mid-stream client disconnect against the real
+  container (e.g. closing the browser tab mid-answer) - the worker-thread
+  cancellation gap flagged in Change 4b's self-critique remains unverified
+  under container conditions specifically.
+
+Cost this entry: 3 real full streaming queries through the container (Google
+$0.016342, IBM $0.015213, Meta $0.015145) = $0.0467 VERIFIED. Running total
+across the whole run: ~22 query-equivalents / 40 cap, ~$0.115 / $8.00 cap -
+both still far under budget.
+
+Next: WRITEUP - a summary notebook/table in tier1_latency/ plus a final
+closing entry, then decide whether to stop the loop or continue.
