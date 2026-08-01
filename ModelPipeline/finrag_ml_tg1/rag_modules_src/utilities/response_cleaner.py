@@ -1,7 +1,23 @@
 """
-Minimal response cleaner - prevent LaTeX/markdown triggering in Streamlit.
+Response cleaner - prevent Streamlit's dollar-sign LaTeX trigger without
+destroying markdown formatting.
 
-Philosophy: Line-aware cleaning - preserve structure, neutralize triggers.
+Background: Streamlit's st.markdown renders $...$ and $$...$$ as LaTeX math
+by default, with no parameter to disable it (verified against current
+Streamlit docs, 2026-08). Two earlier versions of this module (see
+response_cleaner_bkv1.py) worked around this by stripping ALL markdown
+emphasis (**bold**, *italic*, _underline-ish_) and either deleting $ or
+replacing it with the word "USD" - which incidentally solved the $ problem
+by removing the character that triggers it, but took bold/italic down with
+it for no reason connected to the actual bug.
+
+This version escapes the dollar sign (\\$) instead of removing or replacing
+it - the standard fix used elsewhere for this exact Streamlit behavior - and
+leaves every other markdown construct untouched. Bold and italic were never
+the problem; only the literal $ character is.
+
+This domain (SEC filing answers) never legitimately needs real LaTeX math,
+so there is no ambiguous case to resolve here: every $ is currency, always.
 """
 
 import re
@@ -12,212 +28,48 @@ logger = logging.getLogger(__name__)
 
 class ResponseCleaner:
     """
-    Line-aware cleaner that prevents LaTeX/markdown triggering.
-    
-    Strategy:
-        1. Classify each line (heading, bullet, ordinary)
-        2. Remove markdown wrappers ($...$, **bold**, *italic*)
-        3. Escape residual triggers (* _ $) to prevent Streamlit interpretation
-        4. Preserve heading structure and bullet prefixes
-    
-    Hard Guarantee:
-        After cleaning, only these render as markdown:
-        - Headings starting with # (preserved structure)
-        - Bullet prefixes -, *, +, 1. (preserved structure)
-        - Everything else is markdown-inert (escaped)
+    Escapes the one character that breaks Streamlit rendering ($) and
+    leaves every other markdown construct (bold, italic, headers, bullets)
+    untouched.
     """
-    
+
     def __init__(self, log_changes: bool = False):
         self.log_changes = log_changes
-        self._changes_made = []
-    
+
     def clean(self, text: str) -> str:
         """
-        Clean LLM response line-by-line.
-        
+        Escape literal dollar signs so Streamlit's markdown renderer
+        cannot interpret them as LaTeX math delimiters.
+
         Args:
             text: Raw LLM output
-            
+
         Returns:
-            Cleaned text safe for st.markdown()
+            Text safe for st.markdown(), with bold/italic/headers/bullets
+            rendering exactly as the model wrote them.
         """
         if not text:
             return text
-        
-        self._changes_made = []
-        
-        # Process line-by-line
-        cleaned_lines = []
-        for line in text.split('\n'):
-            cleaned_line = self._clean_line(line)
-            cleaned_lines.append(cleaned_line)
-        
-        result = '\n'.join(cleaned_lines)
-        
-        if self.log_changes:
-            logger.info(
-                f"ResponseCleaner: {len(self._changes_made)} operations, "
-                f"{len(text)} → {len(result)} chars"
-            )
-        
-        return result
-    
-    def _clean_line(self, line: str) -> str:
-        """
-        Clean a single line based on its type.
-        
-        Line types:
-            1. Heading (starts with #) → Preserve structure, clean body
-            2. Bullet/List (starts with -, *, +, 1.) → Preserve prefix, clean body
-            3. Ordinary → Full cleaning
-        """
-        # ================================================================
-        # Type 1: Heading - PRESERVE STRUCTURE, CLEAN BODY
-        # ================================================================
-        # Pattern: optional indent + 1-6 hashes + optional space + body
-        # Example: "  ## Revenue Analysis *2022*" → "  ## Revenue Analysis 2022"
-        
-        heading_match = re.match(r'^(\s*)(#{1,6})\s*(.*)$', line)
-        if heading_match:
-            indent = heading_match.group(1)
-            hashes = heading_match.group(2)
-            body = heading_match.group(3)
-            
-            # Clean the heading body (remove wrappers, escape triggers)
-            body = self._strip_wrappers(body)
-            body = self._escape_triggers(body)
-            
-            # Reconstruct: indent + hashes + space + body
-            cleaned = f"{hashes} {body}".rstrip() if body else hashes
-            return f"{indent}{cleaned}"
-        
-        # ================================================================
-        # Type 2: Bullet/List - PRESERVE PREFIX, CLEAN BODY
-        # ================================================================
-        # Patterns: "- item", "  * item", "1. item", "  + item"
-        bullet_match = re.match(r'^(\s*)([-*+]|\d+\.)\s+(.*)$', line)
-        if bullet_match:
-            indent = bullet_match.group(1)
-            prefix = bullet_match.group(2)
-            body = bullet_match.group(3)
-            
-            # Clean the body part only
-            body = self._strip_wrappers(body)
-            body = self._escape_triggers(body)
-            
-            return f"{indent}{prefix} {body}"
-        
-        # ================================================================
-        # Type 3: Ordinary Line - FULL CLEANING
-        # ================================================================
-        line = self._strip_wrappers(line)
-        line = self._escape_triggers(line)
-        
-        return line
-    
-    def _strip_wrappers(self, text: str) -> str:
-        """
-        Remove markdown/LaTeX wrappers.
-        
-        Removes:
-            $...$ (LaTeX)
-            **bold**, __bold__
-            *italic*, _italic_
-            ~~strikethrough~~
-        
-        Simple unwrapping - no fancy logic.
-        """
-        # LaTeX: $content$ → content
-        text = re.sub(r'\$([^\$]+)\$', r'\1', text)
-        
-        # Bold: **text** and __text__
-        text = re.sub(r'\*\*(.+?)\*\*', r'\1', text)
-        text = re.sub(r'__(.+?)__', r'\1', text)
-        
-        # Italic: *text* and _text_
-        text = re.sub(r'\*(.+?)\*', r'\1', text)
-        text = re.sub(r'_(.+?)_', r'\1', text)
-        
-        # Strikethrough: ~~text~~
-        text = re.sub(r'~~(.+?)~~', r'\1', text)
-        
-        return text
-    
-    
-    def _escape_triggers(self, text: str) -> str:
-        r"""
-        Make text completely safe for Streamlit markdown.
-        
-        Strategy:
-            - Replace all '$' with 'USD ' (eliminates LaTeX risk entirely)
-            - Escape '*' and '_' (prevents italic/bold)
-        
-        Hard guarantee: No LaTeX math mode possible after this.
-        """
-        # Replace all $ with USD (no dollar symbol remains)
-        text = text.replace('$', 'USD ')
-        
-        # Escape asterisks and underscores (idempotent)
-        text = re.sub(r'(?<!\\)\*', '\\*', text)
-        text = re.sub(r'(?<!\\)_', '\\_', text)
-        
-        return text
 
+        original_length = len(text)
+
+        # Escape every literal $ as \$. This is the standard CommonMark
+        # escape and is respected by the markdown renderer Streamlit uses -
+        # the dollar sign still displays, it just can no longer open a math
+        # block. Skip any $ already escaped (idempotent on repeated calls).
+        cleaned = re.sub(r'(?<!\\)\$', r'\\$', text)
+
+        if self.log_changes:
+            n_escaped = cleaned.count(r'\$') - text.count(r'\$')
+            logger.info(
+                f"ResponseCleaner: escaped {n_escaped} dollar sign(s), "
+                f"{original_length} -> {len(cleaned)} chars"
+            )
+
+        return cleaned
 
 
 def clean_llm_response(text: str, log_changes: bool = False) -> str:
     """Convenience function."""
     cleaner = ResponseCleaner(log_changes=log_changes)
     return cleaner.clean(text)
-
-
-# Testing
-if __name__ == "__main__":
-    test_cases = [
-        {
-            'name': 'Heading with italic',
-            'input': '## Revenue Analysis *2022*',
-            'expected': '## Revenue Analysis 2022'
-        },
-        {
-            'name': 'Body with LaTeX wrapper',
-            'input': 'Revenue was $36.6billionin2016$ last year.',
-            'expected': 'Revenue was 36.6billionin2016 last year.'
-        },
-        {
-            'name': 'Bullet with bold',
-            'input': '- Revenue: **$10B**',
-            'expected': '- Revenue: \\$10B'
-        },
-        {
-            'name': 'Ordinary with italic',
-            'input': 'The company had *negative* cash flow.',
-            'expected': 'The company had negative cash flow.'
-        },
-        {
-            'name': 'Mixed formatting',
-            'input': 'Netflix **grew** from *2.5B* to $31.6B$.',
-            'expected': 'Netflix grew from 2.5B to 31.6B.'
-        },
-    ]
-    
-    cleaner = ResponseCleaner(log_changes=True)
-    
-    print("=" * 80)
-    print("ResponseCleaner Test Suite (Enhanced Minimal)")
-    print("=" * 80)
-    
-    for case in test_cases:
-        print(f"\n[Test: {case['name']}]")
-        print(f"Input:    {case['input']}")
-        
-        result = cleaner.clean(case['input'])
-        print(f"Output:   {result}")
-        print(f"Expected: {case['expected']}")
-        
-        if result == case['expected']:
-            print("✓ PASS")
-        else:
-            print("~ CHECK")
-    
-    print("\n" + "=" * 80)

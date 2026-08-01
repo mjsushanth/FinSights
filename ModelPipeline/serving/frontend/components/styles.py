@@ -38,7 +38,7 @@ def inject_global_css():
         }
 
         .stApp {
-            background-color: #020617 !important; /* slate-950 */
+            background-color: #140F32 !important; /* deep blue-violet */
         }
 
         .main .block-container {
@@ -96,7 +96,7 @@ def inject_global_css():
            ======================================================================= */
 
         [data-testid="stMetric"] {
-            background: rgba(10, 15, 35, 0.9) !important;
+            background: rgba(20, 15, 50, 0.9) !important;
             padding: 1.3rem !important;
             border-radius: 24px !important;
             border: 1.5px solid rgba(59, 130, 246, 0.4) !important;
@@ -151,7 +151,7 @@ def inject_global_css():
         }
 
         .stButton > button[kind="secondary"] {
-            background: rgba(15, 23, 42, 0.6) !important;
+            background: rgba(20, 15, 50, 0.6) !important;
             color: #e5e7eb !important;
             border: 1px solid rgba(148, 163, 184, 0.3) !important;
             border-radius: 10px !important;
@@ -221,7 +221,7 @@ def inject_global_css():
             flex: 1 1 calc(33.333% - 2rem);
             min-width: 260px;
 
-            background: rgba(10, 15, 35, 0.9);
+            background: rgba(20, 15, 50, 0.9);
             border: 1.5px solid rgba(59, 130, 246, 0.5);
             border-radius: 40px;
             padding: 1.8rem 1.6rem;
@@ -305,9 +305,11 @@ def inject_global_css():
            CHATBOT PAGE STYLING - ChatGPT-style narrow interface
            ======================================================================= */
         
-        /* Narrow chat container for chatbot page */
+        /* Chat container for chatbot page - wide enough to lose the dead
+           margins on large monitors, capped short of a full-width sprawl
+           so long financial paragraphs stay comfortable to read. */
         body:has([data-testid="stChatInput"]) .main .block-container {
-            max-width: 720px !important;
+            max-width: 900px !important;
             padding-left: 1.5rem;
             padding-right: 1.5rem;
         }
@@ -337,7 +339,7 @@ def inject_global_css():
         [data-testid="stChatInput"] {
             border-radius: 12px !important;
             border: 1px solid rgba(148, 163, 184, 0.3) !important;
-            background: rgba(15, 23, 42, 0.6) !important;
+            background: rgba(20, 15, 50, 0.6) !important;
         }
         
         [data-testid="stChatInput"]:focus-within {
@@ -352,7 +354,7 @@ def inject_global_css():
         
         /* Sidebar styling */
         [data-testid="stSidebar"] {
-            background: rgba(15, 23, 42, 0.95) !important;
+            background: rgba(20, 15, 50, 0.95) !important;
             border-right: 1px solid rgba(148, 163, 184, 0.1) !important;
         }
         
@@ -365,7 +367,7 @@ def inject_global_css():
         
         /* Sidebar expanders */
         [data-testid="stSidebar"] [data-testid="stExpander"] {
-            background: rgba(10, 15, 35, 0.6) !important;
+            background: rgba(20, 15, 50, 0.6) !important;
             border: 1px solid rgba(148, 163, 184, 0.2) !important;
             border-radius: 8px !important;
             margin-bottom: 0.5rem !important;
