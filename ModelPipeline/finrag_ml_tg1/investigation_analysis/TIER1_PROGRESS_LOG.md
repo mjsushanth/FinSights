@@ -37,7 +37,8 @@ Change 3 is **gated** — do not start it until Step 0 produces a number.
     [x] CHANGE 2 api_service.py: async def -> def. DONE 2026-08-01, verified LIVE
                  (real concurrent queries, /health responsive during a query,
                  zero lost log rows under the _LOG_LOCK). See entries.
-    [ ] CHANGE 4a Progress events through supply_lines on_progress callback
+    [x] CHANGE 4a Progress events through supply_lines on_progress callback.
+                 DONE 2026-08-01, all 5 stages verified firing in order with real data.
     [SKIPPED] CHANGE 3 Concurrent retrieval — gate failed 2026-08-01, see entry for why
               (also: variant_gen_ms measured LARGER than s3_query_ms, so ceiling
               benefit is smaller than originally assumed even independent of the gate)
@@ -383,3 +384,66 @@ metadata.llm.cost). Running total: ~15 query-equivalents / 40 cap,
 ~$0.0432 / $8.00 cap (both far under budget).
 
 Next: CHANGE 4a (progress events through supply_lines on_progress callback).
+
+### 2026-08-01 13:28 — CHANGE 4a (progress events) — DONE
+
+What I did:
+- `supply_lines.py`: added `on_progress: Optional[Callable[[str, Dict[str, Any]],
+  None]] = None` to `run_supply_line_2_rag()` and `build_combined_context()`,
+  default `None` on both so every existing caller (CLI, notebooks, gold-set
+  harness, `answer_query()` itself) is unaffected unless it opts in.
+- Added a local `_emit(stage, **detail)` closure and called it at 5 of the 6
+  existing timing points: `entities` (with extracted companies/years),
+  `embed`, `retrieve` (with hit count + variant query count), `expand` (with
+  sentence count), `assemble` (with context length). `rerank` also
+  instrumented but conditional on `rag.reranker is not None` - did not fire
+  in this run since `enable_reranking: false`, correctly.
+  Threaded `on_progress` through `build_combined_context`'s call to
+  `run_supply_line_2_rag`. Did NOT thread it into `answer_query()` itself -
+  that has no consumer for progress events yet (it returns one dict at the
+  end); wiring it in belongs to Change 4b's `answer_query_stream()` sibling
+  function, per the design doc's explicit 4a/4b split.
+- `python3 -m py_compile`: SYNTAX OK.
+- Wrote and ran `tier1_latency/change4a_verify_progress_events.py`: real call
+  to `run_supply_line_2_rag()` with a real callback attached, plus a second
+  call with no callback at all to confirm the default path is unchanged.
+
+What I observed (VERIFIED, real AWS, 2 supply-line-2 calls, no LLM synthesis):
+
+    [event] entities  ms=8.6    companies=['NVDA']  years=[2021]
+    [event] embed     ms=339.9
+    [event] retrieve  ms=3202.2 n_hits=30  n_variant_queries=3
+    [event] expand    ms=59.5   n_sentences=158
+    [event] assemble  ms=3.5    context_chars=32001
+
+All 5 expected stages fired, in the correct order, with correct real detail
+(NVDA/2021 correctly extracted from the query text). Second call with no
+`on_progress` argument at all completed with zero exceptions (3379.3ms,
+same order of magnitude as the instrumented call at 3613.9ms - the emit
+calls add no measurable overhead).
+
+Self-critique:
+- Not yet consumed by anything - this is plumbing with no listener attached
+  in the real serving path. Its value is entirely prospective, realized only
+  when Change 4b builds the SSE endpoint that attaches a real `on_progress`.
+  Correctly sequenced (4a before 4b), not yet useful standalone.
+- Did not test the reranker-on path (`rerank` event). Not testable without
+  flipping `enable_reranking`, which is explicitly forbidden by the
+  guardrails in this session regardless of Tier 1 scope.
+- The `_emit` closure catches nothing - if a caller's `on_progress` callback
+  itself raises, that exception propagates up through `run_supply_line_2_rag`
+  and would crash the query. Acceptable for now (4a has no real caller yet),
+  but Change 4b's queue-based bridge (per the design doc) MUST wrap the
+  callback in its own try/except, or a bug in event formatting could take
+  down retrieval. Flagging for 4b, not fixing here since there's no consumer
+  yet to test against.
+
+Cost this entry: 2 supply-line-2 calls (no LLM synthesis), same cheap profile
+as Step 0. Running total: ~17 query-equivalents / 40 cap, ~$0.0432 / $8.00 cap.
+
+Next: CHANGE 4b (token streaming) OR the Docker VERIFY step. Per the design
+doc's sequencing, 4b is next, but it is the largest remaining item (Bedrock
+event-stream field names are explicitly flagged UNVERIFIED in the design doc
+and need a live single-call probe before building on them) - this is a
+natural place to check the cost ledger and time budget before committing to
+it in this same run.

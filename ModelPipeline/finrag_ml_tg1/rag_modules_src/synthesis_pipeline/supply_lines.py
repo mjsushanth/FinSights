@@ -23,7 +23,7 @@ from pathlib import Path
 from dataclasses import dataclass
 from datetime import datetime
 from time import perf_counter
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Callable, Dict, List, Optional, Tuple
 
 from finrag_ml_tg1.rag_modules_src.entity_adapter.entity_adapter import EntityAdapter
 from finrag_ml_tg1.rag_modules_src.metric_pipeline.src.pipeline import MetricPipeline
@@ -188,6 +188,7 @@ def run_supply_line_1_kpi(
 def run_supply_line_2_rag(
     query: str,
     rag: RAGComponents,
+    on_progress: Optional[Callable[[str, Dict[str, Any]], None]] = None,
 ) -> Tuple[str, Any, Any, List[Any], str, Dict[str, Any]]:
     """
     Supply Line 2 wiring.
@@ -223,15 +224,28 @@ def run_supply_line_2_rag(
     """
     timings_ms: Dict[str, float] = {}
 
+    def _emit(stage: str, **detail: Any) -> None:
+        """Fire a progress event if a listener is attached. Default None ->
+        zero behavior change for every existing caller (CLI, notebooks, gold
+        set harness). See TIER1_LATENCY_DESIGN.md section 4a."""
+        if on_progress is not None:
+            on_progress(stage, detail)
+
     # Step 1: Entity extraction
     t0 = perf_counter()
     entities = rag.adapter.extract(query)
     timings_ms["entities"] = (perf_counter() - t0) * 1000
+    _emit(
+        "entities", ms=timings_ms["entities"],
+        companies=list(entities.companies.tickers),
+        years=list(entities.years.years),
+    )
 
     # Step 2: Query embedding
     t0 = perf_counter()
     base_embedding = rag.embedder.embed_query(query, entities)
     timings_ms["embed"] = (perf_counter() - t0) * 1000
+    _emit("embed", ms=timings_ms["embed"])
 
     # Step 3: Metadata filters
     filtered_filters = rag.filter_builder.build_filters(entities)
@@ -251,11 +265,17 @@ def run_supply_line_2_rag(
     # attributed to "S3 Vectors" was actually variant-gen + S3 queries combined.
     timings_ms["retrieve_variant_gen"] = bundle.variant_gen_ms
     timings_ms["retrieve_s3_query"] = bundle.s3_query_ms
+    _emit(
+        "retrieve", ms=timings_ms["retrieve"],
+        n_hits=len(bundle.union_hits),
+        n_variant_queries=len(bundle.variant_queries),
+    )
 
     # Steps 6–7: Sentence expansion + dedup
     t0 = perf_counter()
     unique_sents = rag.expander.expand_and_deduplicate(bundle.union_hits)
     timings_ms["expand"] = (perf_counter() - t0) * 1000
+    _emit("expand", ms=timings_ms["expand"], n_sentences=len(unique_sents))
 
     # Step 8 (optional): Cross-encoder reranking. Pruning only -- ContextAssembler
     # re-sorts into document order regardless, so a reranker that only reordered
@@ -267,11 +287,13 @@ def run_supply_line_2_rag(
         reranked_sents = rag.reranker.rerank(query, unique_sents)
         timings_ms["rerank"] = (perf_counter() - t0) * 1000
         final_sents = reranked_sents
+        _emit("rerank", ms=timings_ms["rerank"])
 
     # Step 10: Context assembly
     t0 = perf_counter()
     context_str = rag.assembler.assemble(final_sents)
     timings_ms["assemble"] = (perf_counter() - t0) * 1000
+    _emit("assemble", ms=timings_ms["assemble"], context_chars=len(context_str))
 
     telemetry = build_retrieval_telemetry(
         query, bundle, unique_sents, timings_ms, reranked_sents=reranked_sents,
@@ -301,6 +323,7 @@ def build_combined_context(
     rag: RAGComponents,
     include_kpi: bool = True,
     include_rag: bool = True,
+    on_progress: Optional[Callable[[str, Dict[str, Any]], None]] = None,
 ) -> Tuple[str, Dict[str, Any]]:
     """
     High-level helper: run both supply lines and append their outputs.
@@ -343,7 +366,9 @@ def build_combined_context(
 
     # RAG side
     if include_rag:
-        rag_block, rag_entities, rag_bundle, _, _, retrieval_stats = run_supply_line_2_rag(query, rag)
+        rag_block, rag_entities, rag_bundle, _, _, retrieval_stats = run_supply_line_2_rag(
+            query, rag, on_progress=on_progress
+        )
         meta["rag_block"] = rag_block
         meta["rag_entities"] = rag_entities
         meta["retrieval_bundle"] = rag_bundle
