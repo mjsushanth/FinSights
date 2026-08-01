@@ -51,8 +51,9 @@ Usage:
     result = client.query("What was Apple's revenue?")
 """
 
+import json
 import requests
-from typing import Dict, Optional, Any
+from typing import Dict, Iterator, Optional, Any
 from datetime import datetime
 import os
 from config import BACKEND_URL, API_TIMEOUT
@@ -226,7 +227,76 @@ class FinSightClient:
                 error_type="UnexpectedError",
                 stage="http_request"
             )
-    
+
+
+    def query_stream(
+        self,
+        question: str,
+        include_kpi: bool = True,
+        include_rag: bool = True,
+        model_key: Optional[str] = None
+    ) -> Iterator[Dict[str, Any]]:
+        """
+        Streaming twin of query() (Tier 1 Change 4b, 2026-08-01).
+
+        query() is completely unchanged and still fully functional - this is
+        an addition, not a replacement, so other callers (tests, eval
+        scripts) are unaffected by this method existing.
+
+        Yields parsed SSE event dicts from POST /query/stream as they arrive:
+            {"type": "stage",   "stage": str, "ms": float, ...}
+            {"type": "token",   "text": str}
+            {"type": "replace", "text": str}          # cleaned final answer
+            {"type": "done",    "metadata": dict}
+            {"type": "error",   "error": str, "error_type": str, "stage": str}
+
+        Does not raise - connection/timeout failures surface as a single
+        {"type": "error", ...} event, mirroring query()'s error contract.
+        """
+        payload = {
+            "question": question,
+            "include_kpi": include_kpi,
+            "include_rag": include_rag,
+        }
+        if model_key is not None:
+            payload["model_key"] = model_key
+
+        try:
+            response = requests.post(
+                f"{self.base_url}/query/stream",
+                json=payload,
+                timeout=self.timeout,
+                stream=True,
+            )
+            response.raise_for_status()
+            for line in response.iter_lines(decode_unicode=True):
+                if not line or not line.startswith("data: "):
+                    continue
+                yield json.loads(line[len("data: "):])
+
+        except requests.exceptions.Timeout:
+            yield {
+                "type": "error",
+                "error": f"Query timed out after {self.timeout} seconds",
+                "error_type": "TimeoutError",
+                "stage": "http_request",
+            }
+        except requests.exceptions.ConnectionError:
+            yield {
+                "type": "error",
+                "error": f"Cannot connect to backend at {self.base_url}",
+                "error_type": "ConnectionError",
+                "stage": "http_request",
+            }
+        except Exception as e:
+            yield {
+                "type": "error",
+                "error": f"Unexpected error: {str(e)}",
+                "error_type": "UnexpectedError",
+                "stage": "http_request",
+            }
+
+
     
     # ========================================================================
     # PRIVATE HELPER METHODS

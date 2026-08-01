@@ -25,8 +25,9 @@ Does NOT:
 """
 
 from pathlib import Path
-from typing import Dict, Optional
+from typing import Any, Dict, Iterator, Optional
 import logging
+import queue
 import threading
 import time
 
@@ -459,6 +460,179 @@ def answer_query(
     
     logger.info("Query processing complete")
     return result
+
+
+# ============================================================================
+# STREAMING VARIANT (Tier 1 Change 4b, 2026-08-01)
+#
+# Sibling to answer_query() - answer_query() itself is NOT modified, so the
+# CLI, the batch harness, and the non-streaming /query endpoint are all
+# unaffected. Reuses the same cached getters (_get_rag_components() etc.)
+# and the same _LOG_LOCK.
+#
+# Bridging problem: build_combined_context()'s on_progress callback (Change
+# 4a) fires synchronously, deep inside the call stack, but this function
+# needs to *yield* events from the top as they happen. Per
+# TIER1_LATENCY_DESIGN.md section 4b, the whole pipeline runs on a background
+# worker thread that pushes onto a thread-safe queue.Queue; this generator
+# drains that queue and yields each item as it arrives. This is the only
+# viable shape for a synchronous generator that must yield in real time from
+# work happening on another thread - a single thread cannot both run the
+# blocking pipeline and drain its own callback's queue at the same time.
+# ============================================================================
+
+def answer_query_stream(
+    query: str,
+    model_root: Path,
+    include_kpi: bool = True,
+    include_rag: bool = True,
+    model_key: Optional[str] = None,
+    export_context: bool = True,
+    export_response: bool = True,
+) -> Iterator[Dict[str, Any]]:
+    """
+    Streaming twin of answer_query(). Same pipeline, yielded as events
+    instead of returned as one dict.
+
+    Event shapes (see TIER1_LATENCY_DESIGN.md section 4a/4b):
+        {"type": "stage",   "stage": str, ...stage-specific detail...}
+        {"type": "token",   "text": str}
+        {"type": "replace", "text": str}                       # cleaned final answer
+        {"type": "done",    "metadata": dict}
+        {"type": "error",   "error": str, "error_type": str, "stage": str}
+
+    Does NOT raise - all errors surface as an "error" event, mirroring
+    answer_query()'s "does not raise" contract.
+    """
+    events: "queue.Queue" = queue.Queue()
+
+    def on_progress(stage: str, detail: Dict[str, Any]) -> None:
+        # Guard against a bug in event formatting/consumption taking down
+        # retrieval - flagged as a requirement in the Change 4a entry.
+        try:
+            events.put({"type": "stage", "stage": stage, **detail})
+        except Exception as e:
+            logger.error(f"on_progress bridge failed (non-fatal): {e}", exc_info=True)
+
+    def worker() -> None:
+        start_time = time.time()
+        try:
+            config = MLConfig()
+            rag_components = _get_rag_components()
+            prompt_loader = _get_prompt_loader()
+            llm_client = _get_llm_client(config, model_key)
+            query_logger = _get_query_logger()
+        except Exception as e:
+            logger.error(f"Streaming initialization failed: {e}", exc_info=True)
+            error_response = create_error_response(query=query, error=e, stage='initialization')
+            d = error_response.to_dict()
+            events.put({"type": "error", "error": d.get("error"),
+                        "error_type": d.get("error_type"), "stage": d.get("stage")})
+            return
+
+        try:
+            combined_context, context_metadata = build_combined_context(
+                query=query, rag=rag_components,
+                include_kpi=include_kpi, include_rag=include_rag,
+                on_progress=on_progress,
+            )
+        except Exception as e:
+            logger.error(f"Streaming context building failed: {e}", exc_info=True)
+            error_response = create_error_response(query=query, error=e, stage='context_building')
+            d = error_response.to_dict()
+            with _LOG_LOCK:
+                try:
+                    query_logger.log_query(result=d, export_context=False,
+                                            export_response=export_response)
+                except Exception as log_error:
+                    logger.error(f"Logging failed: {log_error}")
+            events.put({"type": "error", "error": d.get("error"),
+                        "error_type": d.get("error_type"), "stage": d.get("stage")})
+            return
+
+        try:
+            system_prompt = prompt_loader.load_system_prompt()
+            user_prompt = prompt_loader.format_query_template(combined_context)
+        except Exception as e:
+            logger.error(f"Streaming prompt formatting failed: {e}", exc_info=True)
+            error_response = create_error_response(query=query, error=e, stage='prompt_formatting')
+            d = error_response.to_dict()
+            with _LOG_LOCK:
+                try:
+                    query_logger.log_query(result=d, export_context=export_context,
+                                            export_response=export_response)
+                except Exception as log_error:
+                    logger.error(f"Logging failed: {log_error}")
+            events.put({"type": "error", "error": d.get("error"),
+                        "error_type": d.get("error_type"), "stage": d.get("stage")})
+            return
+
+        try:
+            llm_response = None
+            for kind, payload in llm_client.invoke_stream(system=system_prompt, user=user_prompt):
+                if kind == "text":
+                    events.put({"type": "token", "text": payload})
+                elif kind == "final":
+                    llm_response = payload
+            if llm_response is None:
+                raise RuntimeError("invoke_stream() produced no final event")
+        except Exception as e:
+            logger.error(f"Streaming LLM invocation failed: {e}", exc_info=True)
+            error_response = create_error_response(query=query, error=e, stage='llm_invocation')
+            d = error_response.to_dict()
+            with _LOG_LOCK:
+                try:
+                    query_logger.log_query(result=d, export_context=export_context,
+                                            export_response=export_response)
+                except Exception as log_error:
+                    logger.error(f"Logging failed: {log_error}")
+            events.put({"type": "error", "error": d.get("error"),
+                        "error_type": d.get("error_type"), "stage": d.get("stage")})
+            return
+
+        try:
+            processing_time_ms = (time.time() - start_time) * 1000
+            response = create_success_response(
+                query=query, answer=llm_response['content'], context=combined_context,
+                llm_response=llm_response, context_metadata=context_metadata,
+                processing_time_ms=processing_time_ms,
+            )
+            result = response.to_dict()
+        except Exception as e:
+            logger.error(f"Streaming response packaging failed: {e}", exc_info=True)
+            error_response = create_error_response(query=query, error=e, stage='response_packaging')
+            d = error_response.to_dict()
+            with _LOG_LOCK:
+                try:
+                    query_logger.log_query(result=d, export_context=export_context,
+                                            export_response=export_response)
+                except Exception as log_error:
+                    logger.error(f"Logging failed: {log_error}")
+            events.put({"type": "error", "error": d.get("error"),
+                        "error_type": d.get("error_type"), "stage": d.get("stage")})
+            return
+
+        try:
+            with _LOG_LOCK:
+                query_logger.log_query(result=result, export_context=export_context,
+                                        export_response=export_response)
+        except Exception as e:
+            logger.error(f"Logging failed (non-fatal): {e}", exc_info=True)
+
+        events.put({"type": "replace", "text": result["answer"]})
+        events.put({"type": "done", "metadata": result["metadata"]})
+
+    thread = threading.Thread(target=worker, daemon=True)
+    thread.start()
+
+    try:
+        while True:
+            item = events.get()
+            yield item
+            if item.get("type") in ("error", "done"):
+                break
+    finally:
+        thread.join(timeout=5.0)
 
 
 # ============================================================================

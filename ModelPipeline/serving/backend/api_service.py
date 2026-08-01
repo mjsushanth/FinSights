@@ -35,14 +35,15 @@ Usage:
 
 """
 
+import json
 import sys
 from pathlib import Path
 from datetime import datetime
-from typing import Dict, Any
+from typing import Dict, Any, Iterator
 
 from fastapi import FastAPI, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, StreamingResponse
 from loguru import logger
 
 from backend.models import (
@@ -69,7 +70,10 @@ if str(MODEL_PIPELINE_ROOT) not in sys.path:
 
 # Import using absolute path from ModelPipeline
 try:
-    from finrag_ml_tg1.rag_modules_src.synthesis_pipeline.orchestrator import answer_query
+    from finrag_ml_tg1.rag_modules_src.synthesis_pipeline.orchestrator import (
+        answer_query,
+        answer_query_stream,
+    )
     logger.info(f" Successfully imported orchestrator")
 except ImportError as e:
     logger.error(f"❌ Failed to import orchestrator: {e}")
@@ -256,6 +260,39 @@ def query_endpoint(request: QueryRequest):
                 "query": request.question
             }
         )
+
+
+@app.post("/query/stream", tags=["Query"])
+def query_stream_endpoint(request: QueryRequest):
+    """
+    Streaming twin of /query (Tier 1 Change 4b, 2026-08-01).
+
+    /query is left completely unchanged above, so the Streamlit UI can fall
+    back to it and the gold-set eval harness is unaffected by this endpoint
+    existing. Server-Sent Events (SSE): one JSON object per line, newline-
+    delimited, per TIER1_LATENCY_DESIGN.md section 4a event protocol.
+
+    Deliberately a sync `def`, matching query_endpoint's Change 2 reasoning -
+    FastAPI runs it in its threadpool, keeping the event loop free. The
+    actual pipeline work happens on a further worker thread spawned inside
+    answer_query_stream() itself (see orchestrator.py) so this thread is free
+    to drain and forward events as they arrive.
+    """
+    logger.info(f"📥 Received streaming query: {request.question[:50]}...")
+
+    def event_source() -> Iterator[str]:
+        for event in answer_query_stream(
+            query=request.question,
+            model_root=MODEL_PIPELINE_ROOT,
+            include_kpi=request.include_kpi,
+            include_rag=request.include_rag,
+            model_key=request.model_key,
+            export_context=config.enable_exports,
+            export_response=config.enable_exports,
+        ):
+            yield f"data: {json.dumps(event)}\n\n"
+
+    return StreamingResponse(event_source(), media_type="text/event-stream")
 
 
 # ============================================================================

@@ -116,63 +116,83 @@ def handle_user_input(client: FinSightClient) -> None:
         with st.chat_message("user"):
             st.markdown(prompt)
         
-        # Process query with loading indicator. The wait is 25-50s by design (the
-        # cost-over-latency trade-off), so the spinner names the pipeline stages
-        # instead of just saying "processing" - it sets the right expectation
-        # without claiming any stage has finished.
+        # Process query with LIVE progress (Tier 1 Change 4b, 2026-08-01).
+        # Previously a static spinner for the full 25-50s+ with no feedback -
+        # replaced with real pipeline-stage events plus token-by-token text as
+        # they actually arrive. client.query() (non-streaming) is untouched
+        # and still available - this only changes what this call site uses.
         with st.chat_message("assistant"):
-            with st.spinner(
-                "Extracting entities, retrieving filings, synthesising - "
-                "typically 25-50 seconds..."
+            model_key = st.session_state.get("model_key")
+
+            status = st.status("Starting...", expanded=False)
+            answer_placeholder = st.empty()
+
+            accumulated_text = ""
+            final_metadata: Dict[str, Any] = {}
+            error_event: Dict[str, Any] = {}
+
+            for event in client.query_stream(
+                question=prompt,
+                include_kpi=True,
+                include_rag=True,
+                model_key=model_key
             ):
-                # Get model_key from session state
-                model_key = st.session_state.get("model_key")
+                etype = event.get("type")
 
-                # Call backend
-                result = client.query(
-                    question=prompt,
-                    include_kpi=True,
-                    include_rag=True,
-                    model_key=model_key
-                )
+                if etype == "stage":
+                    ms = event.get("ms", 0)
+                    status.update(label=f"{event.get('stage', '...')} ({ms:.0f} ms)")
 
-            # Handle response
-            if result.get("success"):
-                # Success - display answer
-                answer = result.get("answer", "")
-                metadata = result.get("metadata", {})
+                elif etype == "token":
+                    # Raw, uncleaned deltas while streaming - see
+                    # TIER1_LATENCY_DESIGN.md section 4.0. Plain markdown only;
+                    # render_answer() needs the COMPLETE cleaned text (it parses
+                    # a DATA SOURCES section that only exists once the answer
+                    # has fully arrived), so it is called once, below, on
+                    # "replace" - never on a partial stream.
+                    accumulated_text += event.get("text", "")
+                    answer_placeholder.markdown(accumulated_text + " ▌")
 
-                render_answer(answer)
-                
-                # Add to history
-                add_assistant_message(
-                    content=answer,
-                    metadata=metadata,
-                    error=False
-                )
-                
-                # Update metrics
-                cost = metadata.get("llm", {}).get("cost", 0.0)
-                update_metrics(cost)
-                
-                # Display metadata
-                display_query_metadata(metadata)
-            
-            else:
-                # Error - display error message
-                error_msg = result.get("error", "Unknown error occurred")
-                error_type = result.get("error_type", "UnknownError")
-                stage = result.get("stage", "unknown")
-                
+                elif etype == "replace":
+                    accumulated_text = event.get("text", accumulated_text)
+
+                elif etype == "done":
+                    final_metadata = event.get("metadata", {})
+                    status.update(label="Done", state="complete")
+
+                elif etype == "error":
+                    error_event = event
+                    status.update(label="Error", state="error")
+
+            if error_event:
+                error_msg = error_event.get("error", "Unknown error occurred")
+                error_type = error_event.get("error_type", "UnknownError")
+                stage = error_event.get("stage", "unknown")
+
                 display_error_message(error_msg, error_type, stage)
-                
-                # Add error to history
+
                 add_assistant_message(
                     content=error_msg,
                     metadata=None,
                     error=True
                 )
-        
+            else:
+                # Final render, once, with the complete cleaned text - same
+                # citation-chip rendering the non-streaming path always used.
+                with answer_placeholder.container():
+                    render_answer(accumulated_text)
+
+                add_assistant_message(
+                    content=accumulated_text,
+                    metadata=final_metadata,
+                    error=False
+                )
+
+                cost = final_metadata.get("llm", {}).get("cost", 0.0)
+                update_metrics(cost)
+
+                display_query_metadata(final_metadata)
+
         # Rerun to update UI
         st.rerun()
 

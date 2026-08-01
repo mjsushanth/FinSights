@@ -42,7 +42,9 @@ Change 3 is **gated** — do not start it until Step 0 produces a number.
     [SKIPPED] CHANGE 3 Concurrent retrieval — gate failed 2026-08-01, see entry for why
               (also: variant_gen_ms measured LARGER than s3_query_ms, so ceiling
               benefit is smaller than originally assumed even independent of the gate)
-    [ ] CHANGE 4b Token streaming (invoke_stream + /query/stream + Streamlit consumer)
+    [x] CHANGE 4b Token streaming. DONE 2026-08-01, verified live in a real
+                 browser (screenshots of live stage updates + token streaming +
+                 final citation-chip render) plus direct SSE curl test. See entries.
     [ ] VERIFY   Local Docker end-to-end, both containers, real AWS, real query
     [ ] WRITEUP  Findings into tier1_latency/ notebook + a summary entry here
 
@@ -520,3 +522,132 @@ Running total: still far under both caps.
 Next: build `answer_query_stream()` (orchestrator.py) + `/query/stream`
 (api_service.py) + Streamlit consumer, in a fresh focused pass. Then the
 Docker VERIFY step, then WRITEUP.
+
+### 2026-08-01 13:38 — CHANGE 4b (SSE endpoint + Streamlit consumer) — DONE, verified in a real browser
+
+What I did:
+- `orchestrator.py`: added `answer_query_stream()` as a sibling to `answer_query()`
+  (which is untouched). Runs the whole pipeline (init -> context building ->
+  prompt formatting -> streaming LLM call -> response packaging -> logging) on
+  a background `threading.Thread`, using a `queue.Queue` as the bridge - the
+  worker pushes `{"type": ...}` event dicts (stage events via the Change 4a
+  `on_progress` callback, `token` events from `invoke_stream`, then `replace`/
+  `done`/`error`), and the generator itself just drains the queue and yields.
+  Mirrors every one of `answer_query()`'s 5 try/except stages so error
+  responses carry the same `stage` field contract. Reuses the SAME cached
+  getters (`_get_rag_components()` etc.) and the SAME `_LOG_LOCK` from Change 1.
+- `api_service.py`: added `POST /query/stream` (plain `def`, same Change 2
+  reasoning) returning `StreamingResponse(event_source(), media_type=
+  "text/event-stream")`. `/query` and `query_endpoint` are byte-for-byte
+  unchanged - this is a new, additional route.
+- `api_client.py` (Streamlit side): added `FinSightClient.query_stream()`,
+  a generator using `requests.post(..., stream=True)` +
+  `response.iter_lines()`, parsing `data: {...}` SSE lines. `query()`
+  (non-streaming) is untouched.
+- `chat.py`: replaced the static `st.spinner("...typically 25-50 seconds")`
+  block in `handle_user_input()` with a live consumer: `st.status()` for
+  stage events, `st.empty()` accumulating raw token text with a trailing
+  `▌` cursor. On `"replace"`, calls `render_answer()` (the existing citation-
+  chip component) exactly ONCE on the complete cleaned text, inside
+  `answer_placeholder.container()` - never on partial/streaming text, since
+  `render_answer()` parses a "DATA SOURCES:" section that only exists once
+  the answer has fully arrived. Error/metadata/history handling
+  (`display_error_message`, `add_assistant_message`, `update_metrics`,
+  `display_query_metadata`) reused unchanged - the streaming event shapes
+  were designed to match the non-streaming dict fields exactly, so no
+  adapter code was needed.
+- `python3 -m py_compile` on all 4 touched files: SYNTAX OK.
+
+Verification, in order of increasing realism:
+1. Backend-only: started uvicorn locally, curled `/query/stream` directly for
+   a real query (Amazon revenue 2020). Captured raw SSE: 5 `stage` events (all
+   correctly ordered, correct entity extraction "AMZN"/2020), 95 real `token`
+   deltas, exactly 1 `replace`, exactly 1 `done` with correct real metadata
+   (cost $0.012424, 11,504 tokens). Checked the S3 log directly: landed
+   exactly once.
+2. Full browser test (per this session's own rule: UI changes need a real
+   browser check before being called done). Started uvicorn + Streamlit
+   locally, opened the Browser tool, navigated to `/chatbot`, typed "What was
+   Netflix revenue in 2019?", submitted via the send button.
+   VERIFIED VISUALLY, screenshots captured at two points:
+     - Mid-stream: chat bubble showed the live `st.status` label
+       "assemble (3 ms)" updating in real time, with the answer text already
+       partially visible below it, ending in the `▌` cursor - i.e. stage
+       events and token deltas were both rendering live, exactly as designed.
+     - Final: `st.status` collapsed (done), answer rendered through the real
+       `render_answer()` component with the SAME citation-chip UI as the
+       non-streaming path ("SOURCES" header, numbered badge, "Financial
+       Metrics (Revenue)" chip, "KPI Snapshot" pill), followed by the correct
+       metadata row: Model claude-haiku-4-5, Tokens 12,706, Cost $0.0129,
+       Latency 6.9s. TOTAL QUERIES in the sidebar incremented 0 -> 1,
+       confirming `add_assistant_message`/`update_metrics` fired correctly.
+   Checked the S3 log again: this query also landed exactly once
+   (cost $0.012886, matching the UI's displayed $0.0129).
+
+Acceptance criteria from TIER1_LATENCY_DESIGN.md section 4d:
+  1. First stage event reaches quickly - VERIFIED (both curl and browser).
+  2. Tokens appear progressively, not all at once - VERIFIED (95 deltas in
+     the curl test; visually confirmed live in the browser screenshot).
+  3. Final answer identical in shape/quality to non-streaming - PARTIALLY
+     VERIFIED. Same rendering component, same citation-chip behavior, correct
+     content - but NOT a byte-identical A/B against a parallel non-streaming
+     call of the SAME query, because `semantic_variants.temperature: 0.7`
+     already makes repeat calls to the same query nondeterministic (same
+     caveat as Step 0's Change 3 parity reasoning) - an exact-match test
+     would measure the LLM's sampling, not this change.
+  4. cost/tokens in `done` match reality - VERIFIED twice (curl test's
+     metadata, and the browser UI's displayed values both cross-checked
+     against the actual S3 log rows).
+  5. Query lands in log exactly once - VERIFIED twice (once per real query
+     in this entry, zero duplicates both times).
+  6. `/query` and the CLI still work unchanged - VERIFIED by construction
+     (neither `answer_query()` nor `query_endpoint()` was touched in this
+     change) plus already live-tested under real concurrency in the Change 2
+     entry above.
+
+Self-critique:
+- Two real browser-interaction failures before the query actually submitted:
+  Enter-to-submit did not work on this custom chat input, and my first two
+  clicks on the send button used stale/guessed coordinates from an earlier
+  screenshot rather than a fresh element ref - both landed on nothing.
+  Diagnosed correctly on the third attempt by re-reading the page for a fresh
+  `ref` and clicking that directly instead of a coordinate, which then worked
+  immediately. Recording this because it is a real, generalizable lesson: for
+  any custom-styled Streamlit widget, click by `ref` from a page read taken
+  at the moment of interaction, not by a coordinate reused across
+  screenshots - layout is not guaranteed stable between them.
+- `answer_query_stream()` has real, un-fixed limitations, honestly flagged
+  rather than silently accepted:
+    - No cancellation on client disconnect. If the browser closes mid-stream,
+      Starlette raises `GeneratorExit` in the generator (handled - the
+      `finally: thread.join(timeout=5.0)` still runs), but the WORKER thread
+      itself has no cancellation signal and will run the full pipeline to
+      completion regardless, including paying for the LLM call. Acceptable
+      for now (matches this codebase's existing "queries always run to
+      completion" behavior) but worth knowing before assuming a disconnect
+      saves cost.
+    - `on_progress`'s `events.put()` is wrapped in try/except (added per the
+      Change 4a self-critique's own flag), but nothing analogous guards
+      `invoke_stream()`'s own iteration inside the worker beyond the existing
+      outer try/except around the whole LLM-invocation stage - sufficient for
+      correctness, not exhaustively hardened.
+    - Did not test what happens under >1 concurrent streaming request (this
+      entry tested one full pipeline stream at a time, twice, sequentially).
+      Change 2's concurrency proof was for the NON-streaming path; a second,
+      separate proof for two simultaneous SSE streams was not done here.
+- Did not verify this on ECS/Docker - ports 8000/8501 talking over
+  `localhost` inside a container, and Streamlit's rerun cycle under a real
+  container's process model, are both still unconfirmed. That is explicitly
+  the next queue item (VERIFY), not skipped, not silently folded into this
+  one.
+
+Cost this entry: 2 real full queries (Amazon $0.012424, Netflix $0.012886)
+= $0.02531 VERIFIED. Running total across the whole run: ~19 query-
+equivalents / 40 cap, ~$0.068 / $8.00 cap - both far under budget.
+
+Next: VERIFY (Docker end-to-end, both containers, real AWS) - this queue item
+requires a full container build/run, which is a substantially different kind
+of work (image builds, container networking) from the Python-level changes
+done so far this run. Evaluating whether to continue into it now or
+checkpoint here, given four major changes have now landed and been verified
+live in this single session.
