@@ -447,3 +447,76 @@ event-stream field names are explicitly flagged UNVERIFIED in the design doc
 and need a live single-call probe before building on them) - this is a
 natural place to check the cost ledger and time budget before committing to
 it in this same run.
+
+### 2026-08-01 13:40 — CHANGE 4b (partial: invoke_stream primitive) — PARTIAL
+
+What I did:
+- Resolved the design doc's explicit "TO VERIFY AT IMPLEMENTATION TIME" flag on
+  Bedrock's streaming event structure with one real, minimal, cheap probe
+  (`max_tokens=20`) BEFORE writing any streaming code, rather than building on
+  an assumption. Confirmed exact field paths:
+    message_start.message.usage.input_tokens
+    content_block_delta.delta.text
+    message_delta.usage.output_tokens
+    message_delta.delta.stop_reason
+  All four match the design doc's pseudocode exactly - no correction needed to
+  the plan, only confirmation. Two event types not in the pseudocode also
+  appear in the real stream (`content_block_start`, `content_block_stop`) -
+  both carry no delta text, correctly ignored by an unmatched `elif` chain
+  rather than needing explicit handling.
+  Bonus, NOT acted on: `message_stop` carries
+  `amazon-bedrock-invocationMetrics.firstByteLatency` - a real, precise
+  server-side TTFT metric. Noted as a future enhancement, not built - out of
+  the approved scope for this change.
+- `bedrock_client.py`: added `invoke_stream()` alongside `invoke()` (NOT
+  modifying `invoke()` itself - the CLI, batch harness, and `answer_query()`
+  all keep using it unchanged). Yields `("text", str)` per delta, then exactly
+  one `("final", dict)` with the SAME shape as `invoke()`'s return value
+  (content/usage/cost/model_id/stop_reason), so downstream response packaging
+  and cost tracking need no changes to consume it. `clean_llm_response()` runs
+  once, on the complete joined text, in the final event only - per the
+  design's section 4.0 constraint (text cannot be cleaned before it fully
+  arrives).
+- `python3 -m py_compile`: SYNTAX OK.
+- Wrote and ran `tier1_latency/change4b_verify_invoke_stream.py`: one real
+  capped call (`max_tokens=20`), with hard assertions (not just prints) on
+  every field of the final event.
+
+What I observed (VERIFIED, real AWS, 1 capped call):
+
+    delta: 'hello world'
+    final: {'content': 'hello world',
+             'usage': {'input_tokens': 21, 'output_tokens': 5},
+             'cost': 4.6e-05, 'stop_reason': 'end_turn', ...}
+    time to first token: 1295.7ms
+    total stream time:   1296.5ms
+    All 5 assertions PASSED.
+
+Self-critique:
+- This test's response was short enough (5 output tokens) that the whole
+  answer arrived as ONE delta chunk, so time-to-first-token == total time
+  here. That is NOT representative of a real answer (hundreds of tokens,
+  many small deltas) - the real TTFT benefit this change is FOR has not
+  actually been demonstrated yet, only the plumbing's correctness has.
+- This is `invoke_stream()` in isolation only. NOT built yet, and explicitly
+  the larger remaining slice: (a) `answer_query_stream()` sibling in
+  orchestrator.py bridging the synchronous `on_progress` callback (Change 4a)
+  into a generator via a queue - the design doc flags this bridging as the
+  trickiest remaining plumbing; (b) the `/query/stream` SSE endpoint in
+  api_service.py; (c) the Streamlit multiplexed consumer (stage events +
+  token text from one stream, not just `st.write_stream`); (d) real container
+  verification, since streaming behaves differently through Docker/uvicorn
+  than a bare local process.
+- Deliberately stopping here rather than rushing (b)/(c)/(d) into this same
+  long turn. Four solid, independently-verified, committed changes already
+  landed this run (Step 0, Change 1, Change 2, Change 4a) plus the riskiest
+  unknown in 4b resolved and its core primitive proven - this is a real
+  checkpoint, not an excuse to stop short of finishing.
+
+Cost this entry: 2 tiny capped calls (the field-path probe + this verification,
+both `max_tokens<=20`) - real but negligible, well under a cent combined.
+Running total: still far under both caps.
+
+Next: build `answer_query_stream()` (orchestrator.py) + `/query/stream`
+(api_service.py) + Streamlit consumer, in a fresh focused pass. Then the
+Docker VERIFY step, then WRITEUP.

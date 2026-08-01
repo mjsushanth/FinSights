@@ -10,7 +10,7 @@ Does NOT: Build prompts, format context, manage configuration.
 
 import boto3
 import json
-from typing import Dict
+from typing import Dict, Iterator, Tuple, Any
 import logging
 
 from ..utilities.response_cleaner import clean_llm_response
@@ -203,6 +203,92 @@ class BedrockClient:
             logger.error(f"Bedrock API error: {e}", exc_info=True)
             raise
     
+
+    def invoke_stream(self, system: str, user: str) -> Iterator[Tuple[str, Any]]:
+        """
+        Invoke Claude model with streaming, yielding text deltas then a final summary.
+
+        Tier 1 Change 4b (2026-08-01). Uses invoke_model_with_response_stream
+        rather than Converse - invoke() already uses the raw Anthropic messages
+        body via invoke_model, not the Converse API, so this mirrors that same
+        choice for consistency.
+
+        Event field paths below were VERIFIED against a real live call before
+        writing this (not assumed): message_start.message.usage.input_tokens,
+        content_block_delta.delta.text, message_delta.usage.output_tokens,
+        message_delta.delta.stop_reason. content_block_start/content_block_stop
+        also occur in the real stream and are intentionally ignored - no delta
+        text lives on them.
+
+        clean_llm_response() runs on the COMPLETE text only, once, in the final
+        "final" event - text cannot be cleaned before it has fully arrived, so
+        the caller sees raw deltas while streaming and one cleaned replacement
+        at the end. See TIER1_LATENCY_DESIGN.md section 4.0.
+
+        Yields:
+            ("text", str)  - one per content_block_delta, raw (uncleaned) text
+            ("final", dict) - exactly once, last - same shape as invoke()'s
+                              return value, so downstream response packaging
+                              and cost tracking are unchanged.
+
+        Raises:
+            Exception: On AWS API errors (caller should handle), same as invoke()
+        """
+        body = {
+            "anthropic_version": "bedrock-2023-05-31",
+            "max_tokens": self.max_tokens,
+            "temperature": self.temperature,
+            "system": system,
+            "messages": [{"role": "user", "content": user}],
+        }
+
+        try:
+            response = self.client.invoke_model_with_response_stream(
+                modelId=self.model_id, body=json.dumps(body)
+            )
+        except Exception as e:
+            logger.error(f"Bedrock streaming API error: {e}", exc_info=True)
+            raise
+
+        input_tokens = 0
+        output_tokens = 0
+        stop_reason = "unknown"
+        parts = []
+
+        for event in response["body"]:
+            payload = json.loads(event["chunk"]["bytes"])
+            kind = payload.get("type")
+
+            if kind == "message_start":
+                input_tokens = payload["message"]["usage"]["input_tokens"]
+            elif kind == "content_block_delta":
+                text = payload["delta"].get("text", "")
+                if text:
+                    parts.append(text)
+                    yield ("text", text)
+            elif kind == "message_delta":
+                output_tokens = payload["usage"]["output_tokens"]
+                stop_reason = payload["delta"].get("stop_reason") or stop_reason
+            # content_block_start / content_block_stop / message_stop: no
+            # delta text and no usage not already captured above - ignored.
+
+        raw_content = "".join(parts)
+        content = clean_llm_response(raw_content, log_changes=True)
+        cost = self._calculate_cost(input_tokens, output_tokens)
+
+        logger.info(
+            f"Bedrock stream complete: input={input_tokens} tokens, "
+            f"output={output_tokens} tokens, cost=${cost:.4f}, "
+            f"stop_reason={stop_reason}"
+        )
+
+        yield ("final", {
+            "content": content,
+            "usage": {"input_tokens": input_tokens, "output_tokens": output_tokens},
+            "cost": cost,
+            "model_id": self.model_id,
+            "stop_reason": stop_reason,
+        })
 
     def _calculate_cost(self, input_tokens: int, output_tokens: int) -> float:
         """
