@@ -38,7 +38,7 @@ def inject_global_css():
         }
 
         .stApp {
-            background-color: #140F32 !important; /* deep blue-violet */
+            background-color: #0c011c !important; /* deep blue-violet */
         }
 
         .main .block-container {
@@ -96,7 +96,7 @@ def inject_global_css():
            ======================================================================= */
 
         [data-testid="stMetric"] {
-            background: rgba(20, 15, 50, 0.9) !important;
+            background: rgba(12, 1, 28, 0.9) !important;
             padding: 1.3rem !important;
             border-radius: 24px !important;
             border: 1.5px solid rgba(59, 130, 246, 0.4) !important;
@@ -151,7 +151,7 @@ def inject_global_css():
         }
 
         .stButton > button[kind="secondary"] {
-            background: rgba(20, 15, 50, 0.6) !important;
+            background: rgba(12, 1, 28, 0.6) !important;
             color: #e5e7eb !important;
             border: 1px solid rgba(148, 163, 184, 0.3) !important;
             border-radius: 10px !important;
@@ -221,7 +221,7 @@ def inject_global_css():
             flex: 1 1 calc(33.333% - 2rem);
             min-width: 260px;
 
-            background: rgba(20, 15, 50, 0.9);
+            background: rgba(12, 1, 28, 0.9);
             border: 1.5px solid rgba(59, 130, 246, 0.5);
             border-radius: 40px;
             padding: 1.8rem 1.6rem;
@@ -339,7 +339,7 @@ def inject_global_css():
         [data-testid="stChatInput"] {
             border-radius: 12px !important;
             border: 1px solid rgba(148, 163, 184, 0.3) !important;
-            background: rgba(20, 15, 50, 0.6) !important;
+            background: rgba(12, 1, 28, 0.6) !important;
         }
         
         [data-testid="stChatInput"]:focus-within {
@@ -354,7 +354,7 @@ def inject_global_css():
         
         /* Sidebar styling */
         [data-testid="stSidebar"] {
-            background: rgba(20, 15, 50, 0.95) !important;
+            background: rgba(12, 1, 28, 0.95) !important;
             border-right: 1px solid rgba(148, 163, 184, 0.1) !important;
         }
         
@@ -367,7 +367,7 @@ def inject_global_css():
         
         /* Sidebar expanders */
         [data-testid="stSidebar"] [data-testid="stExpander"] {
-            background: rgba(20, 15, 50, 0.6) !important;
+            background: rgba(12, 1, 28, 0.6) !important;
             border: 1px solid rgba(148, 163, 184, 0.2) !important;
             border-radius: 8px !important;
             margin-bottom: 0.5rem !important;
