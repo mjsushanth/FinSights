@@ -690,6 +690,16 @@ recurring $25.50`, `annual $306.00`.
 Its own conclusion is the useful part: *"The real cost centers are typically embeddings and LLM
 tokens, not vector comparisons."*
 
+**RESOLVED 2026-08-05 — this is now (a), a measurement.** Cost Explorer on the live account
+(908877262866) supplied the real rates, and `S3Vect_QueryCost.md` has a new "Verified pricing"
+section carrying them. Outcome: AWS bills S3 Vectors at **$0.06/GB-month** storage and
+**$0.20/GB** PUT — there is no "comparison" billing unit, so `P = $1.00/1M comparisons` was
+invented. The `~$0.30 per million vectors` heuristic was close ($0.244/M measured) but sized
+for the deleted 203k index; the live 614,647 vectors occupy 2.501 GB = $0.150/month. The
+document's claim that PUT is "effectively free" was **false** — populating the index cost
+$0.500237. The qualitative conclusion quoted above is **confirmed**: Bedrock was 81% of a
+$4.59 June–August total, S3 Vectors storage under 4%.
+
 **Provenance gap flagged:** the `6,153 in / 777 out` and `$0.02782 / $0.01044` figures at
 `:175-176` appear nowhere else in the repo and no run producing them could be located. **Do not
 cite as measured.**
@@ -1210,7 +1220,7 @@ since it was first written.
 | **Open-regime search size** | "71.8M sentences" (`06_Gold_Test_Framework.md:75`) | ≤ 614,787 | **B.** A is off by ~100×. |
 | **Vectors parquet size** | **2,293,538,065 B (2.29 GB)** measured | 1.56 GB / ~2.2 GB | **A.** Three sizes, one file. |
 | **Stage 2 parquet size** | "500 MB – 2.3 GB" / "500MB+" | **64,781,290 B (~62 MiB)** | **B.** Measured. |
-| **Per-vector footprint** | 4,210 B → 0.7962 GB (203k vectors) | 4,399 B → 2.519 GB (614,787) | Different corpora *and* different metadata assumptions. A third value (0.82 GB) at `S3Vect_QueryCost.md:167`. |
+| **Per-vector footprint** | 4,210 B → 0.7962 GB (203k vectors) | 4,399 B → 2.519 GB (614,787) | Different corpora *and* different metadata assumptions. A third value (0.82 GB) at `S3Vect_QueryCost.md:167`. **SETTLED 2026-08-05 by billing data: AWS bills 2.501 GB logical for the live 614,647-vector index** (`Vectors-TimedStorage-ByteHrs`, 0.080683 GB-Month/day × 31). That is 1.067× the 2.345 GiB raw fp32 payload, the excess being metadata + keys. The 2.519 GB estimate was accurate to 0.7%; 0.82 GB and 0.7962 GB both described the deleted 203k index. |
 | **Total latency** | 15.8–36.8 s + one 319.9 s outlier | 9.6–14.1 s | **Both.** Different query classes; resolved in `ECS_FARGATE_RUNBOOK.md` §3.1. |
 | **RAG pipeline constant** | 6.2–7.0 s (Windows, LOCAL_CACHE) | 5.17 s (Mac, 30q telemetry) | Both; different machine and corpus. |
 | **"P50 / P95 / P99"** | 27.9 / 32.1 / 36.3 s | code is `observed × 1.0 / 1.15 / 1.30`, **n=1** | **Neither is a percentile.** And 27.9 is the *mean*; the median is 31.0 s. |
