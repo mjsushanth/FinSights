@@ -173,18 +173,23 @@ always-on cost cleanly:
 
 | Line item | $/day | $/30 days |
 | :-- | --: | --: |
-| S3 Vectors storage (2.501 GB @ $0.06/GB-mo) | 0.0048410 | 0.1452 |
-| S3 Standard + ECR storage (4.968 GB blended) | 0.0049531 | 0.1486 |
+| S3 Vectors storage (2.501 GB @ $0.06/GB-mo) | 0.004841 | 0.1452 |
+| S3 Standard storage | 0.003307 | 0.0992 |
+| ECR image storage | 0.001646 | 0.0494 |
 | **Total** | **0.009794** | **0.2938** |
 
 Swept for silent recurring resources and found **none**: no NAT gateway, load balancer, Elastic
 IP, EBS volume or snapshot, Route 53 hosted zone, Secrets Manager secret, KMS customer key, or
 Glue database. VERIFIED by direct API calls.
 
-**Discrepancy to note, not resolved:** the 07-31 entry recorded ECR standing cost at 0.643 GB →
-$0.0643/month. Today the two repos hold one `latest` image each, 197,961,464 B + 146,761,936 B =
-**0.345 GB**. Either untagged layers have since been reclaimed or the earlier figure counted
-build layers. Not chased - ECR is under 3% of the idle floor either way. UNVERIFIED which.
+**ECR figure from 07-31 revisited.** That entry recorded 0.643 GB → $0.0643/month. Cost
+Explorer now isolates ECR at **$0.001646/day = $0.0494/month**, implying ~0.49 GB stored at
+$0.10/GB-month. `describe-images` reports only 0.345 GB across the two `latest` tags
+(197,961,464 B + 146,761,936 B), so roughly 0.15 GB is untagged layers that `describe-images`
+does not show. Direction of travel is down (0.643 → 0.49 GB), consistent with some layer
+reclamation since 07-31. The remaining tagged-vs-billed gap is **UNVERIFIED** but is inherent to
+how ECR reports: bill by stored layers, API by tagged manifests. ECR is 17% of the idle floor
+and $0.05/month absolute, so not chased further.
 
 ### Spend to date
 
@@ -199,6 +204,29 @@ Haiku 4.5 $1.2715, Rerank 3.5 $0.24). All infrastructure combined - ECS, ECR, VP
 a correction log. Also settled the long-open per-vector footprint contradiction in
 `investigation_analysis/EMPIRICAL_METHODS_AND_FINDINGS.md` at **2.501 GB** logical for 614,647
 vectors. Committed as `889e898`.
+
+### Built: `deploy_aws/cost_forensics.py`
+
+The analysis above was first done with throwaway shell one-liners. It is now a ninth module in
+this package so the next session does not re-derive it: `CostForensics` over `AwsSession`,
+Decimal end to end, usage-type results cached so no service is queried twice.
+
+- `by_service()` / `by_usage_type()` - grouped totals, credits and refunds filtered out.
+- `unit_rates()` - cost / usage quantity. This is what closed open item 3, and is the general
+  way to price anything the Pricing API will not quote.
+- `idle_floor(day)` - pass a zero-activity day to get the true recurring floor, measured.
+- `log_report(start, end)` - the whole breakdown.
+
+Follows the package convention: a `__main__` self-test that creates nothing **and makes no API
+calls** - it checks always-on classification and Decimal aggregation against synthetic data.
+Cost Explorer bills ~$0.01/request, so live querying is opt-in behind `--live`:
+
+```bash
+python -m deploy_aws.cost_forensics                                     # offline, free
+python -m deploy_aws.cost_forensics --live --start 2026-08-03 --end 2026-08-04
+```
+
+Both paths VERIFIED 2026-08-05. The live run independently reproduced the $0.2938/month floor.
 
 ### Still open (unchanged from 07-31)
 
