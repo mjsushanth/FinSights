@@ -20,7 +20,7 @@ Traditional supervised learning evaluates models against static test sets with f
 
 3. **Semantic Equivalence**: "Revenue increased 15% to $2.3B" and "Net sales rose to $2,300M, up 15% YoY" convey identical facts with zero lexical overlap—exact-match metrics fail catastrophically.
 
-4. **Cross-Document Noise**: In a 4,674-company corpus, lexical similarity often misleads. "Item 1A Risk Factors" boilerplate appears in every 10-K, creating false-positive traps that embedding models must navigate.
+4. **Cross-Document Noise**: In a 25-company / 614,647-vector corpus (corrected 2026-08-05 — this read "4,674-company"; 4,674 is the upstream ETL universe, not the embedded corpus, so the scale argument here is weaker than originally written), lexical similarity often misleads. "Item 1A Risk Factors" boilerplate appears in every 10-K, creating false-positive traps that embedding models must navigate.
 
 ### 1.2 Why Three Phases?
 
@@ -100,7 +100,7 @@ Hit@k = (# anchors with ≥1 gold hit) / (total anchors)
 - **Open Regime** (no filters, global 71.8M-sentence search):
   - Hit@1: 21.7%, Hit@3: 46.7%, **Hit@5: 61.0%**
 
-**Interpretation**: 21% Hit@5 delta (82% → 61%) quantifies the cost of **cross-document noise**. ITEM_1A risk boilerplate ("regulatory changes may adversely affect...") creates high cosine similarity across all 4,674 companies, burying true local context under false positives. This validates the need for metadata-driven filtering in production RAG.
+**Interpretation**: 21% Hit@5 delta (82% → 61%) quantifies the cost of **cross-document noise**. ITEM_1A risk boilerplate ("regulatory changes may adversely affect...") creates high cosine similarity across all 25 embedded companies (corrected 2026-08-05 from "4,674"), burying true local context under false positives. This validates the need for metadata-driven filtering in production RAG.
 
 ---
 
@@ -157,7 +157,7 @@ MRR@k = (1/N) × Σ [1/r_i if r_i ≤ k, else 0]
 **Observed Patterns**:
 
 1. **ITEM_1A Boilerplate Dominance**  
-   Risk factor sections contain templated language ("may materially and adversely affect our business, financial condition, and results of operations") that's nearly identical across 4,674 companies. Cosine similarity approaches 0.95+ for boilerplate, drowning out true local context.
+   Risk factor sections contain templated language ("may materially and adversely affect our business, financial condition, and results of operations") that's nearly identical across the 25 embedded companies (corrected 2026-08-05 from "4,674"). Cosine similarity approaches 0.95+ for boilerplate, drowning out true local context.
 
    *Example*: Walmart ITEM_1A sentence #78 ("We are subject to legal proceedings...") retrieved Microsoft #142, Apple #204, Tesla #95 before Walmart #77.
 

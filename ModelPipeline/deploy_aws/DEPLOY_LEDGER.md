@@ -131,3 +131,76 @@ python -m deploy_aws.cli up --no-build   # if the ECR images are still there
 ```
 
 Nothing in this work has been committed to git.
+*(Superseded — see the 2026-08-05 entry: `deploy_aws/` is tracked in git as of the Aug 1 work.)*
+
+---
+
+## 2026-08-05 - cost verification against Cost Explorer
+
+No infrastructure was created, started, or modified. Read-only billing analysis only.
+
+### Open item 3 - RESOLVED: Fargate ARM pricing is now VERIFIED
+
+The 2026-07-31 entry recorded Fargate ARM rates as **UNVERIFIED**, used published figures, and
+asked to "confirm against Cost Explorer after a full day." Done. Derived by dividing
+`UnblendedCost` by `UsageQuantity` per usage type over 2026-07-01 → 2026-08-06:
+
+| Usage type | Published (assumed 07-31) | Measured from bill | Verdict |
+| :-- | --: | --: | :-- |
+| `USE1-Fargate-ARM-vCPU-Hours:perCPU` | $0.03238 / vCPU-hr | **$0.032380** | exact match |
+| `USE1-Fargate-ARM-GB-Hours` | $0.00356 / GB-hr | **$0.003560** | exact match |
+| `USE1-PublicIPv4:InUseAddress` | not recorded | **$0.005000 / hr** | new |
+
+The published rates were right. **VERIFIED.** Note the Pricing API gap that caused the original
+UNVERIFIED label is real and unchanged — service code `AmazonECS` still returns no Fargate usage
+types. Cost Explorer, not the Pricing API, is the way to confirm these.
+
+### Cost of the deployed shape - VERIFIED
+
+For `finsights-app:6` (1 vCPU / 3072 MiB ARM64) at `desiredCount=1`, 24/7:
+
+    1 vCPU x $0.03238  +  3 GB x $0.00356  +  $0.005 IPv4  =  $0.04806/hr
+    -> $1.1534/day  ->  $34.60 per 30 days
+
+Actual Fargate consumed to date: **1.0633 vCPU-hours** (~1.1 h of a 1-vCPU task) across the
+Jul 31 and Aug 1-2 sessions. The service is currently at `desiredCount=0`, running 0, and has
+been since Aug 2 - so it is contributing **nothing**. VERIFIED by `describe-services`.
+
+### Account-wide idle floor - VERIFIED
+
+2026-08-03 was a natural zero-activity day (no Bedrock, no Fargate), which isolates the
+always-on cost cleanly:
+
+| Line item | $/day | $/30 days |
+| :-- | --: | --: |
+| S3 Vectors storage (2.501 GB @ $0.06/GB-mo) | 0.0048410 | 0.1452 |
+| S3 Standard + ECR storage (4.968 GB blended) | 0.0049531 | 0.1486 |
+| **Total** | **0.009794** | **0.2938** |
+
+Swept for silent recurring resources and found **none**: no NAT gateway, load balancer, Elastic
+IP, EBS volume or snapshot, Route 53 hosted zone, Secrets Manager secret, KMS customer key, or
+Glue database. VERIFIED by direct API calls.
+
+**Discrepancy to note, not resolved:** the 07-31 entry recorded ECR standing cost at 0.643 GB →
+$0.0643/month. Today the two repos hold one `latest` image each, 197,961,464 B + 146,761,936 B =
+**0.345 GB**. Either untagged layers have since been reclaimed or the earlier figure counted
+build layers. Not chased - ECR is under 3% of the idle floor either way. UNVERIFIED which.
+
+### Spend to date
+
+Jun 1 - Aug 5 total **$4.59**, of which Bedrock inference is 81% (Cohere Embed 4 $2.2279,
+Haiku 4.5 $1.2715, Rerank 3.5 $0.24). All infrastructure combined - ECS, ECR, VPC - is
+**$0.0590**, i.e. 1.3%. The deployment is not what costs money; the model calls are.
+
+### Corrected elsewhere in this pass
+
+`finrag_ml_tg1/S3Vect_QueryCost.md` carried "PutVectors and data ingress are effectively free" -
+**false**, PUT is $0.20/GB and cost $0.500237. Fixed, with a dated "Verified pricing" section and
+a correction log. Also settled the long-open per-vector footprint contradiction in
+`investigation_analysis/EMPIRICAL_METHODS_AND_FINDINGS.md` at **2.501 GB** logical for 614,647
+vectors. Committed as `889e898`.
+
+### Still open (unchanged from 07-31)
+
+Items 1 (per-request rebuild), 2 (latency discrepancy), 4 (real readiness probe), and 5 (CI
+wiring) are untouched by this pass.
