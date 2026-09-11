@@ -472,3 +472,34 @@ thing was not a number but a noise floor.
 3. **Upstream note, optional.** The three XML-export gotchas in `img/EXPORT_NOTES.md` are
    generic to the diagram-design plugin, not to this repo. Worth raising upstream; the
    plugin's `self_check.py` catches neither the `--`-in-comment case nor label clipping.
+
+## 15. Post-deploy polish — orchestrator re-lock
+
+Deck verified live at https://mjsushanth.github.io/FinSights/ after Joel enabled Pages.
+Two defects found by looking at the rendered page rather than the build log:
+
+1. **Literal `--` on 11 slide faces.** Written as an em dash substitute, but markdown-it
+   has `typographer` off by default, so it rendered as two hyphens on nearly every slide —
+   including the title slide's eyebrow, the first thing anyone sees. Converted to real
+   em dashes (en dash for the date range). Presenter notes deliberately untouched: `--`
+   inside an HTML comment never renders, and rewriting 67 instances would risk the
+   XML-comment problem recorded in `img/EXPORT_NOTES.md`.
+
+2. **Dark mode crushed contrast.** `style.css` is light-only — hardcoded `#f8f8f6`
+   background and `#5a6571` subtitle. With seriph's dark mode active the subtitle sat
+   grey-on-near-black. Since a viewer's OS preference decides this, the deck could have
+   looked broken for a recruiter with dark mode on. Fixed with `colorSchema: light`
+   in the headmatter (verified key, Slidev headmatter reference), locking the deck to
+   the scheme its stylesheet was actually designed for.
+
+Both were invisible to every check run so far: `slidev build` passed, all 17 SVGs
+validated, the dev server served clean, and the workflow went green. The defects only
+appear when a human looks at the page. That is the same lesson as
+`img/EXPORT_NOTES.md` entry 3 — some classes of defect have no validator.
+
+**Ownership note, per section 8c.** The worker had been handed `slides.md` and stood
+down, and session-to-session messaging hit its rate limit, so a re-lock could not be
+announced by message. Recorded here instead, the canonical channel per section 8b:
+the orchestrator re-took `slides.md`, made these two changes, rebuilt (724 ms, clean),
+verified no slide figure changed, and committed. Worker should re-read before any
+further edit.

@@ -2,15 +2,18 @@
 theme: seriph
 # Confirmed 2026-09-11: seriph, light mode, custom accent layer in style.css
 # matching the diagram-design "finsights" profile. Screenshotted and ruled
-# on by the orchestrator -- not a placeholder anymore.
+# on by the orchestrator — not a placeholder anymore.
 background: null
 class: text-left
+# style.css is light-only (hardcoded #f8f8f6 bg, #5a6571 subtitle).
+# Locked so seriph's dark mode cannot take over and crush contrast.
+colorSchema: light
 highlighter: shiki
 lineNumbers: false
 drawings:
   persist: false
 transition: fade
-title: FinSights -- A Financial RAG System Under a Hobbyist Budget
+title: FinSights — A Financial RAG System Under a Hobbyist Budget
 ---
 
 <!--
@@ -27,7 +30,7 @@ than presented as fresh measurement.
 # FinSights
 ## A financial RAG system, priced like a hobby project
 
-<div class="eyebrow">Sep 2025 -- Dec 2025</div>
+<div class="eyebrow">Sep 2025 – Dec 2025</div>
 
 25 companies &middot; 2006-2025 &middot; **614,647** live vectors &middot; built for **$2.21**
 
@@ -46,7 +49,7 @@ its own correction elsewhere in the repo; not relitigated here.
 
 <span class="stat">$17<span class="stat-label">/month, the line that was never crossed</span></span>
 
-One constraint -- never adopt anything costing more than this -- settled seven
+One constraint — never adopt anything costing more than this — settled seven
 architecture decisions.
 
 ![Seven decisions scored on whether they hurt quality](./img/cost-decisions-matrix.svg)
@@ -103,9 +106,9 @@ So is every user query.
 </v-click>
 <v-click>
 
-<span class="stat">$0<span class="stat-label">to fix -- zero re-embedding, zero re-upload</span></span>
+<span class="stat">$0<span class="stat-label">to fix — zero re-embedding, zero re-upload</span></span>
 
-Cohere's dual-encoder needs the *query* tagged `search_query` -- a different,
+Cohere's dual-encoder needs the *query* tagged `search_query` — a different,
 asymmetric objective from document-to-document similarity. One config line
 carried the wrong value since a refactor.
 
@@ -189,12 +192,12 @@ near-duplicate rate 22.7% of context, median 100 sentences per context.
 
 ---
 
-# The score distribution is flat -- this is the reranking argument
+# The score distribution is flat — this is the reranking argument
 
 <span class="stat">0.063<span class="stat-label">-wide similarity band across the top 45 candidates</span></span>
 
 [0.674, 0.737]. Zero rejections at any threshold from 0.0 to 0.5. No
-long tail to filter -- cosine carries almost no ordering information here.
+long tail to filter — cosine carries almost no ordering information here.
 
 ![A 0.063-wide band on the full 0 to 1 axis](./img/flat-score-range.svg)
 
@@ -254,7 +257,7 @@ layout: default
 </v-click>
 <v-click>
 
-**Measured:** variant generation, <span class="stat" style="display:inline">1,990ms</span> median --
+**Measured:** variant generation, <span class="stat" style="display:inline">1,990ms</span> median —
 larger than the S3 query itself, <span class="stat" style="display:inline">1,465ms</span>.
 
 ![The measured split, 12-run medians](./img/latency-measured.svg)
@@ -287,7 +290,7 @@ layout: default
 
 **Won on cost and context:** cross-encoder reranking at top-8 cut cost
 <span class="stat" style="display:inline">32%</span> and cut context 61%.
-ROUGE-L was tied -- <span class="stat" style="display:inline">0.1120</span> vs
+ROUGE-L was tied — <span class="stat" style="display:inline">0.1120</span> vs
 <span class="stat" style="display:inline">0.1012</span>, a delta of 0.0108, inside
 the noise floor of a 10-question sample.
 
@@ -424,7 +427,7 @@ live deployed Fargate service specifically.
 
 <span class="stat">1<span class="stat-label">genuinely shared mutable thing, found by audit</span></span>
 
-`answer_query` is blocking and I/O-heavy -- that alone decided threadpool over
+`answer_query` is blocking and I/O-heavy — that alone decided threadpool over
 event loop. boto3 clients are safe to share; Sessions are not. One
 lazy-table memo was the real hazard.
 
@@ -452,7 +455,7 @@ consequences" -- not a taste decision.
 
 Fargate charges per task, on the shape you reserve rather than what you use.
 A second container in the same task is nearly free; a second task doubles the
-bill. One image, two containers, ARM64 -- 20% cheaper than x86_64.
+bill. One image, two containers, ARM64 — 20% cheaper than x86_64.
 
 ![One task, two containers, no ALB, no NAT](./img/fargate-deployment.svg)
 
@@ -511,7 +514,7 @@ class: text-left
 
 <v-click>Prefer unrepresentable to unlikely.</v-click>
 <v-click>Trust the artifact over the description.</v-click>
-<v-click>Label provenance on every number -- an unlabelled one is a liability.</v-click>
+<v-click>Label provenance on every number — an unlabelled one is a liability.</v-click>
 <v-click>A tight cost constraint removes options you did not need.</v-click>
 <v-click>Negative results, reached honestly, are still results.</v-click>
 
