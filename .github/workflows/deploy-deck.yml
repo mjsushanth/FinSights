@@ -1,0 +1,68 @@
+name: Deploy FinSights deck
+
+# Adapted from Slidev's official Pages workflow (sli.dev/guide/hosting).
+# Two deliberate changes from the upstream template: this repo is not a
+# Slidev-only repo, so every step is scoped to deck/ with
+# working-directory rather than assuming package.json sits at the repo
+# root; and plain npm is used instead of @antfu/ni's nci/nr shortcuts, to
+# avoid installing an extra global package just to alias commands this
+# workflow only runs once.
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'deck/**'
+      - '.github/workflows/deploy-deck.yml'
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 'lts/*'
+
+      - name: Install dependencies
+        working-directory: deck
+        run: npm ci
+
+      # package.json's build script already hardcodes --base /FinSights/,
+      # matching this repo's name -- not passed again here to avoid a
+      # duplicate --base flag reaching the underlying `slidev build` call.
+      - name: Build
+        working-directory: deck
+        run: npm run build
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v6
+        with:
+          enablement: true
+
+      - uses: actions/upload-pages-artifact@v5
+        with:
+          path: deck/dist
+
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    needs: build
+    runs-on: ubuntu-latest
+    name: Deploy
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v5
