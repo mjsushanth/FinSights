@@ -1,49 +1,55 @@
 <!DOCTYPE html>
 <html lang="en"><head><meta charset="UTF-8">
 <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-<style>*{box-sizing:border-box;margin:0;padding:0}body{background:#f8f8f6;padding:2rem;display:flex;justify-content:center}svg{width:100%;max-width:900px}</style>
+<style>*{box-sizing:border-box;margin:0;padding:0}body{background:#f8f8f6;padding:2rem;display:flex;justify-content:center}svg{width:100%;max-width:1000px}</style>
 </head><body>
-<svg viewBox="0 0 1200 560" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="fishbone-title fishbone-desc">
-<title id="fishbone-title">Four verification methods, three of which caught the tool itself lying</title>
-<desc id="fishbone-desc">A fishbone diagram with false confidence from broken tooling as the observed effect, and four measurement method categories as contributing bones, three of which are annotated with a real incident where the measurement tool itself was wrong.</desc>
+<svg viewBox="0 0 1440 560" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="fishbone-title fishbone-desc">
+<title id="fishbone-title">A number you can trust -- five methods, three of which caught the tool lying</title>
+<desc id="fishbone-desc">A fishbone diagram with a number you can trust as the observed effect, and five measurement methods from S02h as contributing bones, three annotated with a real incident where the measurement tool itself was wrong.</desc>
 <defs><marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#eb6c36"/></marker></defs>
 <rect width="100%" height="100%" fill="#f8f8f6"/>
 
-<!-- spine -->
-<line x1="80" y1="280" x2="988" y2="280" stroke="#eb6c36" stroke-width="1.4" marker-end="url(#arrow)"/>
+<!-- spine, HEAD=1200, CY=320 -->
+<line x1="80" y1="320" x2="1188" y2="320" stroke="#eb6c36" stroke-width="1.4" marker-end="url(#arrow)"/>
 
-<!-- bone 1, above, x=680 -->
-<line x1="680" y1="280" x2="584" y2="112" stroke="#2d323a" stroke-width="1"/>
-<rect x="500" y="88" width="150" height="24" rx="4" fill="#ffffff" stroke="#2d323a" stroke-width="0.8"/>
-<text x="575" y="104" fill="#2d323a" font-size="11" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">External observer</text>
-<line x1="648" y1="164" x2="616" y2="164" stroke="#828891" stroke-width="1"/>
-<text x="612" y="160" fill="#5a6571" font-size="9" font-family="'Geist Mono', monospace" text-anchor="end">grep pattern that could never match</text>
+<!-- bone 1, above, attach_x=880: External observer -->
+<line x1="880" y1="320" x2="784" y2="152" stroke="#2d323a" stroke-width="1"/>
+<rect x="704" y="128" width="160" height="24" rx="4" fill="#ffffff" stroke="#2d323a" stroke-width="0.8"/>
+<text x="784" y="144" fill="#2d323a" font-size="11" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">External observer</text>
+<line x1="832" y1="236" x2="800" y2="236" stroke="#eb6c36" stroke-width="1"/>
+<text x="796" y="232" fill="#eb6c36" font-size="9" font-family="'Geist Mono', monospace" text-anchor="end">grep pattern that could never match</text>
 
-<!-- bone 2, below, x=520 -->
-<line x1="520" y1="280" x2="424" y2="448" stroke="#2d323a" stroke-width="1"/>
-<rect x="340" y="436" width="170" height="24" rx="4" fill="#ffffff" stroke="#2d323a" stroke-width="0.8"/>
-<text x="425" y="452" fill="#2d323a" font-size="11" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">One-time vs per-call cost</text>
-<line x1="488" y1="392" x2="456" y2="392" stroke="#828891" stroke-width="1"/>
-<text x="452" y="404" fill="#5a6571" font-size="9" font-family="'Geist Mono', monospace" text-anchor="end">exit code read from the wrong command</text>
+<!-- bone 2, below, attach_x=720: One-time vs per-call cost (cold-vs-warm folded in) -->
+<line x1="720" y1="320" x2="624" y2="488" stroke="#2d323a" stroke-width="1"/>
+<rect x="529" y="476" width="190" height="24" rx="4" fill="#ffffff" stroke="#2d323a" stroke-width="0.8"/>
+<text x="624" y="492" fill="#2d323a" font-size="11" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">One-time vs per-call cost</text>
+<line x1="672" y1="404" x2="640" y2="404" stroke="#eb6c36" stroke-width="1"/>
+<text x="636" y="416" fill="#eb6c36" font-size="9" font-family="'Geist Mono', monospace" text-anchor="end">exit code read from the wrong command</text>
 
-<!-- bone 3, above, x=360 -->
-<line x1="360" y1="280" x2="264" y2="112" stroke="#2d323a" stroke-width="1"/>
-<rect x="180" y="88" width="150" height="24" rx="4" fill="#ffffff" stroke="#2d323a" stroke-width="0.8"/>
-<text x="255" y="104" fill="#2d323a" font-size="11" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">Static analysis</text>
+<!-- bone 3, above, attach_x=560: Static analysis (no callout) -->
+<line x1="560" y1="320" x2="464" y2="152" stroke="#2d323a" stroke-width="1"/>
+<rect x="394" y="128" width="140" height="24" rx="4" fill="#ffffff" stroke="#2d323a" stroke-width="0.8"/>
+<text x="464" y="144" fill="#2d323a" font-size="11" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">Static analysis</text>
 
-<!-- bone 4, below, x=200, FOCAL root cause -->
-<line x1="200" y1="280" x2="104" y2="448" stroke="#eb6c36" stroke-width="1.4"/>
-<rect x="20" y="436" width="170" height="24" rx="4" fill="rgba(235,108,54,0.07)" stroke="#eb6c36" stroke-width="1.4"/>
-<text x="105" y="452" fill="#eb6c36" font-size="11" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">Ask the cloud, not assume</text>
-<line x1="168" y1="392" x2="136" y2="392" stroke="#eb6c36" stroke-width="1"/>
-<text x="132" y="404" fill="#eb6c36" font-size="9" font-family="'Geist Mono', monospace" text-anchor="end">Pricing API prefix bug -- fixed this deck's own Fargate numbers</text>
+<!-- bone 4, below, attach_x=400: Ask the cloud -->
+<line x1="400" y1="320" x2="304" y2="488" stroke="#2d323a" stroke-width="1"/>
+<rect x="234" y="476" width="140" height="24" rx="4" fill="#ffffff" stroke="#2d323a" stroke-width="0.8"/>
+<text x="304" y="492" fill="#2d323a" font-size="11" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">Ask the cloud</text>
+<line x1="384" y1="348" x2="352" y2="348" stroke="#eb6c36" stroke-width="1"/>
+<text x="348" y="360" fill="#eb6c36" font-size="9" font-family="'Geist Mono', monospace" text-anchor="end">Pricing API prefix bug -- fixed this deck's own Fargate numbers</text>
+
+<!-- bone 5, above, attach_x=240: Measure the artifact, not the description (restored) -->
+<line x1="240" y1="320" x2="144" y2="152" stroke="#2d323a" stroke-width="1"/>
+<rect x="44" y="112" width="200" height="40" rx="4" fill="#ffffff" stroke="#2d323a" stroke-width="0.8"/>
+<text x="144" y="130" fill="#2d323a" font-size="11" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">Measure the artifact,</text>
+<text x="144" y="146" fill="#2d323a" font-size="11" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">not the description</text>
 
 <!-- effect box -->
-<rect x="988" y="250" width="180" height="60" rx="8" fill="rgba(235,108,54,0.07)" stroke="#eb6c36" stroke-width="1.4"/>
-<text x="1078" y="276" fill="#2d323a" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">False confidence</text>
-<text x="1078" y="294" fill="#2d323a" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">from broken tooling</text>
+<rect x="1188" y="284" width="200" height="72" rx="8" fill="rgba(235,108,54,0.07)" stroke="#eb6c36" stroke-width="1.4"/>
+<text x="1288" y="314" fill="#2d323a" font-size="13" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">A number</text>
+<text x="1288" y="332" fill="#2d323a" font-size="13" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">you can trust</text>
 
-<line x1="20" y1="520" x2="1170" y2="520" stroke="rgba(45,50,58,0.10)" stroke-width="0.8"/>
-<text x="20" y="536" fill="#828891" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.06em">S02h - Measurement as a Design Practice, section 8: three times my own measurement was the thing that was broken</text>
+<line x1="20" y1="520" x2="1400" y2="520" stroke="rgba(45,50,58,0.10)" stroke-width="0.8"/>
+<text x="20" y="536" fill="#828891" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.06em">S02h - Measurement as a Design Practice: five methods; three times the tool itself was the thing that was broken</text>
 </svg>
 </body></html>

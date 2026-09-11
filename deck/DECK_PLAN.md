@@ -252,6 +252,23 @@ claim-plus-three-examples-plus-recap, do not reach for elevated synonyms, and do
 not strip legitimate constructions because they look like AI tells. Presenter notes
 are the longer prose and benefit most.
 
+## 8b. Precedence — THIS DOC IS CANONICAL
+
+**`deck/DECK_PLAN.md` is the single source of truth. Cross-session messages are
+notifications, not the record.** When a message and this document disagree, **the
+document wins.** No timestamp forensics required.
+
+The orchestrator writes this doc *last*, after any message on the same decision, so
+its state is by definition the latest ruling. An instruction sent by message but not
+yet reflected here is **provisional** and must be flagged as such rather than built on.
+
+Why this exists: the six-bone / five-bone fishbone conflict (see section 13). The
+orchestrator issued an instruction, refined it after seeing the build, and wrote the
+doc in parallel with messaging. Two channels carrying the same decision at different
+times is how a worker builds the wrong thing with full confidence. The worker caught
+it by comparing file mtimes and held off committing, which was correct — but it should
+never have needed to.
+
 ## 9. Iteration protocol
 
 This refines by rounds, not in one pass.
@@ -332,3 +349,50 @@ class as the refused Gantt: an encoding implying data that cannot be sourced.
 
 Bar-family count across the final set: **one** (slide 9, and only if the full stage
 split is unavailable). The monotony risk is closed.
+
+## 13. Deviation ruling, rev 6 — and a propagated error caught
+
+Worker built all 14 diagrams and disclosed four deviations from spec in the relevant
+presenter notes. Ruling:
+
+| Deviation | Ruling |
+| :-- | :-- |
+| Slide 2 matrix: 1 column, not 2 | **Accepted.** An "eliminated by cost" column is constant-true by construction; a constant column carries no information. The uniform "No" column was always the argument |
+| Slide 8 Sankey: 2 stages, not 3 | **Accepted.** 23 -> 15/8 has no natural middle stage; inventing one is the Gantt error again |
+| Slide 11 fishbone: 4 bones, not 6 | **Refined to 5.** Cold-vs-warm folding into one-time-vs-per-call is a real same-concern merge. But "measure the artifact, not the description" is restored — it is the most distinctive idea in S02h and it is also P18 |
+| Slide 10 radar: 5 metrics normalized to 0-10 | **Rejected as built.** See below |
+
+### The radar error — orchestrator's, not the worker's
+
+The built radar lights ROUGE-L as one of three "won" axes. But the source disclaims it:
+
+- `EMPIRICAL_METHODS_AND_FINDINGS.md:860` — "a ROUGE-L delta of 0.011 sits inside the
+  noise of a 10-question sample"
+- `S02i:276` — same finding, stated again
+
+Normalizing 0.101 vs 0.112 to a 0-10 axis renders a within-noise delta as a visible
+advantage. **S02i P10 is "compare your effect against the system's own noise floor,"**
+and P10 is material in this deck — so the figure contradicted the deck's most
+distinctive idea using the deck's own numbers.
+
+Root cause: the orchestrator's slide-10 reframe instructed "won on three metrics
+(32% cost, 61% context, best ROUGE-L)." The docs do contain the phrase "the best
+ROUGE-L" in a summary line, but qualify it as noise two paragraphs later. Summary read,
+caveat missed, error propagated into the build.
+
+Fix: keep the axis, draw a **noise band** showing both polygons inside it, light two
+axes rather than three on the first reveal, and restate the claim as —
+
+> Won on cost and context. Tied on ROUGE-L, inside the noise floor of a 10-question
+> sample. Rejected because 5 of 10 answers got worse.
+
+That demonstrates P10 on the project's own numbers instead of asserting it elsewhere.
+Refusing to count a favourable result because it sits inside the noise is a stronger
+signal than the win would have been.
+
+### Standing lesson
+
+Three times this round an encoding was refused for implying data that could not be
+sourced — the Gantt, the dot plot, the fabricated waterfall total. The radar is the
+fourth case and the only one that got through, because the unsourceable part was not a
+missing number but a **missing significance test** on a number that did exist.

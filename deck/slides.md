@@ -287,11 +287,13 @@ layout: default
 
 <v-click>
 
-**Won on three metrics:** cross-encoder reranking at top-8 cut cost
-<span class="stat" style="display:inline">32%</span>, cut context 61%, and
-had the best ROUGE-L of any configuration tested.
+**Won on cost and context:** cross-encoder reranking at top-8 cut cost
+<span class="stat" style="display:inline">32%</span> and cut context 61%.
+ROUGE-L was tied -- <span class="stat" style="display:inline">0.112</span> vs
+<span class="stat" style="display:inline">0.101</span>, a delta inside the
+noise floor of a 10-question sample.
 
-![Won on cost, context, and ROUGE-L](./img/rerank-radar-won.svg)
+![Won on cost and context; ROUGE-L tied inside noise](./img/rerank-radar-won.svg)
 
 </v-click>
 <v-click>
@@ -302,7 +304,7 @@ Mechanism: the cross-encoder is blind to fiscal year. Off-year context rose
 from <span class="stat" style="display:inline">31.3%</span> of the pool to
 <span class="stat" style="display:inline">47.4%</span> of what survived pruning.
 
-![The full five-axis picture: won on three, lost on two](./img/rerank-radar-full.svg)
+![The full five-axis picture: ahead on cost and context, tied on ROUGE-L, behind on two](./img/rerank-radar-full.svg)
 
 </v-click>
 
@@ -332,13 +334,26 @@ All figures: RERANKING_FINAL_SYNTHESIS.md, cross-referenced against
 IMPLEMENTATION_GUIDE.md:420 (local-pair figures) and :425
 (enable_reranking: false, confirming the rejection shipped as a real
 config state, not just a recommendation).
-DIAGRAM NOTE: the two radar states plot both series (baseline, reranking)
-across 5 axes normalized to a shared 0-10 scale via a disclosed linear
-transform (efficiency = 10 x min/observed for cost and context; quality
-= 10 x non-worse-fraction; off-year = 10 x (1 - off-year rate)). The
-transform is a standard, stated normalization of real measured numbers,
-not a fabricated data point -- every input is one of the verified figures
-above.
+DIAGRAM NOTE (revised 2026-09-11, orchestrator rev-6 ruling): the radar
+originally rendered ROUGE-L as a clean third "win" (an accent dot at
+normalized score 10 vs baseline's 9.0), but the source explicitly disclaims
+it -- EMPIRICAL_METHODS_AND_FINDINGS.md:860 and S02i:276 both say the
+underlying 0.011 delta (0.112 top-8 vs 0.101 no-rerank,
+EMPIRICAL_METHODS_AND_FINDINGS.md:844,846) sits inside the noise of a
+10-question sample. Asserting that delta as a visible win contradicted this
+deck's own governing principle (S02i P10: check every effect against its
+noise floor) using the deck's own numbers. Root cause: the orchestrator's
+original slide-10 reframe read the docs' summary line ("the best ROUGE-L")
+without the caveat two paragraphs later. Fixed: the ROUGE-L accent
+vertex/dot is replaced with a muted noise-band stroke along that spoke
+(covering roughly normalized score 7.5-10) carrying two neutral markers,
+baseline and reranking, both pulled out of the "won" accent color; only
+COST and CONTEXT keep the accent treatment on the first reveal, and the
+full second-reveal chart carries the same noise band. The 5-axis
+normalization otherwise stands: a disclosed linear transform (efficiency =
+10 x min/observed for cost and context; ROUGE-L = 10 x value/max(value);
+quality = 10 x non-worse-fraction; off-year = 10 x (1 - off-year rate)) --
+every input is one of the verified figures above, no fabricated data point.
 -->
 
 ---
@@ -350,7 +365,7 @@ above.
 A grep pattern that could never match. An exit code read from the wrong
 command. A Pricing API query with the wrong usage-type prefix.
 
-![Four measurement methods, three catching the tool itself lying](./img/measurement-fishbone.svg)
+![Five measurement methods, three catching the tool itself lying](./img/measurement-fishbone.svg)
 
 <!--
 Source: S02h - Measurement as a Design Practice.md, section 8, all three
@@ -365,14 +380,23 @@ back exactly ($0.032380/vCPU-hr ARM64, matching this deck's own slide 14).
 The lesson stated directly in the source: "my tool returned nothing" and
 "the data does not exist" are different conclusions, and conflating them
 produces a confident gap.
-DIAGRAM NOTE: built with 4 bones, not the 6 measurement methods S02h
-actually documents (external observer, one-time-vs-per-call cost, cold-vs-
-warm instance, static analysis, ask the cloud, measure the artifact).
-Consolidated cold-vs-warm into one-time-vs-per-call (both isolate the same
-kind of cost) and measure-the-artifact into ask-the-cloud (both are
-"verify against the real system, not the description") to keep the
-geometry clean at the type's default canvas size. A truthful grouping of
-6 real methods into 4 bones, not an invented category.
+DIAGRAM NOTE (revised 2026-09-11, orchestrator rev-6 ruling): went through
+three bone-counts before settling. First build folded the 6 real S02h
+methods down to 4 bones (cold-vs-warm into one-time-vs-per-call, and
+measure-the-artifact into ask-the-cloud) to fit the type's 5-bone default
+canvas. Orchestrator's "GO" instruction called for all 6 back, so it was
+rebuilt at 6 bones with the canvas widened per the type's own rule (HEAD
+1200 -> 1360). Rev-6 then refined that down to 5: the cold-vs-warm /
+one-time-vs-per-call merge is a genuine same-concern fold and stays, but
+"measure the artifact, not the description" is restored as its own bone --
+it is the most distinctive idea in S02h (also S02i P18) and was worth more
+than a fifth bone costs. Final 5 bones, back at the type's default HEAD=1200
+canvas: external observer, one-time-vs-per-call cost, static analysis, ask
+the cloud, measure the artifact (not the description). No bone marked focal
+-- there is no single confirmed root cause here, five parallel methods,
+three of which happen to carry a real incident callout. Only the effect box
+carries accent, per the type's own allowance for zero focal bones. Head
+text is "a number you can trust," matching the ruling's exact phrasing.
 -->
 
 ---
