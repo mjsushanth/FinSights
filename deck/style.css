@@ -1,0 +1,73 @@
+/*
+Accent layer on top of @slidev/theme-seriph (light mode). Palette matches
+the diagram-design "finsights" profile (~/.diagram-design/profiles/
+finsights.md) so the one embedded diagram and the surrounding slides read
+as one system. Swaps only seriph's accent + a few spacing defaults --
+seriph's own type ramp and layout are left alone, per "don't rebuild what
+already works."
+*/
+
+:root {
+  --slidev-theme-primary: #eb6c36;
+}
+
+html.light body {
+  background: #f8f8f6;
+  color: #2d323a;
+}
+
+.slidev-layout {
+  font-family: 'Geist', system-ui, sans-serif;
+}
+
+.slidev-layout h1 {
+  font-family: 'Instrument Serif', serif;
+  font-weight: 400;
+  color: #2d323a;
+}
+
+.slidev-layout h2 {
+  font-family: 'Instrument Serif', serif;
+  font-weight: 400;
+  font-size: 1.7em;
+  line-height: 1.25;
+  color: #2d323a;
+  max-width: 22ch;
+}
+
+.slidev-layout .eyebrow {
+  display: block;
+  font-family: 'Geist Mono', ui-monospace, monospace;
+  font-size: 0.55em;
+  font-weight: 500;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: #5a6571;
+  margin-bottom: 0.6em;
+}
+
+.slidev-layout .stat {
+  display: block;
+  font-family: 'Geist Mono', ui-monospace, monospace;
+  font-weight: 600;
+  font-size: 1.6em;
+  color: #eb6c36;
+  margin: 0.5em 0;
+  letter-spacing: -0.01em;
+}
+
+.slidev-layout .stat-label {
+  display: block;
+  font-family: 'Geist Mono', ui-monospace, monospace;
+  font-size: 0.4em;
+  font-weight: 400;
+  color: #828891;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin-top: -0.3em;
+}
+
+.slidev-layout img {
+  display: block;
+  margin: 0.5em auto;
+}

@@ -322,3 +322,8 @@ DataPipeline/data_engineering_research/duckdb_data_engineering/manual_export_ana
 # Microsoft Office lock/temp files (e.g. ~$Finance_RAG_HLD_v1.xlsx) - created
 # automatically while a file is open, accidental to commit, never source.
 ~$*
+
+# Node dependencies for the Slidev deck (deck/). The repo is otherwise pure
+# Python, so this had no entry until the deck was added. 486 MB / 436 packages
+# measured 2026-09-11 - restored by `npm ci` from package-lock.json, never source.
+node_modules/
