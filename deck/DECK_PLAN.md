@@ -269,6 +269,32 @@ times is how a worker builds the wrong thing with full confidence. The worker ca
 it by comparing file mtimes and held off committing, which was correct — but it should
 never have needed to.
 
+## 8c. File ownership handoff — one direction only
+
+**Whoever hands off a file does not touch it again without announcing a re-lock.**
+
+The orchestrator unlocked `slides.md` ("rebuild, verify, commit"), the worker began its
+diff-and-verify pass, and the orchestrator then applied an eighth edit and called the
+file "final and yours." The worker committed having diffed only the first seven. The
+content happened to be correct and independently re-verified afterwards, but it was
+committed unreviewed.
+
+Root cause is the **handoff, not the commit discipline.** The worker's proposed fix —
+diff immediately before commit — is sound defense and worth keeping, but it treats the
+symptom. The orchestrator mutated a file after transferring ownership of it.
+
+This is the second instance of one pattern, the first being the doc-versus-message
+precedence conflict in section 8b: shared state modified while the other party was
+acting on its earlier view of it. Both were the orchestrator's doing, and both were
+caught by the worker rather than by the party that caused them.
+
+Rules, and they bind the orchestrator hardest because it has been the one breaking them:
+
+1. Unlocking a file is final. To edit again, announce a re-lock and wait for
+   acknowledgement before touching it.
+2. A late correction after unlock goes to the owner **as a request**, not as an edit.
+3. Diff immediately before `git add`, with nothing in between.
+
 ## 9. Iteration protocol
 
 This refines by rounds, not in one pass.
