@@ -101,16 +101,14 @@ The corpus is embedded with `input_type="search_document"`.
 
 So is every user query.
 
-![Two paths converging on the same wrong value](./img/asymmetry-flow-current.svg)
 
 </v-click>
 <v-click>
 
 <span class="stat">$0<span class="stat-label">to fix — zero re-embedding, zero re-upload</span></span>
 
-Cohere's dual-encoder needs the *query* tagged `search_query` — a different,
-asymmetric objective from document-to-document similarity. One config line
-carried the wrong value since a refactor.
+Cohere's dual-encoder needs the *query* tagged `search_query`. One config
+line carried the wrong value since a refactor.
 
 </v-click>
 <v-click>
@@ -118,9 +116,19 @@ carried the wrong value since a refactor.
 The correct value was already sitting in a deprecated config block. The
 live path just wasn't reading it.
 
-![The correct value already existed in a deprecated block](./img/asymmetry-flow-fix.svg)
 
 </v-click>
+
+<div class="fig-swap" v-click="[1,3]">
+
+![Two paths converging on the same wrong value](./img/asymmetry-flow-current.svg)
+
+</div>
+<div class="fig-swap" v-click="[3,99]">
+
+![The correct value already existed in a deprecated block](./img/asymmetry-flow-fix.svg)
+
+</div>
 
 <!--
 Source: RETRIEVAL_IMPROVEMENT_STUDY.md section 3.1, tagged [V] against
@@ -252,7 +260,6 @@ layout: default
 
 **Documented claim:** S3 Vectors retrieval is ~90% of pipeline time.
 
-![Documented claim, never independently measured](./img/latency-claim.svg)
 
 </v-click>
 <v-click>
@@ -260,7 +267,6 @@ layout: default
 **Measured:** variant generation, <span class="stat" style="display:inline">1,990ms</span> median —
 larger than the S3 query itself, <span class="stat" style="display:inline">1,465ms</span>.
 
-![The measured split, 12-run medians](./img/latency-measured.svg)
 
 </v-click>
 <v-click>
@@ -268,6 +274,17 @@ larger than the S3 query itself, <span class="stat" style="display:inline">1,465
 The 90% figure was real. The attribution was wrong.
 
 </v-click>
+
+<div class="fig-swap" v-click="[1,2]">
+
+![Documented claim, never independently measured](./img/latency-claim.svg)
+
+</div>
+<div class="fig-swap" v-click="[2,99]">
+
+![The measured split, 12-run medians](./img/latency-measured.svg)
+
+</div>
 
 <!--
 Source: TIER1_PROGRESS_LOG.md, Step 0 (2026-08-01), directly verified this
@@ -294,7 +311,6 @@ ROUGE-L was tied — <span class="stat" style="display:inline">0.1120</span> vs
 <span class="stat" style="display:inline">0.1012</span>, a delta of 0.0108, inside
 the noise floor of a 10-question sample.
 
-![Won on cost and context; ROUGE-L tied inside noise](./img/rerank-radar-won.svg)
 
 </v-click>
 <v-click>
@@ -305,9 +321,19 @@ Mechanism: the cross-encoder is blind to fiscal year. Off-year context rose
 from <span class="stat" style="display:inline">31.3%</span> of the pool to
 <span class="stat" style="display:inline">47.4%</span> of what survived pruning.
 
-![The full five-axis picture: ahead on cost and context, tied on ROUGE-L, behind on two](./img/rerank-radar-full.svg)
 
 </v-click>
+
+<div class="fig-swap" v-click="[1,2]">
+
+![Won on cost and context; ROUGE-L tied inside noise](./img/rerank-radar-won.svg)
+
+</div>
+<div class="fig-swap" v-click="[2,99]">
+
+![The full five-axis picture: ahead on cost and context, tied on ROUGE-L, behind on two](./img/rerank-radar-full.svg)
+
+</div>
 
 <!--
 CORRECTED 2026-09-11 after a peer session's independent verification pass

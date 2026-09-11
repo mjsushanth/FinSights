@@ -70,4 +70,18 @@ html.light body {
 .slidev-layout img {
   display: block;
   margin: 0.5em auto;
+  /* Diagram SVGs are viewBox 640x400. At full content width they render ~562px
+     tall, taller than the 551px canvas (980px / 16:9), so every diagram slide
+     overflowed. Cap the height and let width follow. */
+  max-height: 330px;
+  width: auto;
+  max-width: 100%;
+}
+
+/* Slidev's v-click hides by opacity, so a hidden element still occupies its
+   space. For the three slides that swap one figure for another (4, 9, 10) that
+   left the hidden figure holding ~340px of layout and pushing the visible one
+   off the canvas. These wrappers leave the flow entirely when hidden. */
+.fig-swap.slidev-vclick-hidden {
+  display: none;
 }
