@@ -14,10 +14,8 @@ title: FinSights -- A Financial RAG System Under a Hobbyist Budget
 ---
 
 <!--
-DECK STATUS: content draft only. Not yet run through `slidev build` or even
-`slidev` dev mode -- this repo has no node_modules yet, pending Joel's
-explicit go-ahead on the install (asked separately, not assumed from the
-orchestrator's dispatch). Every number below is cited to a source file in
+DECK STATUS: built and pushed. `slidev build` clean, all diagram SVGs
+validated as strict XML and confirmed serving. Every number below is cited to a source file in
 its own slide's presenter notes. Two numbers ($32.85/mo NAT, $0.017-0.06
 Bedrock cost band) are the only ones NOT independently re-measured this
 session -- both are reported from S02i / SYSTEMS_WALKTHROUGH.md, both
@@ -48,8 +46,8 @@ its own correction elsewhere in the repo; not relitigated here.
 
 <span class="stat">$17<span class="stat-label">/month, the line that was never crossed</span></span>
 
-One constraint -- never adopt anything costing more than this -- decided seven
-architecture decisions before a single line of infra code was written.
+One constraint -- never adopt anything costing more than this -- settled seven
+architecture decisions.
 
 ![Seven decisions scored on whether they hurt quality](./img/cost-decisions-matrix.svg)
 
@@ -92,7 +90,7 @@ layout: default
 ---
 
 # The asymmetry bug
-### The single sharpest finding in the whole project
+### Found by reading the live config against Cohere's own docs
 
 <v-click>
 
@@ -153,8 +151,8 @@ Five S3 Vectors calls per question. One filtered path, one global fallback,
 three semantic variants. Metadata prefilters do the heavy lifting.
 
 <!--
-The one system diagram in the deck (design record: max 3 total, only this
-slide gets one). Diagram built via the diagram-design skill, profile
+The system-architecture diagram. The design record's original 3-diagram cap
+was lifted; 14 of 16 slides now carry one. Diagram built via the diagram-design skill, profile
 "finsights" (blended palette, see ~/.diagram-design/profiles/finsights.md
 for the derivation). Five calls verified: RETRIEVAL_IMPROVEMENT_STUDY.md
 1.2 -- base filtered (topK=30), base global (topK=15), then 3 variant-
@@ -172,8 +170,8 @@ not an invented abstraction.
 
 <span class="stat">44.9%<span class="stat-label">exact-duplicate text rate across the corpus</span></span>
 
-The same sentence, repeated verbatim across filing years by the same company --
-not cross-company leakage. One sentence alone recurred 424 times.
+The same sentence, repeated verbatim across filing years by the same company.
+One sentence alone recurred 424 times.
 
 ![44.9% of the corpus is a duplicate copy](./img/boilerplate-treemap.svg)
 
@@ -289,9 +287,9 @@ layout: default
 
 **Won on cost and context:** cross-encoder reranking at top-8 cut cost
 <span class="stat" style="display:inline">32%</span> and cut context 61%.
-ROUGE-L was tied -- <span class="stat" style="display:inline">0.112</span> vs
-<span class="stat" style="display:inline">0.101</span>, a delta inside the
-noise floor of a 10-question sample.
+ROUGE-L was tied -- <span class="stat" style="display:inline">0.1120</span> vs
+<span class="stat" style="display:inline">0.1012</span>, a delta of 0.0108, inside
+the noise floor of a 10-question sample.
 
 ![Won on cost and context; ROUGE-L tied inside noise](./img/rerank-radar-won.svg)
 
@@ -452,8 +450,9 @@ consequences" -- not a taste decision.
 
 <span class="stat">1,220 MiB<span class="stat-label">measured peak -> sized at 1 vCPU / 3072 MiB</span></span>
 
-Fargate charges per task, on the reserved shape, not per container and not on
-actual usage. One image, two containers, ARM64 -- 20% cheaper than x86_64.
+Fargate charges per task, on the shape you reserve rather than what you use.
+A second container in the same task is nearly free; a second task doubles the
+bill. One image, two containers, ARM64 -- 20% cheaper than x86_64.
 
 ![One task, two containers, no ALB, no NAT](./img/fargate-deployment.svg)
 
@@ -482,7 +481,8 @@ being split into two services.
 <span class="stat">$0.2938<span class="stat-label">/month, everything scaled to zero</span></span>
 
 `destroy` then `up` reached the same steady state from the repository alone.
-That is the completeness test -- not a disaster-recovery drill.
+That round trip is the completeness test: if the reverse operation works, the
+forward one was understood.
 
 ![The same up edge both bootstraps and rebuilds](./img/control-plane-state.svg)
 
