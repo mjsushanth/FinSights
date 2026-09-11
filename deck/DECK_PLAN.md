@@ -396,3 +396,53 @@ Three times this round an encoding was refused for implying data that could not 
 sourced — the Gantt, the dot plot, the fabricated waterfall total. The radar is the
 fourth case and the only one that got through, because the unsourceable part was not a
 missing number but a **missing significance test** on a number that did exist.
+
+## 14. FINAL STATE — deck complete at 0934b8e
+
+Independently verified by the orchestrator, not taken on report:
+
+| Check | Result |
+| :-- | :-- |
+| HEAD | `0934b8e`, in sync with `origin/main` |
+| Slides | 16 |
+| Diagrammed slides | 14 (slides 1 and 16 argued bare) |
+| SVG files | 17 — three slides render two `v-click` states (4, 9, 10) |
+| Referenced SVGs present | all |
+| Strict XML validity | all 17 parse as well-formed XML |
+| `slidev build` | clean, 810 ms |
+| `dist/` staged | never |
+
+Commit arc: `168d588` diagrams + cap dropped -> `c7d5477` rev-6 fixes (claim bar,
+radar noise band, 5-bone fishbone) -> `1ef4f29` export gotchas -> `0934b8e` voice pass.
+
+### What the process caught that a single pass would not
+
+Both directions, which is the argument for the orchestrator/worker split:
+
+- Worker caught the orchestrator's `{{TOKENS}}` instruction as a bad trade (regressing
+  twelve sourced citations to guard against one error).
+- Orchestrator caught the 45.2% / 31.3% mispairing — two figures from different
+  populations presented as one comparison.
+- Worker caught a doc-vs-message precedence conflict by comparing mtimes, and held off
+  committing rather than guessing. Produced the section 8b rule.
+- Orchestrator caught the radar asserting a ROUGE-L win the source disclaims as noise —
+  a figure contradicting the deck's own P10 using the deck's own numbers.
+- Worker caught three XML-export failure classes and a silent label-clipping bug, after
+  its own `self_check.py` had already passed.
+- Voice pass caught two stale internal claims: a `DECK STATUS` header still saying the
+  deck had never been built, and slide 5 citing the removed 3-diagram cap.
+
+Four encodings were refused for implying unsourceable data: the Gantt (no per-bin
+durations), the dot plot (4 summary stats drawn as 45 observations), a waterfall total
+(two different-scope measurements stitched), and the radar's ROUGE-L win (a number that
+existed but had no significance test). The last is the instructive one — the missing
+thing was not a number but a noise floor.
+
+### Open
+
+1. **GitHub Pages not enabled.** See section 11. Needs Joel.
+2. **Projects 2 and 3.** The recipe is section 6; the reusable assets are the six-act
+   skeleton and the slide contract, not the tooling. Awaiting Joel naming the projects.
+3. **Upstream note, optional.** The three XML-export gotchas in `img/EXPORT_NOTES.md` are
+   generic to the diagram-design plugin, not to this repo. Worth raising upstream; the
+   plugin's `self_check.py` catches neither the `--`-in-comment case nor label clipping.
