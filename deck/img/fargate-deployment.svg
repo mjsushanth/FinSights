@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 720 320" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="deploy-title deploy-desc">
+<title id="deploy-title">One task, two containers, sized against a measured peak</title>
+<desc id="deploy-desc">An ECS Fargate deployment diagram showing one task at 1 vCPU and 3072 MiB running backend and frontend containers together, inside the default VPC with no load balancer.</desc>
+<defs>
+<style>@import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&amp;family=Geist:wght@400;500;600&amp;family=Geist+Mono:wght@400;500;600&amp;display=swap');</style></defs>
+<rect width="100%" height="100%" fill="#f8f8f6"/>
+
+<!-- zone: us-east-1 default VPC -->
+<rect x="30" y="40" width="660" height="240" rx="8" fill="#2d323a" fill-opacity="0.02" stroke="#2d323a" stroke-opacity="0.20" stroke-width="1" stroke-dasharray="4,4"/>
+<rect x="42" y="30" width="180" height="18" fill="#f8f8f6"/>
+<text x="46" y="43" fill="#5a6571" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.1em">US-EAST-1 · DEFAULT VPC, NO NAT</text>
+
+<!-- infra node: fargate task -->
+<rect x="70" y="80" width="580" height="160" rx="6" fill="#ffffff" stroke="#eb6c36" stroke-width="1.4"/>
+<rect x="82" y="90" width="80" height="16" rx="2" fill="none" stroke="#eb6c36" stroke-opacity="0.40" stroke-width="0.8"/>
+<text x="122" y="101" fill="#eb6c36" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">FARGATE TASK</text>
+<rect x="600" y="90" width="34" height="16" rx="2" fill="#eb6c36" fill-opacity="0.10" stroke="#eb6c36" stroke-width="0.8"/>
+<text x="617" y="101" fill="#eb6c36" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">x1</text>
+<text x="366" y="118" fill="#2d323a" font-size="13" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">1 vCPU · 3072 MiB · ARM64</text>
+<text x="366" y="134" fill="#828891" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">sized against 1,220 MiB measured peak</text>
+
+<!-- artifact chips -->
+<rect x="110" y="160" width="260" height="52" rx="4" fill="#2d323a" fill-opacity="0.05" stroke="#5a6571" stroke-width="1"/>
+<text x="122" y="182" fill="#2d323a" font-size="11" font-family="'Geist', sans-serif">backend</text>
+<text x="358" y="182" fill="#828891" font-size="9" font-family="'Geist Mono', monospace" text-anchor="end">2560 MiB</text>
+<text x="122" y="200" fill="#828891" font-size="8" font-family="'Geist Mono', monospace">FastAPI :8000</text>
+
+<rect x="380" y="160" width="260" height="52" rx="4" fill="#2d323a" fill-opacity="0.05" stroke="#5a6571" stroke-width="1"/>
+<text x="392" y="182" fill="#2d323a" font-size="11" font-family="'Geist', sans-serif">frontend</text>
+<text x="628" y="182" fill="#828891" font-size="9" font-family="'Geist Mono', monospace" text-anchor="end">384 MiB</text>
+<text x="392" y="200" fill="#828891" font-size="8" font-family="'Geist Mono', monospace">Streamlit :8501, localhost</text>
+
+<line x1="30" y1="296" x2="690" y2="296" stroke="#2d323a" stroke-opacity="0.10" stroke-width="0.8"/>
+<text x="30" y="310" fill="#828891" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.06em">no ALB, no NAT gateway -- one image is nearly free, a second task doubles the bill</text>
+</svg>

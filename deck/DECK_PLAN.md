@@ -266,3 +266,69 @@ This refines by rounds, not in one pass.
 
 E0 reports upward rather than waiting to be asked. Anything it cannot verify at
 source gets flagged, never smoothed over.
+
+## 10. Diagram ruling, rev 4 — final assignment
+
+Worker challenged the section 7 proposal type by type rather than accepting it.
+Outcome: 3 orchestrator picks overturned, 2 slides argued bare and accepted,
+4 resolved to a third shape neither side first proposed. **14 of 16 carry a diagram.**
+
+| # | Final type | Resolution |
+| --: | :-- | :-- |
+| 1 | *(none)* | Bare, accepted. A timeline needs positioned events; one unbroken span is text |
+| 2 | **matrix** (7 x 2) | Refined. Quadrant invents an axis; a binary bar chart is a list. The punchline is a column of uniform "No" |
+| 3 | **process** | Worker override accepted. Gantt bars cannot be sized without per-bin durations — inventing proportions is fabrication |
+| 4 | **data flow** | Worker override accepted. Two static paths, no time-ordered messages |
+| 5 | architecture | Confirmed |
+| 6 | treemap | Confirmed — 338,869 unique texts vs duplicate remainder |
+| 7 | **box/range on full 0-1 axis** | Refined twice. Bars bury the clustering claim; a dot plot/beeswarm would imply 45 observations from 4 summary stats. Box is the honest encoding for min/median/mean/max |
+| 8 | Sankey, year-coverage only | Confirmed with scoping. Multi-company starvation stays in notes — second claim |
+| 9 | **waterfall if the full stage split exists, else bar** | Conditional. A whole-pipeline budget has a real cumulative total; two durations do not |
+| 10 | radar | Confirmed. Every axis carries a real number |
+| 11 | **fishbone, head = "a number you can trust", 6 bones = the S02h methods** | Refined. 3 incidents would leave it sparse; they become callouts on the bones |
+| 12 | sequence | Confirmed — cleanest fit in the deck |
+| 13 | **layer stack** | Worker override accepted. Swimlane implies handoff; nothing is handed off |
+| 14 | deployment | Confirmed |
+| 15 | state machine | Confirmed. P5's reverse-operation test is literally "does a transition back exist" |
+| 16 | *(none)* | Bare, accepted. Layer stack would impose hierarchy on five peer groups — dishonest, not just suboptimal |
+
+Spread: seven chart-like, seven structural, minimal repetition. Answers the
+monotony risk raised in section 9.
+
+Standing rule reaffirmed both times it came up: a figure needing a number that
+cannot be sourced does not get estimated. Same discipline as the prose.
+
+## 11. Blocked
+
+**GitHub Pages is not enabled.** Build succeeds end to end; `configure-pages`
+fails because creating a Pages *site* needs repo-admin privilege the default
+`GITHUB_TOKEN` never receives at any permission level. Repo
+`default_workflow_permissions` is already `write`, so that is not the cause and no
+workflow-file edit fixes it. Orchestrator attempt via `gh api` was blocked by the
+session permission classifier; not routed around, and not delegated to the worker.
+
+Needs one of: Joel flips Settings -> Pages -> Source: GitHub Actions, or Joel
+approves `gh api -X POST repos/mjsushanth/FinSights/pages -f build_type=workflow`.
+One-time either way; the existing workflow then deploys on every push.
+
+
+## 12. Staging — animation that carries the argument
+
+Three diagrams render in two states via `v-click`, one figure each rather than two images:
+
+- **Slide 4** — both paths converging on `search_document` as wired, then where the
+  query path should diverge to `search_query`.
+- **Slide 9** — the documented ~90% assumption, then the measured split beside it.
+  The assumption bar must be **ghosted and labelled as a claim**: nobody measured it,
+  and a slide about an unchecked assumption must not itself assert an unobserved number.
+- **Slide 10** — the three won axes light first (cost, context, ROUGE-L), then the two
+  lost ones (answer quality, off-year). The tension arrives in the argument's own order.
+
+Slides 12 and 15 stay static. Sequence and state-machine diagrams already carry their
+ordering inherently; inventing a reveal there would be decoration.
+
+Rejected: dot plot / beeswarm for slide 7 — see the row in section 10. Same failure
+class as the refused Gantt: an encoding implying data that cannot be sourced.
+
+Bar-family count across the final set: **one** (slide 9, and only if the full stage
+split is unavailable). The monotony risk is closed.

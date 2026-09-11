@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 640 300" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="sankey-title sankey-desc">
+<title id="sankey-title">35% of exports never contained the fiscal year that was asked about</title>
+<desc id="sankey-desc">Of 23 real response exports, 15 contained the asked fiscal year and 8 did not contain it at all, shown as a flow splitting from one source into two outcomes.</desc>
+<defs>
+<style>@import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&amp;family=Geist:wght@400;500;600&amp;family=Geist+Mono:wght@400;500;600&amp;display=swap');</style></defs>
+<rect width="100%" height="100%" fill="#f8f8f6"/>
+
+<!-- source node: 23 units, k=8px/unit -> 184px -->
+<rect x="120" y="58" width="12" height="184" fill="#2d323a"/>
+<text x="108" y="146" fill="#2d323a" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="end">23 exports</text>
+
+<!-- outcome nodes -->
+<rect x="500" y="58" width="12" height="120" fill="#2d323a"/>
+<text x="520" y="112" fill="#2d323a" font-size="12" font-weight="600" font-family="'Geist', sans-serif">Year present</text>
+<text x="520" y="128" fill="#5a6571" font-size="10" font-family="'Geist Mono', monospace">15 · 65%</text>
+
+<rect x="500" y="190" width="12" height="64" fill="#eb6c36"/>
+<text x="520" y="216" fill="#2d323a" font-size="12" font-weight="600" font-family="'Geist', sans-serif">Year missing</text>
+<text x="520" y="232" fill="#eb6c36" font-size="10" font-family="'Geist Mono', monospace">8 · 35%</text>
+
+<!-- ribbons -->
+<path d="M 132,58 C 316,58 316,58 500,58 L 500,178 C 316,178 316,178 132,178 Z" fill="#5a6571" fill-opacity="0.18"/>
+<path d="M 132,178 C 316,178 316,190 500,190 L 500,254 C 316,254 316,242 132,242 Z" fill="#eb6c36" fill-opacity="0.28"/>
+
+<text x="316" y="270" fill="#828891" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">EXPORTS</text>
+<text x="500" y="270" fill="#828891" font-size="8" font-family="'Geist Mono', monospace" text-anchor="start">COVERAGE OUTCOME</text>
+
+<line x1="16" y1="284" x2="620" y2="284" stroke="#2d323a" stroke-opacity="0.10" stroke-width="0.8"/>
+<text x="16" y="296" fill="#828891" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.06em">RETRIEVAL_IMPROVEMENT_STUDY.md 2.6, all 23 real exports checked</text>
+</svg>

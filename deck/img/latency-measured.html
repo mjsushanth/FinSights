@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8">
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>*{box-sizing:border-box;margin:0;padding:0}body{background:#f8f8f6;padding:2rem;display:flex;justify-content:center}svg{width:100%;max-width:640px}</style>
+</head><body>
+<svg viewBox="0 0 640 340" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="latency-measured-title latency-measured-desc">
+<title id="latency-measured-title">Measured: variant generation exceeds the S3 query it was blamed for</title>
+<desc id="latency-measured-desc">Two bars comparing median durations across 12 runs: variant generation at 1990.3 milliseconds, larger than the S3 Vectors query itself at 1465.1 milliseconds.</desc>
+<defs></defs>
+<rect width="100%" height="100%" fill="#f8f8f6"/>
+<line x1="80" y1="280" x2="80" y2="40" stroke="rgba(45,50,58,0.25)" stroke-width="1"/>
+<line x1="80" y1="280" x2="600" y2="280" stroke="rgba(45,50,58,0.25)" stroke-width="1"/>
+<line x1="80" y1="80" x2="600" y2="80" stroke="rgba(45,50,58,0.08)" stroke-width="0.8"/>
+<line x1="80" y1="180" x2="600" y2="180" stroke="rgba(45,50,58,0.08)" stroke-width="0.8"/>
+<text x="72" y="84" fill="#828891" font-size="8" font-family="'Geist Mono', monospace" text-anchor="end">2000ms</text>
+<text x="72" y="184" fill="#828891" font-size="8" font-family="'Geist Mono', monospace" text-anchor="end">1000ms</text>
+<text x="72" y="284" fill="#828891" font-size="8" font-family="'Geist Mono', monospace" text-anchor="end">0</text>
+
+<rect x="180" y="80.7" width="120" height="199.3" fill="#f8f8f6"/>
+<rect x="180" y="80.7" width="120" height="199.3" fill="rgba(235,108,54,0.15)" stroke="#eb6c36" stroke-width="1.2"/>
+<text x="240" y="70" fill="#eb6c36" font-size="10" font-family="'Geist Mono', monospace" text-anchor="middle">1,990.3ms</text>
+<text x="240" y="300" fill="#2d323a" font-size="11" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">variant_gen</text>
+
+<rect x="380" y="134.7" width="120" height="145.3" fill="#f8f8f6"/>
+<rect x="380" y="134.7" width="120" height="145.3" fill="rgba(90,101,113,0.15)" stroke="#5a6571" stroke-width="1"/>
+<text x="440" y="124" fill="#5a6571" font-size="10" font-family="'Geist Mono', monospace" text-anchor="middle">1,465.1ms</text>
+<text x="440" y="300" fill="#2d323a" font-size="11" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">s3_query</text>
+
+<text x="340" y="320" fill="#828891" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">MEDIANS, 12 RUNS -- TIER1_PROGRESS_LOG.md</text>
+</svg>
+</body></html>

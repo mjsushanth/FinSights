@@ -1,8 +1,8 @@
 ---
 theme: seriph
-# Placeholder pending prototyping (design record OPEN_QUESTIONS #3) --
-# seriph vs default vs a custom build needs an actual rendered preview,
-# which needs the npm install Joel has not yet confirmed in this session.
+# Confirmed 2026-09-11: seriph, light mode, custom accent layer in style.css
+# matching the diagram-design "finsights" profile. Screenshotted and ruled
+# on by the orchestrator -- not a placeholder anymore.
 background: null
 class: text-left
 highlighter: shiki
@@ -51,6 +51,8 @@ its own correction elsewhere in the repo; not relitigated here.
 One constraint -- never adopt anything costing more than this -- decided seven
 architecture decisions before a single line of infra code was written.
 
+![Seven decisions scored on whether they hurt quality](./img/cost-decisions-matrix.svg)
+
 <!--
 Source: S02i P15 "A tight cost constraint removes options you did not
 need," and SYSTEMS_WALKTHROUGH.md Part 0 (the thesis-in-one-sentence
@@ -58,6 +60,11 @@ framing). VERIFIED against both docs directly this session. The seven
 decisions and which ones actually cost quality (2 of 7 -- scale-to-zero
 cold starts, no load balancer's shifting public IP) are the material for
 slide 15's close on the same theme; don't spend that here.
+DIAGRAM NOTE: built as a one-column matrix (Decision x Hurt-quality), not
+the proposed two-column form. Source only supports one real per-row
+property -- a second column ("eliminated by cost") would be uniformly true
+for all seven rows by construction, which is not an independent axis.
+Disclosed deviation, not a silent shortcut.
 -->
 
 ---
@@ -68,6 +75,8 @@ slide 15's close on the same theme; don't spend that here.
 
 614,647 sentence-level vectors, three checkpointed fail-safe bins, $2.21 total.
 A crash costs one bin, not the corpus.
+
+![Three checkpointed embedding regeneration bins](./img/regeneration-process.svg)
 
 <!--
 Source: IMPLEMENTATION_GUIDE.md:43, "Sustained throughput reached ~1850
@@ -89,10 +98,9 @@ layout: default
 
 The corpus is embedded with `input_type="search_document"`.
 
-</v-click>
-<v-click>
-
 So is every user query.
+
+![Two paths converging on the same wrong value](./img/asymmetry-flow-current.svg)
 
 </v-click>
 <v-click>
@@ -108,6 +116,8 @@ carried the wrong value since a refactor.
 
 The correct value was already sitting in a deprecated config block. The
 live path just wasn't reading it.
+
+![The correct value already existed in a deprecated block](./img/asymmetry-flow-fix.svg)
 
 </v-click>
 
@@ -165,6 +175,8 @@ not an invented abstraction.
 The same sentence, repeated verbatim across filing years by the same company --
 not cross-company leakage. One sentence alone recurred 424 times.
 
+![44.9% of the corpus is a duplicate copy](./img/boilerplate-treemap.svg)
+
 <!--
 Source: RETRIEVAL_IMPROVEMENT_STUDY.md 2.1, tagged [V], measured directly
 against finrag_fact_sentences.parquet (614,787 rows): 338,869 unique
@@ -186,6 +198,8 @@ near-duplicate rate 22.7% of context, median 100 sentences per context.
 [0.674, 0.737]. Zero rejections at any threshold from 0.0 to 0.5. No
 long tail to filter -- cosine carries almost no ordering information here.
 
+![A 0.063-wide band on the full 0 to 1 axis](./img/flat-score-range.svg)
+
 <!--
 Source: RETRIEVAL_IMPROVEMENT_STUDY.md 2.4, quoting 08_RAGArch_
 DesignNotes.ipynb cell 17 verbatim, tagged [V]. "All thresholds (0.0 to
@@ -205,6 +219,8 @@ does not carry. Sets up slide 10's reranking story directly.
 8 of 23 real exports never contained the fiscal year the question asked
 about. One 3-company export gave Netflix zero context, three times running.
 
+![35% of exports flow into missing-year coverage](./img/wrongyear-sankey.svg)
+
 <!--
 Source: RETRIEVAL_IMPROVEMENT_STUDY.md 2.6 and 2.7, both [V]. 2.6: checked
 all 23 response exports against "| FY nnnn |" headers actually present;
@@ -217,6 +233,12 @@ sentences sit slightly further from the query gets nothing. Netflix: 0
 context in 3/3 runs. Only 3 of 31 gold questions are cross_company, so
 this affects 100% of the multi-company gold set that exists. "Deterministic"
 is the word worth keeping -- this is a structural gap, not noisy variance.
+DIAGRAM NOTE: built as a 2-column Sankey (23 exports -> present/missing),
+not the type's stated "exactly 3 columns." The real data is a single
+binary split with no natural middle stage; inventing one would fabricate
+structure that doesn't exist. Multi-company starvation (Netflix 0/3)
+deliberately kept out of the figure per the design record's own
+instruction -- one number per diagram face.
 -->
 
 ---
@@ -229,11 +251,15 @@ layout: default
 
 **Documented claim:** S3 Vectors retrieval is ~90% of pipeline time.
 
+![Documented claim, never independently measured](./img/latency-claim.svg)
+
 </v-click>
 <v-click>
 
 **Measured:** variant generation, <span class="stat" style="display:inline">1,990ms</span> median --
 larger than the S3 query itself, <span class="stat" style="display:inline">1,465ms</span>.
+
+![The measured split, 12-run medians](./img/latency-measured.svg)
 
 </v-click>
 <v-click>
@@ -265,17 +291,18 @@ layout: default
 <span class="stat" style="display:inline">32%</span>, cut context 61%, and
 had the best ROUGE-L of any configuration tested.
 
+![Won on cost, context, and ROUGE-L](./img/rerank-radar-won.svg)
+
 </v-click>
 <v-click>
 
 **Rejected anyway:** answers got worse on 5 of 10 held-out questions.
 
-</v-click>
-<v-click>
-
 Mechanism: the cross-encoder is blind to fiscal year. Off-year context rose
 from <span class="stat" style="display:inline">31.3%</span> of the pool to
 <span class="stat" style="display:inline">47.4%</span> of what survived pruning.
+
+![The full five-axis picture: won on three, lost on two](./img/rerank-radar-full.svg)
 
 </v-click>
 
@@ -305,6 +332,13 @@ All figures: RERANKING_FINAL_SYNTHESIS.md, cross-referenced against
 IMPLEMENTATION_GUIDE.md:420 (local-pair figures) and :425
 (enable_reranking: false, confirming the rejection shipped as a real
 config state, not just a recommendation).
+DIAGRAM NOTE: the two radar states plot both series (baseline, reranking)
+across 5 axes normalized to a shared 0-10 scale via a disclosed linear
+transform (efficiency = 10 x min/observed for cost and context; quality
+= 10 x non-worse-fraction; off-year = 10 x (1 - off-year rate)). The
+transform is a standard, stated normalization of real measured numbers,
+not a fabricated data point -- every input is one of the verified figures
+above.
 -->
 
 ---
@@ -315,6 +349,8 @@ config state, not just a recommendation).
 
 A grep pattern that could never match. An exit code read from the wrong
 command. A Pricing API query with the wrong usage-type prefix.
+
+![Four measurement methods, three catching the tool itself lying](./img/measurement-fishbone.svg)
 
 <!--
 Source: S02h - Measurement as a Design Practice.md, section 8, all three
@@ -329,6 +365,14 @@ back exactly ($0.032380/vCPU-hr ARM64, matching this deck's own slide 14).
 The lesson stated directly in the source: "my tool returned nothing" and
 "the data does not exist" are different conclusions, and conflating them
 produces a confident gap.
+DIAGRAM NOTE: built with 4 bones, not the 6 measurement methods S02h
+actually documents (external observer, one-time-vs-per-call cost, cold-vs-
+warm instance, static analysis, ask the cloud, measure the artifact).
+Consolidated cold-vs-warm into one-time-vs-per-call (both isolate the same
+kind of cost) and measure-the-artifact into ask-the-cloud (both are
+"verify against the real system, not the description") to keep the
+geometry clean at the type's default canvas size. A truthful grouping of
+6 real methods into 4 bones, not an invented category.
 -->
 
 ---
@@ -339,6 +383,8 @@ produces a confident gap.
 
 A `queue.Queue` plus a background thread streams pipeline-stage events and
 token output to the browser. Total time is unchanged. What changed is the wait.
+
+![Browser, endpoint, worker thread, and queue](./img/sse-sequence.svg)
 
 <!--
 Source: TIER1_PROGRESS_LOG.md Change 4b (2026-08-01), VERIFIED via a real
@@ -359,6 +405,8 @@ live deployed Fargate service specifically.
 `answer_query` is blocking and I/O-heavy -- that alone decided threadpool over
 event loop. boto3 clients are safe to share; Sessions are not. One
 lazy-table memo was the real hazard.
+
+![Session, Client, and the one genuinely shared thing](./img/concurrency-layers.svg)
 
 <!--
 Source: S02g - Concurrency and Shared State.md, VERIFIED this session.
@@ -382,6 +430,8 @@ consequences" -- not a taste decision.
 
 Fargate charges per task, on the reserved shape, not per container and not on
 actual usage. One image, two containers, ARM64 -- 20% cheaper than x86_64.
+
+![One task, two containers, no ALB, no NAT](./img/fargate-deployment.svg)
 
 <!--
 Source: SYSTEMS_WALKTHROUGH.md 3.1 and 3.2, VERIFIED against the AWS
@@ -409,6 +459,8 @@ being split into two services.
 
 `destroy` then `up` reached the same steady state from the repository alone.
 That is the completeness test -- not a disaster-recovery drill.
+
+![The same up edge both bootstraps and rebuilds](./img/control-plane-state.svg)
 
 <!--
 Source: SYSTEMS_WALKTHROUGH.md Part 7.1 (control plane as a Python

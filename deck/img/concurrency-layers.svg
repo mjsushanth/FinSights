@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 760 280" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="conc-layers-title conc-layers-desc">
+<title id="conc-layers-title">Trust hierarchy of what is safe to share across threads</title>
+<desc id="conc-layers-desc">Three stacked layers: Session at the base which is not thread-safe, Client above it which is safe to share, and the application's own DataLoader memo on top as the one genuinely shared mutable thing.</desc>
+<defs>
+<style>@import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&amp;family=Geist:wght@400;500;600&amp;family=Geist+Mono:wght@400;500;600&amp;display=swap');</style></defs>
+<rect width="100%" height="100%" fill="#f8f8f6"/>
+
+<text x="16" y="52" fill="#828891" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.08em">SHARED</text>
+<text x="16" y="64" fill="#828891" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.08em">RISK ^</text>
+
+<!-- L1 Session, base -->
+<rect x="70" y="192" width="640" height="64" fill="#ffffff" stroke="#2d323a" stroke-width="1"/>
+<text x="86" y="216" fill="#828891" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.06em">L1</text>
+<text x="130" y="220" fill="#2d323a" font-size="14" font-weight="600" font-family="'Geist', sans-serif">Session</text>
+<text x="694" y="220" fill="#828891" font-size="9" font-family="'Geist Mono', monospace" text-anchor="end">create per thread -- NOT thread-safe</text>
+
+<!-- L2 Client, middle -->
+<rect x="70" y="128" width="640" height="64" fill="#ffffff" stroke="#2d323a" stroke-width="1"/>
+<text x="86" y="152" fill="#828891" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.06em">L2</text>
+<text x="130" y="156" fill="#2d323a" font-size="14" font-weight="600" font-family="'Geist', sans-serif">Client</text>
+<text x="694" y="156" fill="#828891" font-size="9" font-family="'Geist Mono', monospace" text-anchor="end">safe to share across threads, not processes</text>
+
+<!-- L3 DataLoader memo, top, focal -->
+<rect x="70" y="64" width="640" height="64" fill="#eb6c36" fill-opacity="0.07" stroke="#eb6c36" stroke-width="1.4"/>
+<text x="86" y="88" fill="#eb6c36" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.06em">L3</text>
+<text x="130" y="92" fill="#2d323a" font-size="14" font-weight="600" font-family="'Geist', sans-serif">DataLoader memo</text>
+<text x="694" y="92" fill="#eb6c36" font-size="9" font-family="'Geist Mono', monospace" text-anchor="end">the ONE genuinely shared mutable thing</text>
+
+<line x1="70" y1="128" x2="710" y2="128" stroke="#2d323a" stroke-opacity="0.12" stroke-width="1"/>
+<line x1="70" y1="192" x2="710" y2="192" stroke="#2d323a" stroke-opacity="0.12" stroke-width="1"/>
+
+<line x1="16" y1="272" x2="710" y2="272" stroke="#2d323a" stroke-opacity="0.10" stroke-width="0.8"/>
+<text x="16" y="286" fill="#828891" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.06em">boto3 docs: Client generally yes, Resource no, Session no -- three answers, one library</text>
+</svg>

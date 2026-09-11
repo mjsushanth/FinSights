@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8">
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>*{box-sizing:border-box;margin:0;padding:0}body{background:#f8f8f6;padding:2rem;display:flex;justify-content:center}svg{width:100%;max-width:760px}</style>
+</head><body>
+<svg viewBox="0 0 760 260" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="flow-cur-title flow-cur-desc">
+<title id="flow-cur-title">Two paths, both wired to the same value</title>
+<desc id="flow-cur-desc">The corpus embedding path and the query embedding path both feed into input_type search_document, even though the query needs a different value.</desc>
+<defs><marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#5a6571"/></marker></defs>
+<rect width="100%" height="100%" fill="#f8f8f6"/>
+
+<text x="16" y="30" fill="#828891" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.08em">CORPUS</text>
+<rect x="16" y="44" width="180" height="52" rx="6" fill="#ffffff" stroke="#2d323a" stroke-width="1"/>
+<text x="106" y="66" fill="#2d323a" font-size="11" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">614,787 sentences</text>
+<text x="106" y="82" fill="#828891" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">embedding_generation.py</text>
+<path d="M 196,70 H 340" fill="none" stroke="#5a6571" stroke-width="1" marker-end="url(#arrow)"/>
+
+<text x="16" y="150" fill="#828891" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.08em">QUERY</text>
+<rect x="16" y="164" width="180" height="52" rx="6" fill="#ffffff" stroke="#2d323a" stroke-width="1"/>
+<text x="106" y="186" fill="#2d323a" font-size="11" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">user question</text>
+<text x="106" y="202" fill="#828891" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">query_embedder_v2.py:66</text>
+<path d="M 196,190 H 300 V 100" fill="none" stroke="#5a6571" stroke-width="1" marker-end="url(#arrow)"/>
+
+<rect x="340" y="44" width="240" height="104" rx="8" fill="rgba(90,101,113,0.10)" stroke="#5a6571" stroke-width="1.2"/>
+<text x="460" y="90" fill="#2d323a" font-size="13" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">input_type =</text>
+<text x="460" y="112" fill="#5a6571" font-size="13" font-weight="600" font-family="'Geist Mono', monospace" text-anchor="middle">search_document</text>
+<text x="460" y="130" fill="#828891" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">ml_config.yaml:214</text>
+
+<rect x="610" y="70" width="130" height="60" rx="6" fill="rgba(45,50,58,0.05)" stroke="rgba(45,50,58,0.30)" stroke-width="0.8"/>
+<text x="675" y="96" fill="#5a6571" font-size="10" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">symmetric match</text>
+<text x="675" y="112" fill="#828891" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">"resembles", not "answers"</text>
+<path d="M 580,96 H 610" fill="none" stroke="#5a6571" stroke-width="1" marker-end="url(#arrow)"/>
+
+<line x1="16" y1="234" x2="740" y2="234" stroke="rgba(45,50,58,0.10)" stroke-width="0.8"/>
+<text x="16" y="248" fill="#828891" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.06em">RETRIEVAL_IMPROVEMENT_STUDY.md 3.1 -- both paths verified reading the same config value</text>
+</svg>
+</body></html>

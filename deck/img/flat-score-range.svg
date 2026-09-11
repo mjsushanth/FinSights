@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 760 220" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="flat-score-title flat-score-desc">
+<title id="flat-score-title">The top-45 similarity band on the full 0-to-1 cosine range</title>
+<desc id="flat-score-desc">A narrow 0.063-wide band from 0.674 to 0.737, with the median at 0.687, drawn against the full 0 to 1 cosine similarity axis to show how little of the range the candidates actually occupy.</desc>
+<defs>
+<style>@import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&amp;family=Geist:wght@400;500;600&amp;family=Geist+Mono:wght@400;500;600&amp;display=swap');</style></defs>
+<rect width="100%" height="100%" fill="#f8f8f6"/>
+
+<!-- axis 0..1 mapped x=80..920 -->
+<line x1="80" y1="120" x2="720" y2="120" stroke="#2d323a" stroke-opacity="0.25" stroke-width="1"/>
+<g font-family="'Geist Mono', monospace" font-size="8" fill="#828891" text-anchor="middle">
+<line x1="80" y1="114" x2="80" y2="126" stroke="#2d323a" stroke-opacity="0.25" stroke-width="1"/><text x="80" y="140">0.0</text>
+<line x1="208" y1="114" x2="208" y2="126" stroke="#2d323a" stroke-opacity="0.25" stroke-width="1"/><text x="208" y="140">0.2</text>
+<line x1="336" y1="114" x2="336" y2="126" stroke="#2d323a" stroke-opacity="0.25" stroke-width="1"/><text x="336" y="140">0.4</text>
+<line x1="464" y1="114" x2="464" y2="126" stroke="#2d323a" stroke-opacity="0.25" stroke-width="1"/><text x="464" y="140">0.6</text>
+<line x1="592" y1="114" x2="592" y2="126" stroke="#2d323a" stroke-opacity="0.25" stroke-width="1"/><text x="592" y="140">0.8</text>
+<line x1="720" y1="114" x2="720" y2="126" stroke="#2d323a" stroke-opacity="0.25" stroke-width="1"/><text x="720" y="140">1.0</text>
+</g>
+
+<!-- the band: 0.674 to 0.737 -> x 511.2 to 555.16 -->
+<rect x="511" y="108" width="45" height="24" rx="3" fill="#eb6c36" fill-opacity="0.18" stroke="#eb6c36" stroke-width="1.4"/>
+<!-- median tick at 0.687 -> x=520.1 -->
+<line x1="520" y1="104" x2="520" y2="136" stroke="#2d323a" stroke-width="1.2"/>
+
+<rect x="440" y="60" width="180" height="16" rx="2" fill="#f8f8f6"/>
+<text x="530" y="72" fill="#2d323a" font-size="10" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">0.674 -- 0.737 (width 0.063)</text>
+<rect x="470" y="150" width="120" height="14" rx="2" fill="#f8f8f6"/>
+<text x="530" y="161" fill="#828891" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">median 0.687</text>
+
+<line x1="16" y1="196" x2="710" y2="196" stroke="#2d323a" stroke-opacity="0.10" stroke-width="0.8"/>
+<text x="16" y="210" fill="#828891" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.06em">45 top-ranked candidates, ZERO rejected at any threshold 0.0-0.5 -- 08_RAGArch_DesignNotes.ipynb cell 17</text>
+</svg>

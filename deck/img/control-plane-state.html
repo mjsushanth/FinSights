@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8">
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>*{box-sizing:border-box;margin:0;padding:0}body{background:#f8f8f6;padding:2rem;display:flex;justify-content:center}svg{width:100%;max-width:680px}</style>
+</head><body>
+<svg viewBox="0 0 680 320" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="cp-state-title cp-state-desc">
+<title id="cp-state-title">The control plane's states, and the edge that proves completeness</title>
+<desc id="cp-state-desc">A state machine of Destroyed, Up, and Down, where the same up transition both brings the system up initially and rebuilds it after a destroy, proving the description is complete.</desc>
+<defs>
+<marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#5a6571"/></marker>
+<marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#eb6c36"/></marker>
+</defs>
+<rect width="100%" height="100%" fill="#f8f8f6"/>
+
+<circle cx="60" cy="80" r="6" fill="#2d323a"/>
+
+<!-- accent edge: Destroyed -> Up, used both as initial bring-up and as rebuild -->
+<path d="M 88,88 Q 300,140 452,92" fill="none" stroke="#eb6c36" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+<rect x="230" y="104" width="120" height="14" rx="2" fill="#f8f8f6"/>
+<text x="290" y="115" fill="#eb6c36" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.04em">up  (== rebuild)</text>
+
+<!-- Up -> Destroyed -->
+<path d="M 452,64 Q 260,20 88,68" fill="none" stroke="#5a6571" stroke-width="1" marker-end="url(#arrow)"/>
+<rect x="230" y="26" width="70" height="14" rx="2" fill="#f8f8f6"/>
+<text x="265" y="37" fill="#5a6571" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.04em">destroy</text>
+
+<!-- Up -> Down -->
+<path d="M 500,120 Q 500,180 500,224" fill="none" stroke="#5a6571" stroke-width="1" marker-end="url(#arrow)"/>
+<rect x="474" y="164" width="46" height="14" rx="2" fill="#f8f8f6"/>
+<text x="497" y="175" fill="#5a6571" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.04em">down</text>
+
+<!-- Down -> Up -->
+<path d="M 560,232 Q 590,180 560,124" fill="none" stroke="#5a6571" stroke-width="1" marker-end="url(#arrow)"/>
+<rect x="560" y="164" width="30" height="14" rx="2" fill="#f8f8f6"/>
+<text x="575" y="175" fill="#5a6571" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.04em">up</text>
+
+<!-- States -->
+<rect x="20" y="60" width="140" height="56" rx="8" fill="#ffffff" stroke="#2d323a" stroke-width="1"/>
+<text x="90" y="93" fill="#2d323a" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">Destroyed</text>
+
+<rect x="452" y="64" width="140" height="56" rx="8" fill="rgba(235,108,54,0.07)" stroke="#eb6c36" stroke-width="1.2"/>
+<text x="522" y="97" fill="#2d323a" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">Up (steady state)</text>
+
+<rect x="452" y="224" width="140" height="56" rx="8" fill="#ffffff" stroke="#2d323a" stroke-width="1"/>
+<text x="522" y="257" fill="#2d323a" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">Down (desiredCount=0)</text>
+
+<line x1="20" y1="298" x2="590" y2="298" stroke="rgba(45,50,58,0.10)" stroke-width="0.8"/>
+<text x="20" y="312" fill="#828891" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.06em">P5: destroy -&gt; up REACHES THE SAME STATE. THAT IS THE COMPLETENESS TEST.</text>
+</svg>
+</body></html>
