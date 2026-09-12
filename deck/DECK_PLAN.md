@@ -587,3 +587,66 @@ page cold.
 | When | Commit | State |
 | :-- | :-- | :-- |
 | run start | `6ab7797` | Slides 1-2 in new frame and approved. 3-15 outstanding. Specs for all sent. |
+
+## 17. OUTSTANDING at hand-back — read this first
+
+Orchestrator's cross-session messaging is rate-paused, so this section is the channel.
+Three items remain. Ordered by consequence.
+
+### A. Seventeen slides, not fifteen — one merge left
+
+Slides 13 and 14 landed correctly (live incremental ingestion, engineering choices).
+The three-into-one infrastructure merge has not happened:
+
+- 15 Concurrency model
+- 16 Fargate cost model
+- 17 Infrastructure control plane
+
+These become **one** slide, "Deployment and operations", which lands the deck on 15.
+They are one story — per-task billing, container sizing, thread-pool selection and
+provisioning/teardown all answer "how does this run". Concurrency and per-task billing
+become bullets, not headlines.
+
+There is also a reader-facing symptom while they stay split: slide 12 is "Operating cost
+analysis" and slide 16 is "Fargate cost model". Two cost slides four apart, the second
+already implied by the first's worked scenario.
+
+### B. The codename sweep has not started, and is growing
+
+**18 of 18 diagrams** carry a repo filename or internal code in visible text. This
+violates Joel's explicit instruction — no elements that look like our codes "and our
+language for files".
+
+Worse: new diagrams are being created **with** the violation. `cross-company-questions.svg`
+arrived this run carrying `P3V3-Q004`, `P3V3-Q005`, `P3V3-Q006` and the curated-set
+filename. The count went 17 to 18, not downward.
+
+Worst three, by exposure:
+- `question-to-answer.svg` — `P3V3-Q003` on the product slide, the most-viewed figure
+- `cross-company-questions.svg` — three question IDs plus the filename
+- `latency-claim.svg` — `CLAUDE.md`, an internal agent-instruction file
+
+Full list is in the orchestrator's message of the same run; every `img/*.svg` is affected.
+Fix: plain-language sourcing, or no caption. File paths belong in presenter notes only.
+Do the merge first so the sweep does not touch diagrams that leave the deck.
+
+### C. Two slides cannot be verified for overflow, and need eyes
+
+| Slide | Words | Why it is a risk |
+| :-- | --: | :-- |
+| 4 Embedding pipeline | 138 | Six bullets; last one sat near the bottom edge when last seen rendered |
+| 11 Evaluation infrastructure | 153 | Densest face in the deck, and a four-into-one fold |
+
+Both are past the 130-word overflow threshold calibrated in section 4. The orchestrator
+**cannot check these** — the browser pane does not composite while Joel is away, so every
+element measures zero height and screenshots time out. This is exactly the failure class
+from section 15, where build, XML validation and CI all passed over three unusable slides.
+
+If evaluation will not fit, cut the weakest of its four folded threads. Do not shrink type.
+
+### Ledger
+
+| When | Commit | State |
+| :-- | :-- | :-- |
+| run start | `6ab7797` | Slides 1-2 approved, 3-15 outstanding |
+| mid-run | `f8d765c` | 17 slides. 1-14 built in the new frame. Merge, sweep and two overflow checks outstanding |
