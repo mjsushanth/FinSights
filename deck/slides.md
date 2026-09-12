@@ -558,6 +558,7 @@ slide's single example, scaled to three.
 
 ---
 class: compact-fig-md
+transition: slide-up
 ---
 
 # Streaming response delivery — stage events and token-level output
@@ -648,7 +649,6 @@ standing practice for superseded diagrams.
 ---
 layout: two-cols
 class: text-left compact-list
-transition: slide-up
 ---
 
 # Operating cost analysis — storage, compute and inference under realistic usage
@@ -949,11 +949,11 @@ number twice across two slides.
 No internal codenames on this face: said "the three gold phases", not
 P1/P2/P3 question-ID codes; no P3V3-Q0xx labels.
 
-v-mark: only .underline and .circle plus color modifiers used, confirmed
-against the installed Slidev CLI's own bundled reference
-(node_modules/@slidev/cli/skills/slidev/references/animation-rough-marker.md)
-rather than asserted from memory. The 0.099 mark has no click-index --
-it is visible from the first view of the slide ("mark it"), and the
+The 0.099 mark uses the CSS-only .mark-circle class (see style.css),
+not v-mark -- v-mark (@slidev/rough-notation@0.1.0) was found to never
+actually render anywhere in this deck, on any slide, in any environment
+including production, and was replaced deck-wide. It has no click-index
+-- it is visible from the first view of the slide ("mark it"), and the
 Arrow + explanation are what wait for click 1 ("then let the next click
 reveal why low is correct"), per the request's own sequencing.
 

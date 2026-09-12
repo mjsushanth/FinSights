@@ -203,14 +203,32 @@ html.light body {
    rules out a positioning or CSS problem and points at the package's own
    mount-time bug. Replaced with plain CSS (below) rather than depending on
    a broken library call for a decorative feature. */
+/* Draw-in via clip-path rather than SVG stroke-dasharray: a dasharray/
+   dashoffset trace needs the path length measured against each specific
+   phrase's rendered box (JS-computed, at a specific mount moment) -- the
+   exact fragility class that just broke v-mark. clip-path's 0%/100%
+   insets are relative to the element's own box automatically, so the
+   same two keyframes work at any text width with no measurement step. */
 .mark-circle {
+  display: inline-block;
+  vertical-align: baseline;
+  line-height: 1.2;
   border: 2.5px solid #eb6c36;
   border-radius: 999px;
   padding: 0px 7px;
+  animation: mark-draw-in 0.7s ease-out;
 }
 .mark-underline {
+  display: inline-block;
+  vertical-align: baseline;
+  line-height: 1.2;
   text-decoration: underline;
   text-decoration-color: #eb6c36;
   text-decoration-thickness: 2px;
   text-underline-offset: 3px;
+  animation: mark-draw-in 0.7s ease-out;
+}
+@keyframes mark-draw-in {
+  from { clip-path: inset(0 100% 0 0); }
+  to   { clip-path: inset(0 0 0 0); }
 }
