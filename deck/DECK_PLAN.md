@@ -80,7 +80,12 @@ P18 trust the artifact over the description
 
 - One claim per slide, phrased as a **sentence**, not a noun phrase.
 - Exactly **one measured number** per slide — measured, never modelled.
-- Slide face <= 40 words. Depth goes in presenter notes.
+- Slide face word budget: **<= 40 words for a single-claim slide, <= 120 for a
+  two-column slide** with bullets left and a figure right. The 40-word rule was written
+  for the single-claim layout and is obsolete for the two-column pattern Joel asked for
+  ("2-3 bullets", "the LEFT SPACE 70% of it should have some good talk"). Measured
+  against live slides: ~110 words fits comfortably, 138 fits but with no slack at the
+  bottom edge. Treat >130 as at risk of overflow.
 - Animation must **carry the argument**, not decorate it: use `v-click` to stage a
   reveal where the sequence *is* the point (claim -> measurement -> reversal).
   A reveal that only delays text is noise.
