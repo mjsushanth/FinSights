@@ -733,3 +733,60 @@ orchestrator's: on a deck opened on someone else's machine, fits-by-a-hair is no
 | run start | `6ab7797` | Slides 1-2 approved, 3-15 outstanding |
 | mid-run | `f8d765c` | 17 slides, merge + sweep outstanding |
 | run end | `fc9ec95` | 15 slides, 0 leaks, deployed and serving. Overflow unverified. |
+| overflow pass | `fb761ed` | Criterion 2/3 verified in browser. One real bug found and fixed. |
+
+## 20. Criterion 2/3 — full walkthrough, complete
+
+Verified against committed HEAD `fb761ed`, in-browser, real 980x551 canvas, dev server
+on port 3030. Method: for each slide, take the visible `.slidev-layout`, walk every
+descendant, compare the deepest visible `bottom` against the slide's true 551px edge
+(not a conservative buffer — the orchestrator's own standard, matching `EXPORT_NOTES.md`).
+
+| Slide | Overflow margin | Note |
+| :-- | --: | :-- |
+| 1 FinSights (title) | -155px | clean |
+| 2 Two supply lines | -40px | clean; title kept as-is, reads plainly at full screen |
+| 3 Corpus construction | -35px | clean |
+| 4 Embedding pipeline | -20px | clean — orchestrator's #1 risk slide, confirmed fine |
+| 5 Retrieval architecture | -23px | clean |
+| 6 Question to cited answer | -63px | clean |
+| 7 Structured KPI extraction | -9px | clean, tight but no overflow |
+| 8 Boilerplate duplication | -40px | clean |
+| 9 Cross-company queries | -26px | clean, no codename leak in rendered DOM |
+| 10 Streaming response delivery | **+32px → -18px** | **real bug, fixed** — see below |
+| 11 Evaluation infrastructure | -78px | clean — orchestrator's #2 risk slide, confirmed fine |
+| 12 Operating cost analysis | -40px | clean |
+| 13 Live incremental ingestion | -88px | clean |
+| 14 Engineering choices | -37px | clean |
+| 15 Deployment and operations | click1 -63px / click2 -36px | clean — orchestrator's #3 risk slide, confirmed fine |
+
+None of the orchestrator's three flagged slides (4, 11, 15) had a real bug. The actual
+bug was on slide 10, which nobody had flagged — found only by walking every slide rather
+than spot-checking the dense ones. Word/bullet density is not a reliable overflow
+predictor; measuring the true bounding box against the true canvas edge is.
+
+### Slide 10 bug, for the record
+
+`sse-sequence.svg`'s image bottom sat 32px past the true 551px edge. Invisible in a plain
+screenshot: `.slidev-slide-content` clips with `overflow-y: hidden`, so the last ~32px
+(the diagram's final `queue.get()` / return-arrow row) was silently dropped from the
+render, not visually clipped in any way a screenshot would flag. Caught only by comparing
+`getBoundingClientRect()` against the real viewport height. Fixed with a new
+`.compact-fig-md` class (280px image cap, slide 10 only) — `.compact-fig-lg` (300px) was
+tried first and still left 2.7px of overflow. Fix at commit `fb761ed`.
+
+### Click-count clamping (Criterion 3)
+
+Only slide 15 has `v-click` staging (confirmed via `grep v-click slides.md` — all other
+slides are static, contrary to earlier assumption that slides 4/6/9 also had staging).
+Verified via `history.pushState` to `?clicks=1`, `?clicks=2`, `?clicks=99`: clicks=99
+renders pixel-identical to clicks=2, confirming exactly 2 real click steps with no
+phantom third state.
+
+### Criterion 1, re-confirmed
+
+`/16` redirects to slide 1 (wraps), confirming exactly 15 slides exist in the live route
+table, matching the frontmatter count.
+
+**All 7 acceptance criteria now independently verified from a session with working
+browser access.** Deck is closed out.
