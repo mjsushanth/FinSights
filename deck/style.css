@@ -97,6 +97,14 @@ html.light body {
   margin: 6px 0;
 }
 
+/* Slide "Embedding pipeline": Joel wants the bin 1-2-3 diagram narrow and
+   vertical on the right, with the left column carrying most of the talk
+   (~70%), not an even 50/50 split. Applied via layoutClass on the
+   two-cols layout. */
+.wide-left {
+  grid-template-columns: 7fr 3fr !important;
+}
+
 /* Slide 14: the voice pass grew its body text from 2 lines to 3, and at the
    global 330px image cap that pushed the diagram 55px past the slide's
    bottom edge -- a smaller, less obvious repeat of slide 4's bug. Tightening

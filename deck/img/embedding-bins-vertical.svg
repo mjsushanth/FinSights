@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 260 360" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="bins-title bins-desc">
+<title id="bins-title">Three checkpointed bins, so a crash costs one bin, not the corpus</title>
+<desc id="bins-desc">Three sequential embedding regeneration bins stacked vertically with checkpoint boundaries between them, so a failure in any one bin does not require redoing the others.</desc>
+<defs>
+<style>@import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&amp;family=Geist:wght@400;500;600&amp;family=Geist+Mono:wght@400;500;600&amp;display=swap');</style><marker id="arrow" markerWidth="8" markerHeight="6" refX="4" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#5a6571"/></marker></defs>
+<rect width="100%" height="100%" fill="#f8f8f6"/>
+
+<text x="20" y="14" fill="#828891" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.08em">EMBEDDING REGENERATION</text>
+
+<rect x="20" y="20" width="220" height="64" rx="6" fill="#ffffff" stroke="#2d323a" stroke-width="1"/>
+<text x="130" y="42" fill="#2d323a" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">Bin 1</text>
+<text x="130" y="58" fill="#828891" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">Bedrock, cohere.embed-v4</text>
+<text x="130" y="72" fill="#828891" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">years 2006-2012</text>
+
+<path d="M 130,84 V 100" fill="none" stroke="#5a6571" stroke-width="1"/>
+<circle cx="130" cy="106" r="9" fill="#f8f8f6" stroke="#eb6c36" stroke-width="1.4"/>
+<text x="130" y="109" fill="#eb6c36" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">CP</text>
+<path d="M 130,115 V 132" fill="none" stroke="#5a6571" stroke-width="1" marker-end="url(#arrow)"/>
+
+<rect x="20" y="136" width="220" height="64" rx="6" fill="#ffffff" stroke="#2d323a" stroke-width="1"/>
+<text x="130" y="158" fill="#2d323a" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">Bin 2</text>
+<text x="130" y="174" fill="#828891" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">Bedrock, cohere.embed-v4</text>
+<text x="130" y="188" fill="#828891" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">years 2013-2019</text>
+
+<path d="M 130,200 V 216" fill="none" stroke="#5a6571" stroke-width="1"/>
+<circle cx="130" cy="222" r="9" fill="#f8f8f6" stroke="#eb6c36" stroke-width="1.4"/>
+<text x="130" y="225" fill="#eb6c36" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">CP</text>
+<path d="M 130,231 V 248" fill="none" stroke="#5a6571" stroke-width="1" marker-end="url(#arrow)"/>
+
+<rect x="20" y="252" width="220" height="64" rx="6" fill="#eb6c36" fill-opacity="0.07" stroke="#eb6c36" stroke-width="1.4"/>
+<text x="130" y="274" fill="#2d323a" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">Bin 3</text>
+<text x="130" y="290" fill="#eb6c36" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">Cohere direct API</text>
+<text x="130" y="304" fill="#828891" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">2020-2025, quota dodge</text>
+
+<line x1="20" y1="326" x2="240" y2="326" stroke="#2d323a" stroke-opacity="0.1" stroke-width="0.8"/>
+<text x="20" y="340" fill="#828891" font-size="8" font-family="'Geist Mono', monospace">614,647 vectors, ~1,850/min, $2.21</text>
+<text x="20" y="352" fill="#828891" font-size="8" font-family="'Geist Mono', monospace">-- IMPLEMENTATION_GUIDE.md:43</text>
+</svg>

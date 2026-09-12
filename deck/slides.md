@@ -186,23 +186,73 @@ reads.
 -->
 
 ---
+layout: two-cols
+layoutClass: wide-left
+class: text-left compact-list tight-body
+---
 
-# Corpus and checkpointed regeneration
+# Embedding pipeline — batching, rate control, checkpointing and recovery
 
 <span class="stat">1,850<span class="stat-label">vectors/minute, sustained</span></span>
 
-614,647 sentence-level vectors, three checkpointed fail-safe bins, $2.21 total.
-A crash costs one bin, not the corpus.
+- Token-aware batching — 96 vectors / 15K tokens per call, exponential backoff, three-try recovery
+- Rate limiting with retry classification — failed batches logged for deterministic replay, not blocked; the same pattern reused in the S3 retriever
+- Checkpoint and resume, flushed before abort — a real quota-exhaustion run once lost 1,920 already-embedded sentences before this fix existed
+- Merge-crash guard protects completed bins from a failed final merge
+- Provider abstraction — Bedrock and Cohere direct behind one interface; caught before shipping: a single global checkpoint path would have let two providers' vectors merge undetected
+- Cohere's 2,000 rpm ceiling was never binding — the run used ~34 rpm of it, headroom rather than a speed claim
 
-![Three checkpointed embedding regeneration bins](./img/regeneration-process.svg)
+::right::
+
+![Three checkpointed embedding regeneration bins, vertical](./img/embedding-bins-vertical.svg)
 
 <!--
-Source: IMPLEMENTATION_GUIDE.md:43, "Sustained throughput reached ~1850
-vectors per minute." VERIFIED this session. Three bins: two via Bedrock,
-one via the Cohere direct API after hitting an 8.1M-token/day account
-quota (documented elsewhere, not needed on this slide). Corpus is
-sentence-level, not chunk-level -- 614,647 rows, not a chunked
-approximation. Cost broke down as ~\$1.30 Bedrock + ~\$0.91 Cohere direct.
+EXPANDED 2026-09-11, split out of the old "Corpus and checkpointed
+regeneration" slide per the orchestrator's disposition table -- the
+selection half became its own slide (previous); this is the regeneration
+half, now carrying the pipeline's real engineering rather than just its
+bins. Layout per Joel's explicit instruction: the bin diagram vertical on
+the right (~30% width), the left column (~70%) carrying the actual talk.
+
+Source: ModelPipeline/finrag_ml_tg1/investigation_analysis/
+EMBEDDING_PROVIDER_ABSTRACTION_DESIGN.md, VERIFIED directly this session,
+every figure below traced to a specific line:
+- Pipeline shape (line 257-258): load meta -> filter -> [batch ->
+  rate_limiter -> provider.embed -> retry] -> checkpoint -> merge ->
+  update meta -> save to S3 + local.
+- 96 vectors / 15K tokens per call: also IMPLEMENTATION_GUIDE.md:43
+  ("Batches of 96 vectors / 15K tokens per call, with exponential backoff
+  and three-try recovery").
+- The 1,920-sentence loss is a REAL incident, not a hypothetical: "yesterday
+  the run reported 131,520 embedded but only 129,600 were saved -- about
+  1,920 sentences of already-paid-for work lost" (line 199-200). Flushing
+  the checkpoint before the abort path recovers it going forward.
+- CHECKPOINT_PATH collision: "one global file... a Bedrock-run and a
+  Cohere-run checkpoint would collide, and vectors from two different
+  transports could merge into one checkpoint file undetected" (line
+  192-196) -- caught during the provider-abstraction design, before it
+  shipped, not after an incident.
+- Cohere rate ceiling (line 70-72): "Cohere's 2,000 rpm ceiling is not the
+  binding constraint (we would use ~34 rpm of it); it simply means no
+  throttling and no daily wall... Do not read 2,000 rpm as a speed claim."
+  Preserved that precision rather than inflating it.
+- "hard-won" (line 231): "checkpoint/resume, merge-crash guard, rate
+  limiter and retry classification were all hard-won" and stay unchanged
+  through the provider refactor -- the reason these bullets are framed as
+  achievements, not incidental plumbing.
+
+Bins/cost/throughput figures unchanged from the prior version of this
+slide: 614,647 sentence-level vectors, $2.21 total (~$1.30 Bedrock +
+$0.91 Cohere direct), three bins (two via Bedrock, one via Cohere direct
+after an 8.1M-token/day account quota), ~85 minutes wall-clock in one
+sitting. Kept the existing 1,850 vectors/minute stat rather than
+replacing it -- still the strongest single verified throughput number for
+this pipeline.
+
+DIAGRAM NOTE: new diagram, embedding-bins-vertical.svg -- same three bins
+and checkpoint markers as regeneration-process.svg (still on disk, no
+longer referenced), redrawn stacked vertically top-to-bottom for the
+narrow right column instead of left-to-right for a full-width slide.
 -->
 
 ---
