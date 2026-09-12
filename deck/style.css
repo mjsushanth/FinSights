@@ -24,6 +24,29 @@ html.light body {
   font-family: 'Instrument Serif', serif;
   font-weight: 400;
   color: #2d323a;
+  /* Signature accent: a short, fixed-width bar rather than a full-width
+     underline. A wrapped two-line h1 has a different width per line, so
+     matching "the text's width" is ambiguous -- a fixed-width mark reads
+     as a consistent signature across all 16 slides instead of a
+     variable-width bar tied to however long that slide's title happens
+     to be. */
+  position: relative;
+  padding-bottom: 6px;
+}
+.slidev-layout h1::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 56px;
+  height: 2.5px;
+  background: #eb6c36;
+  transform-origin: left;
+  animation: title-sweep 0.6s ease-out;
+}
+@keyframes title-sweep {
+  from { transform: scaleX(0); }
+  to   { transform: scaleX(1); }
 }
 
 .slidev-layout h2 {
@@ -57,6 +80,19 @@ html.light body {
   color: #eb6c36;
   margin: 0.5em 0;
   letter-spacing: -0.01em;
+  /* A literal digit-by-digit count-up needs either a JS tick (which only
+     runs once at mount, not on every slide re-entry -- the same failure
+     class that broke v-mark) or a CSS counter driven by a typed
+     @property, which can't reproduce arbitrary formatting (currency
+     signs, decimals, commas, unit suffixes, "5/10" fractions) that this
+     deck's stats actually use. A scale+opacity entrance gets the same
+     "the number arrives with weight" effect reliably, at any format,
+     with a plain restartable CSS animation. */
+  animation: stat-pop 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+@keyframes stat-pop {
+  from { opacity: 0; transform: scale(0.85); }
+  to   { opacity: 1; transform: scale(1); }
 }
 
 .slidev-layout .stat-label {
@@ -140,6 +176,33 @@ html.light body {
    real overflow, but too close to trust across font-rendering variance. */
 .compact-list ul li {
   line-height: 1.5;
+}
+
+/* Staggered bullet entrance, deck-wide. Plain entrance animation, not
+   click-gated -- opacity/transform only, so it changes nothing about
+   final layout and needs no overflow re-check. nth-child delays cover
+   the deck's actual max bullet count (6) with one spare. */
+.slidev-layout li {
+  animation: bullet-enter 0.5s ease-out backwards;
+}
+.slidev-layout li:nth-child(1) { animation-delay: 0ms; }
+.slidev-layout li:nth-child(2) { animation-delay: 70ms; }
+.slidev-layout li:nth-child(3) { animation-delay: 140ms; }
+.slidev-layout li:nth-child(4) { animation-delay: 210ms; }
+.slidev-layout li:nth-child(5) { animation-delay: 280ms; }
+.slidev-layout li:nth-child(6) { animation-delay: 350ms; }
+.slidev-layout li:nth-child(7) { animation-delay: 420ms; }
+@keyframes bullet-enter {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Evaluation infrastructure slide: Joel wants it "sharper and less texty"
+   after cutting a bullet -- a modest body-text reduction on top of the
+   trim, not a substitute for it. Scoped narrowly since a global font-size
+   cut would fight every other slide's already-tuned overflow margins. */
+.dense-body li {
+  font-size: 0.86em;
 }
 
 /* Slide 16 (Evaluation layers): the four semantic-metric bars are built as
@@ -231,4 +294,27 @@ html.light body {
 @keyframes mark-draw-in {
   from { clip-path: inset(0 100% 0 0); }
   to   { clip-path: inset(0 0 0 0); }
+}
+
+/* Slide 16's <Arrow> renders inline in the page DOM (unlike the deck's
+   diagram SVGs, which are <img>-embedded and confirmed NOT to run any
+   internal animation -- tested directly: an animated stroke inside an
+   img-referenced SVG freezes at a single decoded frame and never
+   updates again). Being inline, stroke-dasharray/dashoffset works here
+   exactly like it would on any other DOM element. Length (101) is
+   computed once from the arrow's fixed authored coordinates
+   (x1=825,y1=60 -> x2=775,y2=147, length ~100.34) -- not measured at
+   runtime, so it carries none of the v-mark timing risk. Targets the
+   first (visible) of the component's two <line> children; the second
+   is Slidev's own transparent click-catcher line and must stay
+   untouched. Delayed slightly so it starts just after the click-1
+   reveal begins, alongside the explanation text and the (already
+   click-gated) mark on 0.099. */
+.slidev-page-16 svg.absolute.left-0.top-0 line:first-of-type {
+  stroke-dasharray: 101;
+  stroke-dashoffset: 101;
+  animation: arrow-draw 0.5s ease-out 0.1s forwards;
+}
+@keyframes arrow-draw {
+  to { stroke-dashoffset: 0; }
 }

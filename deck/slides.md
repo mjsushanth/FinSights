@@ -190,6 +190,7 @@ reads.
 layout: two-cols
 layoutClass: wide-left
 class: text-left compact-list tight-body
+transition: slide-up
 ---
 
 # Embedding pipeline — batching, rate control, checkpointing and recovery
@@ -378,7 +379,7 @@ alone on the slide with no other body text competing for space.
 
 ---
 layout: two-cols
-class: text-left compact-list
+class: text-left compact-list dense-body
 ---
 
 # Structured KPI extraction — financial metrics as looked-up facts, not model reading
@@ -501,6 +502,7 @@ the classification.
 
 ---
 class: compact-fig-lg
+transition: slide-up
 ---
 
 # Cross-company, multi-year, multi-section queries — coverage and capability
@@ -582,16 +584,21 @@ live deployed Fargate service specifically.
 
 ---
 transition: slide-up
+layout: two-cols
+class: text-left compact-list dense-body
 ---
 
 # Evaluation infrastructure — measurement that produced decisions
 
 <span class="stat">5/10<span class="stat-label">held-out answers got worse -- the number that reversed a ship decision</span></span>
 
-- Per-stage instrumentation caught a wrong attribution: the documented ~90% pipeline-time figure was real, but variant generation (1,990ms) was the larger component, not S3 Vectors retrieval (1,465ms)
-- A 0.063-wide similarity band across the top 45 candidates, zero rejections at any threshold, was the evidence that motivated trying a cross-encoder reranker at all
+- Per-stage instrumentation caught a wrong attribution — the documented ~90% pipeline-time figure was real, but variant generation (1,990ms), not S3 Vectors retrieval (1,465ms), was the larger component
 - Reranking won on cost (32%) and context (61%), tied on ROUGE-L inside the noise floor — and was rejected anyway: answers got worse on 5 of 10 held-out questions
-- The mechanism was structural, not noise: the cross-encoder is blind to fiscal year, and off-year context share rose from 31% to 47% of what survived pruning — the same deterministic gap that leaves cross-company questions under-served, since 8 of 23 real exports never contained the asked year at all
+- The mechanism was structural, not noise — the cross-encoder is blind to fiscal year, and off-year context share rose as pruning concentrated it
+
+::right::
+
+![Reranking wins on cost and context, ties on ROUGE-L inside noise, loses on quality and off-year](./img/rerank-radar-full.svg)
 
 <!--
 FOLDED 2026-09-11 per the orchestrator's disposition table: four slides
@@ -640,10 +647,29 @@ this affects 100% of the multi-company gold set that exists.
 noisy variance.
 
 Diagrams that carried these four findings (flat-score-range.svg,
-wrongyear-sankey.svg, latency-claim.svg, latency-measured.svg,
-rerank-radar-won.svg, rerank-radar-full.svg) are no longer referenced by
-any slide as of this fold -- left on disk, not deleted, per this deck's
-standing practice for superseded diagrams.
+wrongyear-sankey.svg, latency-claim.svg, latency-measured.svg) remain
+unreferenced by any slide, left on disk per this deck's standing
+practice for superseded diagrams.
+
+UPDATED 2026-09-12 per Joel's direct request: removed the bullet above
+(2, the flat-similarity-band point) -- it explains what motivated
+*trying* a cross-encoder, but this slide is about the decision not to
+ship it, and the setup cost more room than it earned. Finding (2)'s
+substance stays true and cited above for the record, just off the face.
+Restored rerank-radar-full.svg (orphaned by the original fold) as a
+single state, not the old two-click reveal from a slide that no longer
+exists -- the claim here is the whole five-axis trade at once. Verified
+directly against EMPIRICAL_METHODS_AND_FINDINGS.md before shipping,
+independent of the numbers already cited in finding (3) above: cost
+\$0.1970 -> \$0.1319, context 35,905 -> 14,314 chars, ROUGE-L 0.1012 vs
+0.1120 (matches (3) above, inside the same noise floor), 5-worse-of-10
+(matches (3) above exactly). One correction the verification pass
+caught: the off-year axis is NOT a symmetric baseline-vs-reranked
+comparison the way the other four axes are -- it's the `local`-question
+subset's off-year share at top-8 (47.4%) against the unpruned
+candidate-pool base rate (31.3%), source RERANKING_FINAL_SYNTHESIS.md:30-31.
+Labeled on the diagram face as "top-8 local 47.4% vs pool 31.3%" rather
+than implying a clean baseline/reranked pair, since it isn't one.
 -->
 
 ---
@@ -797,6 +823,7 @@ reframing of the slide's whole argument.
 
 ---
 class: tight-body compact-fig
+transition: slide-up
 ---
 
 # Deployment and operations — reproducible, scaled to zero, understood both ways
