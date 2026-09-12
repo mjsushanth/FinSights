@@ -788,91 +788,91 @@ reframing of the slide's whole argument.
 -->
 
 ---
-
-# Concurrency model — thread-pool selection and shared-state audit
-
-<span class="stat">1<span class="stat-label">genuinely shared mutable thing, found by audit</span></span>
-
-`answer_query` is blocking and I/O-heavy — that alone decided threadpool over
-event loop. boto3 clients are safe to share; Sessions are not. One
-lazy-table memo was the real hazard.
-
-![Session, Client, and the one genuinely shared thing](./img/concurrency-layers.svg)
-
-<!--
-Source: the concurrency-and-shared-state design note, VERIFIED this session.
-"Is boto3 thread-safe" has three answers in the source's own words:
-Client generally yes (safe to share, not across processes), Resource no
-(one per thread), Session no (one per thread/process) -- straight from
-boto3's own docs, not recalled from memory. The one genuinely shared
-mutable object found by AST audit: the DataLoader's lazy table memo.
-Also: AwsSession's own client-cache factory has a latent (harmless today,
-single-threaded by construction) race on first use of a new service --
-documented rather than silently living with it. The design principle this
-follows: "the shape of the work chooses [the concurrency model], and then
-you accept the consequences" -- not a taste decision.
--->
-
----
 class: tight-body compact-fig
 ---
 
-# Fargate cost model — per-task billing and container sizing
+# Deployment and operations — reproducible, scaled to zero, understood both ways
 
-<span class="stat">1,220 MiB<span class="stat-label">measured peak -> sized at 1 vCPU / 3072 MiB</span></span>
+<span class="stat">$0.2938<span class="stat-label">/month idle floor, everything scaled to zero</span></span>
+
+<div class="fig-swap" v-click="[1,2]">
 
 Fargate charges per task, on the shape you reserve rather than what you use.
 A second container in the same task is nearly free; a second task doubles the
-bill. One image, two containers, ARM64 — 20% cheaper than x86_64.
+bill — the reason the backend and frontend share one task, sized from a
+measured 1,220 MiB peak to 1 vCPU / 3072 MiB, ARM64 for the ~20% discount.
+
+</div>
+<div class="fig-swap" v-click="2">
+
+`destroy` then `up` reaches the same steady state from the repository alone —
+that round trip is the completeness test: if the reverse operation works, the
+forward one was understood. The concurrency model followed the same discipline:
+`answer_query` is blocking and I/O-heavy, which alone decided threadpool over
+event loop, and an AST audit found exactly one genuinely shared mutable object.
+
+</div>
+
+<div class="fig-swap" v-click="[1,2]">
 
 ![One task, two containers, no ALB, no NAT](./img/fargate-deployment.svg)
 
-<!--
-Source: SYSTEMS_WALKTHROUGH.md 3.1 and 3.2, VERIFIED against the AWS
-Pricing API this session (region prefix fixed, per the measurement-practice
-design note, section 8.3):
-\$0.032380/vCPU-hr and \$0.003560/GB-hr on ARM64, both ~20% below x86_64.
-Units corrected 2026-09-11 per peer verification: source states 1,220 MiB
-(10-company query) and 1,139 MiB (simple query) as the two measured
-peaks, ECS_FARGATE_RUNBOOK.md:169-170; task shape is 1 vCPU / 3072 MiB,
-split 2560/384 as soft reservations, :180. MiB and 3072 read as measured;
-"1.22 GiB / 3 GiB" was a rounding that undersold the point of the slide.
-Sizing rationale unchanged: 1,220 MiB was the worst measured peak; 2048
-MiB would leave under 900 MiB headroom, so 3072 MiB (the next valid
-Fargate memory tier at 1 vCPU) was chosen for ~2.5x headroom without
-paying for a second vCPU. "One image, not two" (Part 2.2): a second CONTAINER
-inside the same task is nearly free; a second TASK doubles the bill --
-the entire reason the backend and frontend share one task rather than
-being split into two services.
--->
-
----
-
-# Infrastructure control plane — reproducible provisioning and teardown
-
-<span class="stat">$0.2938<span class="stat-label">/month, everything scaled to zero</span></span>
-
-`destroy` then `up` reached the same steady state from the repository alone.
-That round trip is the completeness test: if the reverse operation works, the
-forward one was understood.
+</div>
+<div class="fig-swap" v-click="2">
 
 ![The same up edge both bootstraps and rebuilds](./img/control-plane-state.svg)
 
-<!--
-Source: SYSTEMS_WALKTHROUGH.md Part 7.1 (control plane as a Python
-package CI calls, not reimplements) and the design-principles note's
-reverse-operation-completeness-test principle, both read directly this
-session. \$0.2938/month idle
-floor VERIFIED this session directly against Cost Explorer, swept against
-every classic silent-billing resource (NAT gateway, ALB, Elastic IP, EBS,
-Route 53, Secrets Manager, KMS, Glue) -- none exist. Companion figure, NOT
-independently re-measured by me this session (reported from SYSTEMS_
-WALKTHROUGH.md 3.4 / the design-principles note's cost-constraint
-principle, both citing the same source): the ~\$32.85
-/month a NAT gateway would have cost, deliberately never adopted, in favor
-of public subnets since the workload needs egress, not inbound privacy.
-December's prior deployment looked healthy right up until the account
-closed -- the destroy/rebuild test is what would have caught that
-class of failure, not a stronger monitoring dashboard.
--->
+</div>
 
+<!--
+FOLDED AND RETITLED 2026-09-11 per the orchestrator's final structure --
+this is now the deck's final slide (15 of 15), carrying slight closing
+weight without being a summary slide, per the orchestrator's explicit
+instruction: "give slide 15 slight closing weight so it doesn't read as
+though the deck was cut off, but do not turn it into a summary slide."
+
+Folds three former slides: Fargate cost model, infrastructure control
+plane, and concurrency model (per spec, concurrency reduces to one
+bullet here rather than its own slide). All citations preserved verbatim
+from before the fold.
+
+Fargate: Source SYSTEMS_WALKTHROUGH.md 3.1/3.2, VERIFIED against the AWS
+Pricing API this session (region prefix fixed, per the measurement-
+practice design note 8.3): \$0.032380/vCPU-hr, \$0.003560/GB-hr on ARM64,
+~20% below x86_64. Units corrected 2026-09-11 per peer verification:
+1,220 MiB (10-company query) and 1,139 MiB (simple query) are the two
+measured peaks (ECS_FARGATE_RUNBOOK.md:169-170); task shape 1 vCPU /
+3072 MiB, split 2560/384 soft reservations (:180). 3072 MiB chosen for
+~2.5x headroom over the worst measured peak without paying for a second
+vCPU. A second container in the same task is nearly free; a second task
+doubles the bill -- why backend and frontend share one task.
+
+Control plane: Source SYSTEMS_WALKTHROUGH.md Part 7.1 (control plane as
+a Python package CI calls, not reimplements) and the design-principles
+note's reverse-operation-completeness-test principle. \$0.2938/month idle
+floor VERIFIED directly against Cost Explorer, swept against every
+classic silent-billing resource (NAT gateway, ALB, Elastic IP, EBS, Route
+53, Secrets Manager, KMS, Glue) -- none exist. Companion figure, NOT
+independently re-measured this session (SYSTEMS_WALKTHROUGH.md 3.4 / the
+design-principles note's cost-constraint principle): the ~\$32.85/month a
+NAT gateway would have cost, deliberately never adopted in favor of
+public subnets, since the workload needs egress, not inbound privacy.
+December's prior deployment looked healthy right up until the account
+closed -- the destroy/rebuild test is what would have caught that class
+of failure, not a stronger monitoring dashboard.
+
+Concurrency: Source the concurrency-and-shared-state design note,
+VERIFIED. "Is boto3 thread-safe" has three answers in the source's own
+words: Client generally yes (safe to share, not across processes),
+Resource no, Session no -- straight from boto3's own docs. The one
+genuinely shared mutable object found by AST audit: the DataLoader's lazy
+table memo. Design principle: "the shape of the work chooses [the
+concurrency model], and then you accept the consequences" -- not a taste
+decision.
+
+DIAGRAM NOTE: reused fargate-deployment.svg and control-plane-state.svg
+as a staged fig-swap (same v-click="[1,2]"/v-click="2" pattern already
+used elsewhere in this deck, not the buggy v-click="[N,99]" range this
+deck's early build had to fix). concurrency-layers.svg is no longer
+referenced as of this fold -- left on disk, not deleted.
+-->
