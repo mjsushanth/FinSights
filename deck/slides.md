@@ -21,7 +21,7 @@ DECK STATUS: built and pushed. `slidev build` clean, all diagram SVGs
 validated as strict XML and confirmed serving. Every number below is cited to a source file in
 its own slide's presenter notes. Two numbers (\$32.85/mo NAT, \$0.017-0.06
 Bedrock cost band) are the only ones NOT independently re-measured this
-session -- both are reported from S02i / SYSTEMS_WALKTHROUGH.md, both
+session -- both are reported from the design-principles note / SYSTEMS_WALKTHROUGH.md, both
 already carry [V] or an explicit AWS Pricing API citation in their own
 source doc, and both are flagged as such in their slide's notes rather
 than presented as fresh measurement.
@@ -358,12 +358,13 @@ config state, not just a recommendation).
 DIAGRAM NOTE (revised 2026-09-11, orchestrator rev-6 ruling): the radar
 originally rendered ROUGE-L as a clean third "win" (an accent dot at
 normalized score 10 vs baseline's 9.0), but the source explicitly disclaims
-it -- EMPIRICAL_METHODS_AND_FINDINGS.md:860 and S02i:276 both say the
+it -- EMPIRICAL_METHODS_AND_FINDINGS.md:860 and the design-principles note
+(line 276) both say the
 underlying 0.011 delta (0.112 top-8 vs 0.101 no-rerank,
 EMPIRICAL_METHODS_AND_FINDINGS.md:844,846) sits inside the noise of a
 10-question sample. Asserting that delta as a visible win contradicted this
-deck's own governing principle (S02i P10: check every effect against its
-noise floor) using the deck's own numbers. Root cause: the orchestrator's
+deck's own governing principle (compare every effect against the system's
+own noise floor) using the deck's own numbers. Root cause: the orchestrator's
 original slide-10 reframe read the docs' summary line ("the best ROUGE-L")
 without the caveat two paragraphs later. Fixed: the ROUGE-L accent
 vertex/dot is replaced with a muted noise-band stroke along that spoke
@@ -411,7 +412,7 @@ lazy-table memo was the real hazard.
 ![Session, Client, and the one genuinely shared thing](./img/concurrency-layers.svg)
 
 <!--
-Source: S02g - Concurrency and Shared State.md, VERIFIED this session.
+Source: the concurrency-and-shared-state design note, VERIFIED this session.
 "Is boto3 thread-safe" has three answers in the source's own words:
 Client generally yes (safe to share, not across processes), Resource no
 (one per thread), Session no (one per thread/process) -- straight from
@@ -419,9 +420,9 @@ boto3's own docs, not recalled from memory. The one genuinely shared
 mutable object found by AST audit: the DataLoader's lazy table memo.
 Also: AwsSession's own client-cache factory has a latent (harmless today,
 single-threaded by construction) race on first use of a new service --
-documented rather than silently living with it. P16: "the shape of the
-work chooses [the concurrency model], and then you accept the
-consequences" -- not a taste decision.
+documented rather than silently living with it. The design principle this
+follows: "the shape of the work chooses [the concurrency model], and then
+you accept the consequences" -- not a taste decision.
 -->
 
 ---
@@ -440,7 +441,8 @@ bill. One image, two containers, ARM64 — 20% cheaper than x86_64.
 
 <!--
 Source: SYSTEMS_WALKTHROUGH.md 3.1 and 3.2, VERIFIED against the AWS
-Pricing API this session (region prefix fixed, per S02h 8.3 above):
+Pricing API this session (region prefix fixed, per the measurement-practice
+design note, section 8.3):
 \$0.032380/vCPU-hr and \$0.003560/GB-hr on ARM64, both ~20% below x86_64.
 Units corrected 2026-09-11 per peer verification: source states 1,220 MiB
 (10-company query) and 1,139 MiB (simple query) as the two measured
@@ -470,13 +472,15 @@ forward one was understood.
 
 <!--
 Source: SYSTEMS_WALKTHROUGH.md Part 7.1 (control plane as a Python
-package CI calls, not reimplements) and S02i P5 (the reverse-operation
-completeness test), both read directly this session. \$0.2938/month idle
+package CI calls, not reimplements) and the design-principles note's
+reverse-operation-completeness-test principle, both read directly this
+session. \$0.2938/month idle
 floor VERIFIED this session directly against Cost Explorer, swept against
 every classic silent-billing resource (NAT gateway, ALB, Elastic IP, EBS,
 Route 53, Secrets Manager, KMS, Glue) -- none exist. Companion figure, NOT
 independently re-measured by me this session (reported from SYSTEMS_
-WALKTHROUGH.md 3.4 / S02i P15, both citing the same source): the ~\$32.85
+WALKTHROUGH.md 3.4 / the design-principles note's cost-constraint
+principle, both citing the same source): the ~\$32.85
 /month a NAT gateway would have cost, deliberately never adopted, in favor
 of public subnets since the workload needs egress, not inbound privacy.
 December's prior deployment looked healthy right up until the account
@@ -498,11 +502,13 @@ class: text-left
 <v-click>Negative results, reached honestly, are still results.</v-click>
 
 <!--
-Distilled from S02i - Higher-Level Design Principles from a Real
-Deployment.md (19 numbered principles in 5 groups), specifically P1, P18,
-P13, P15, P14 -- each already carries its own verified anchor earlier in
-this deck (slide 2/15 for P15, slide 10 for P14, this deck's whole citation
-discipline for P13). P18-adjacent artifact-trust reasoning previously
+Distilled from the design-principles note (19 numbered principles in 5
+groups), specifically the unrepresentable-over-unlikely, artifact-over-
+description, provenance-labelling, cost-constraint, and negative-results
+principles -- each already carries its own verified anchor earlier in
+this deck (slide 2/15 for the cost-constraint principle, slide 10 for the
+negative-results principle, this deck's whole citation discipline for the
+provenance-labelling principle). The artifact-over-description reasoning previously
 anchored to the asymmetry-bug slide, which is parked (see below) rather
 than in the main sequence as of 2026-09-11 -- Joel's framing correction was
 that the deck should read as project achievements, not process/tooling
