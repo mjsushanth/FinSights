@@ -792,7 +792,11 @@ table, matching the frontmatter count.
 browser access.** Deck is closed out.
 
 
-## 20. Correction: a screenshot does NOT catch overflow
+## 21. Correction: a screenshot does NOT catch overflow
+
+*(Renumbered from a duplicate "20" — written concurrently with section 20 above by a
+different session sharing this working tree. Two corrections to its own claims below,
+made by the session that did the actual measuring.)*
 
 Criterion 2 said "confirmed by looking at it" and section 15 said "a screenshot is the
 only check that catches overflow." **Both are wrong**, and the worker proved it while
@@ -820,8 +824,13 @@ The three slides flagged as at-risk by word count (4, 11, 15) may be fine; the o
 flagged may not be.
 
 Height caps now in use: 330px default, 300px `.compact-fig-lg`, 280px `.compact-fig-md`,
-270px `.compact-fig`. Four tiers, tuned per slide against the stack above the image.
+**220px** `.compact-fig` (not 270px — that was the cap's value before an earlier fix in
+this same run tightened it for the final slide's two-image swap; see `style.css`).
+Four tiers, tuned per slide against the stack above the image.
 
-**Still unmeasured at close: slides 4, 11 and 15 carry no compaction class.** They should
-be measured programmatically rather than eyeballed, along with every other slide at every
-click state.
+**Correction: slides 4, 11 and 15 are not still unmeasured.** Section 20 above (written
+after this one, same run) measured all 15 slides programmatically via
+`getBoundingClientRect()` against the true 551px canvas, including every click state.
+Results: slide 4 -20px, slide 11 -78px, slide 15 click1 -63px / click2 -36px — all three
+clean, no compaction class needed. The only real bug found was slide 10, already fixed
+at commit `fb761ed`. Nothing is unmeasured as of commit `3ae4272`.
