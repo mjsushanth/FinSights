@@ -54,9 +54,9 @@ class: text-left compact-list
 
 <span class="stat">$0.150<span class="stat-label">/month to keep the whole 614,647-vector index live</span></span>
 
-- SEC 10-K sentence corpus, extending a 71M-sentence base and kept current via a live EDGAR incremental feed
+- SEC 10-K sentence corpus, extending a 71M-sentence base — kept current via EDGAR SDK incremental ingestion and the SEC EDGAR API
 - Structured financial KPIs from a third-party parsed-financials corpus, standing alongside the sentence text
-- **Hybrid pipeline:** embeddings + entity adapters assemble one context — financials, sentences, analysis, provenance
+- **Hybrid pipeline:** vector embeddings and entity adapters converge into a single, fully-provenanced context spanning financials, sentences, and analysis
 
 ::right::
 
@@ -80,6 +80,23 @@ third-party tabular-metrics corpus, the hybrid-pipeline philosophy)
 condensed to three for the face; nothing is fabricated, everything traces
 to material already documented in this repo, not just this slide's own
 prior draft.
+
+REFINED 2026-09-11 after Joel reviewed this slide directly: two changes.
+(1) Named the actual tooling behind "kept current" rather than leaving it
+as a vague "live feed" -- EDGAR SDK incremental ingestion and the SEC
+EDGAR API, both confirmed in README.md's own repo map and source-links
+section (src_edgar_incremental, company_tickers.json). Did not name
+"EdgarTools" specifically -- README.md:223 marks that one as "potentially
+used," not confirmed, so it stays out of a slide face. (2) The
+"hybrid pipeline" bullet was Joel's own rough phrasing, given as a bare
+idea to refine, not to ship verbatim -- rewritten from a flat list
+("embeddings + entity adapters assemble one context -- financials,
+sentences, analysis, provenance") to a single sentence that states the
+mechanism and the outcome ("vector embeddings and entity adapters converge
+into a single, fully-provenanced context spanning financials, sentences,
+and analysis"). Same theme and same four components, folding "provenance"
+into an adjective rather than a fourth list item, since a fully-provenanced
+context is what the pipeline actually claims to deliver.
 
 STAT CORRECTION, not taken on request: the peer's spec asked for "average
 cost per query, ~\$0.00004" and "total cost of the vector embeddings" as the
