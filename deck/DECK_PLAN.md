@@ -790,3 +790,38 @@ table, matching the frontmatter count.
 
 **All 7 acceptance criteria now independently verified from a session with working
 browser access.** Deck is closed out.
+
+
+## 20. Correction: a screenshot does NOT catch overflow
+
+Criterion 2 said "confirmed by looking at it" and section 15 said "a screenshot is the
+only check that catches overflow." **Both are wrong**, and the worker proved it while
+fixing slide 10.
+
+Its finding, verbatim from `style.css`: the sequence diagram's bottom 32px
+"was silently clipped by `.slidev-slide-content`'s `overflow-y:hidden` -- **invisible in a
+screenshot**, only caught by comparing `getBoundingClientRect()` against the true 551px
+canvas."
+
+The container clips rather than spills. Clipped content does not look broken in a
+screenshot — it looks *absent*. A slide missing its final row reads as a slide that
+simply ends there. Every visual check in this run was therefore blind to this failure
+mode, including the earlier passes where the orchestrator screenshotted slides 3, 4 and 5
+and reported they fit.
+
+**The correct check is programmatic**, per slide and per click state:
+
+    content bottom (getBoundingClientRect) vs the 551px canvas -> clipped px
+
+Word count is also a poor proxy and should not be trusted. Slide 10 was **48 words**, far
+under the 130 threshold in section 4, and it was the slide that was actually clipped —
+because a tall figure above a short paragraph overflows just as easily as long prose.
+The three slides flagged as at-risk by word count (4, 11, 15) may be fine; the ones not
+flagged may not be.
+
+Height caps now in use: 330px default, 300px `.compact-fig-lg`, 280px `.compact-fig-md`,
+270px `.compact-fig`. Four tiers, tuned per slide against the stack above the image.
+
+**Still unmeasured at close: slides 4, 11 and 15 carry no compaction class.** They should
+be measured programmatically rather than eyeballed, along with every other slide at every
+click state.
