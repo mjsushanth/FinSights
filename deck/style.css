@@ -32,7 +32,10 @@ html.light body {
   font-size: 1.7em;
   line-height: 1.25;
   color: #2d323a;
-  max-width: 22ch;
+  /* Widened from 22ch, which was tuned for the deck's original short
+     subtitle and crushed the current one into 3 narrow lines. Only one
+     h2 exists in the whole deck (title slide), so this is safe globally. */
+  max-width: 38ch;
 }
 
 .slidev-layout .eyebrow {

@@ -555,188 +555,66 @@ slide's single example, scaled to three.
 
 ---
 
-# Similarity score distribution — the case for reranking evaluation
+# Evaluation infrastructure — measurement that produced decisions
 
-<span class="stat">0.063<span class="stat-label">-wide similarity band across the top 45 candidates</span></span>
+<span class="stat">5/10<span class="stat-label">held-out answers got worse -- the number that reversed a ship decision</span></span>
 
-[0.674, 0.737]. Zero rejections at any threshold from 0.0 to 0.5. No
-long tail to filter — cosine carries almost no ordering information here.
-
-![A 0.063-wide band on the full 0 to 1 axis](./img/flat-score-range.svg)
-
-<!--
-Source: RETRIEVAL_IMPROVEMENT_STUDY.md 2.4, quoting 08_RAGArch_
-DesignNotes.ipynb cell 17 verbatim, tagged [V]. "All thresholds (0.0 to
-0.5): 45 hits, NO rejections... no long tail of weak matches to filter
-out AT ALL." This is presented in the source as the single strongest
-piece of evidence for trying a cross-encoder -- only a model that reads
-query and candidate jointly can extract signal a flat band this narrow
-does not carry. Sets up slide 10's reranking story directly.
--->
-
----
-
-# Cross-company queries — coverage and deterministic gaps
-
-<span class="stat">35%<span class="stat-label">of exported queries entirely missing the asked year</span></span>
-
-8 of 23 real exports never contained the fiscal year the question asked
-about. One 3-company export gave Netflix zero context, three times running.
-
-![35% of exports flow into missing-year coverage](./img/wrongyear-sankey.svg)
+- Per-stage instrumentation caught a wrong attribution: the documented ~90% pipeline-time figure was real, but variant generation (1,990ms) was the larger component, not S3 Vectors retrieval (1,465ms)
+- A 0.063-wide similarity band across the top 45 candidates, zero rejections at any threshold, was the evidence that motivated trying a cross-encoder reranker at all
+- Reranking won on cost (32%) and context (61%), tied on ROUGE-L inside the noise floor — and was rejected anyway: answers got worse on 5 of 10 held-out questions
+- The mechanism was structural, not noise: the cross-encoder is blind to fiscal year, and off-year context share rose from 31% to 47% of what survived pruning — the same deterministic gap that leaves cross-company questions under-served, since 8 of 23 real exports never contained the asked year at all
 
 <!--
-Source: RETRIEVAL_IMPROVEMENT_STUDY.md 2.6 and 2.7, both [V]. 2.6: checked
-all 23 response exports against "| FY nnnn |" headers actually present;
-8/23 (35%) missing the asked year entirely, years present in every context
-only 2016-2020 (partly old-corpus coverage at the time, but the code-level
-cause -- the global filter's year handling, bug 3.2 -- survives the
-revival). 2.7: cik_int \$in filter + single global topK means ANN returns
-the 30 globally-best hits regardless of company -- a company whose
-sentences sit slightly further from the query gets nothing. Netflix: 0
-context in 3/3 runs. Only 3 of 31 gold questions are cross_company, so
-this affects 100% of the multi-company gold set that exists. "Deterministic"
-is the word worth keeping -- this is a structural gap, not noisy variance.
-DIAGRAM NOTE: built as a 2-column Sankey (23 exports -> present/missing),
-not the type's stated "exactly 3 columns." The real data is a single
-binary split with no natural middle stage; inventing one would fabricate
-structure that doesn't exist. Multi-company starvation (Netflix 0/3)
-deliberately kept out of the figure per the design record's own
-instruction -- one number per diagram face.
--->
+FOLDED 2026-09-11 per the orchestrator's disposition table: four slides
+that were each their own "reversal story" under the old process-centric
+frame collapse into one here, since as project work they are one thing --
+built evaluation infrastructure, and it produced real decisions -- and one
+strong slide beats four weak ones. All four findings and their citations
+preserved below, sources unchanged from before the fold.
 
----
-layout: default
----
+(1) Latency attribution, Source: TIER1_PROGRESS_LOG.md Step 0
+(2026-08-01), VERIFIED. The retrieve timer wrapped BOTH variant generation
+(1 Haiku call + 3 embedding calls) AND the actual S3 Vectors queries as
+one block -- the ~90% figure for the whole block was correct, attributing
+all of it to "S3 Vectors" specifically was not. Motivated splitting the
+timer into variant_gen_ms and s3_query_ms as separate fields.
 
-# Latency breakdown — variant generation versus S3 Vectors retrieval
+(2) Flat score distribution, Source: RETRIEVAL_IMPROVEMENT_STUDY.md 2.4,
+quoting 08_RAGArch_DesignNotes.ipynb cell 17 verbatim, [V]. "All
+thresholds (0.0 to 0.5): 45 hits, NO rejections... no long tail of weak
+matches to filter out AT ALL" -- presented in source as the single
+strongest evidence for trying a cross-encoder, since only a model reading
+query and candidate jointly can extract signal a band this narrow doesn't
+carry.
 
-<v-click>
-
-**Documented claim:** S3 Vectors retrieval is ~90% of pipeline time.
-
-
-</v-click>
-<v-click>
-
-**Measured:** variant generation, <span class="stat" style="display:inline">1,990ms</span> median —
-larger than the S3 query itself, <span class="stat" style="display:inline">1,465ms</span>.
-
-
-</v-click>
-<v-click>
-
-The 90% figure was real. The attribution was wrong.
-
-</v-click>
-
-<div class="fig-swap" v-click="[1,2]">
-
-![Documented claim, never independently measured](./img/latency-claim.svg)
-
-</div>
-<div class="fig-swap" v-click="2">
-
-![The measured split, 12-run medians](./img/latency-measured.svg)
-
-</div>
-
-<!--
-Source: TIER1_PROGRESS_LOG.md, Step 0 (2026-08-01), directly verified this
-session in an earlier deck iteration. The retrieve timer wraps BOTH
-variant generation (1 Haiku call + 3 embedding calls) AND the actual S3
-Vectors queries as one block -- the 90% figure for the whole block was
-correct, but attributing all of it to "S3 Vectors" specifically was not.
-This is the finding that motivated splitting the timer into variant_gen_ms
-and s3_query_ms as two separate fields, additive, not replacing the
-original `retrieve` key.
--->
-
----
-layout: default
----
-
-# Cross-encoder reranking — cost gains against a quality regression
-
-<v-click>
-
-**Won on cost and context:** cross-encoder reranking at top-8 cut cost
-<span class="stat" style="display:inline">32%</span> and cut context 61%.
-ROUGE-L was tied — <span class="stat" style="display:inline">0.1120</span> vs
-<span class="stat" style="display:inline">0.1012</span>, a delta of 0.0108, inside
-the noise floor of a 10-question sample.
-
-
-</v-click>
-<v-click>
-
-**Rejected anyway:** answers got worse on 5 of 10 held-out questions.
-
-Mechanism: the cross-encoder is blind to fiscal year. Off-year context rose
-from <span class="stat" style="display:inline">31.3%</span> of the pool to
-<span class="stat" style="display:inline">47.4%</span> of what survived pruning.
-
-
-</v-click>
-
-<div class="fig-swap" v-click="[1,2]">
-
-![Won on cost and context; ROUGE-L tied inside noise](./img/rerank-radar-won.svg)
-
-</div>
-<div class="fig-swap" v-click="2">
-
-![The full five-axis picture: ahead on cost and context, tied on ROUGE-L, behind on two](./img/rerank-radar-full.svg)
-
-</div>
-
-<!--
-CORRECTED 2026-09-11 after a peer session's independent verification pass
-caught a real error in an earlier draft: this slide previously paired
-"45.2% vs 31.3%" as one comparison. Those numbers come from DIFFERENT
-populations and must not be paired -- RERANKING_FINAL_SYNTHESIS.md
-distinguishes 45.2% (top-8, ALL 31 questions) vs 31.5% (overall pool base)
-from 47.4% (top-8, the 24 single-company/single-year "local" questions
-only) vs 31.3% (local-only pool base). This slide now uses the internally
-consistent local pair (47.4% vs 31.3%), independently re-verified by me
-directly against RERANKING_FINAL_SYNTHESIS.md before applying the fix,
-not taken on the peer's word alone.
-Also corrected: the rejection was NOT primarily about wrong-year context.
-Source, verbatim: "That 'top-8 is not fit to ship' follows from
-5-worse-of-10." The off-year concentration is the MECHANISM/supporting
-evidence for why reranking makes answers worse, not the primary reason
-itself. Benefit side, also corrected upward: 61% median context reduction
-and best ROUGE-L, not just the 32% cost cut this slide previously led with
-alone. Mechanism detail: off-target-year blocks score higher (mean 0.300
-vs 0.219) and are longer (5.49 vs 4.04 sentences) than on-year blocks --
-the cross-encoder scores text quality, and report_year is never in its
-input, so it structurally cannot tell a well-written wrong-year passage
-from a well-written right-year one.
-All figures: RERANKING_FINAL_SYNTHESIS.md, cross-referenced against
-IMPLEMENTATION_GUIDE.md:420 (local-pair figures) and :425
+(3) The reranking rejection, Source: RERANKING_FINAL_SYNTHESIS.md,
+cross-referenced against IMPLEMENTATION_GUIDE.md:420 and :425
 (enable_reranking: false, confirming the rejection shipped as a real
-config state, not just a recommendation).
-DIAGRAM NOTE (revised 2026-09-11, orchestrator rev-6 ruling): the radar
-originally rendered ROUGE-L as a clean third "win" (an accent dot at
-normalized score 10 vs baseline's 9.0), but the source explicitly disclaims
-it -- EMPIRICAL_METHODS_AND_FINDINGS.md:860 and the design-principles note
-(line 276) both say the
-underlying 0.011 delta (0.112 top-8 vs 0.101 no-rerank,
-EMPIRICAL_METHODS_AND_FINDINGS.md:844,846) sits inside the noise of a
-10-question sample. Asserting that delta as a visible win contradicted this
-deck's own governing principle (compare every effect against the system's
-own noise floor) using the deck's own numbers. Root cause: the orchestrator's
-original slide-10 reframe read the docs' summary line ("the best ROUGE-L")
-without the caveat two paragraphs later. Fixed: the ROUGE-L accent
-vertex/dot is replaced with a muted noise-band stroke along that spoke
-(covering roughly normalized score 7.5-10) carrying two neutral markers,
-baseline and reranking, both pulled out of the "won" accent color; only
-COST and CONTEXT keep the accent treatment on the first reveal, and the
-full second-reveal chart carries the same noise band. The 5-axis
-normalization otherwise stands: a disclosed linear transform (efficiency =
-10 x min/observed for cost and context; ROUGE-L = 10 x value/max(value);
-quality = 10 x non-worse-fraction; off-year = 10 x (1 - off-year rate)) --
-every input is one of the verified figures above, no fabricated data point.
+config state). Won on cost/context, tied on ROUGE-L (0.1120 vs 0.1012,
+delta 0.0108, inside a 10-question sample's noise floor) -- rejected
+because "that 'top-8 is not fit to ship' follows from 5-worse-of-10," not
+primarily from the wrong-year mechanism. Off-target-year blocks score
+higher (mean 0.300 vs 0.219) and are longer (5.49 vs 4.04 sentences) than
+on-year blocks -- the cross-encoder scores text quality and report_year is
+never in its input, so it structurally cannot tell a well-written
+wrong-year passage from a well-written right-year one.
+
+(4) Wrong-year / cross-company coverage, Source: RETRIEVAL_IMPROVEMENT_
+STUDY.md 2.6 and 2.7, both [V]. 8/23 (35%) of real exports missing the
+asked year entirely; cik_int filter + single global topK means ANN
+returns the 30 globally-best hits regardless of company, so a company
+whose sentences sit slightly further from the query gets nothing --
+Netflix: 0 context in 3/3 runs. Only 3 of 31 gold questions are
+cross_company (same set detailed on the cross-company-queries slide), so
+this affects 100% of the multi-company gold set that exists.
+"Deterministic" is the word worth keeping here -- a structural gap, not
+noisy variance.
+
+Diagrams that carried these four findings (flat-score-range.svg,
+wrongyear-sankey.svg, latency-claim.svg, latency-measured.svg,
+rerank-radar-won.svg, rerank-radar-full.svg) are no longer referenced by
+any slide as of this fold -- left on disk, not deleted, per this deck's
+standing practice for superseded diagrams.
 -->
 
 ---
