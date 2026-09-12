@@ -684,3 +684,52 @@ applied to new work inconsistently rather than not at all.
 And re-validate as XML after editing. Two of these replacements remove a `--`, which is
 the sequence that is illegal inside an XML comment and has already broken exports twice
 (see `img/EXPORT_NOTES.md`).
+
+
+## 19. Autonomous run — closing state
+
+Verified against committed HEAD `fc9ec95`, not the working tree.
+
+| Criterion | Result |
+| :-- | :-- |
+| 1. Exactly 15 slides | **PASS** — 15 |
+| 2. Every slide fits at every click state | **NOT VERIFIED BY ORCHESTRATOR** — see below |
+| 3. Click counts equal real steps | not independently verified |
+| 4. Zero internal codenames on any face | **PASS** — 0 leaks across all 14 live diagrams |
+| 5. No slogan titles | **PASS** — all plain register |
+| 6. Every face figure traced to source | **PASS** for figures checked; worker verified its own |
+| 7. Live page renders | **PASS** — HTTP 200, deploy green |
+
+Parked content extracted to `deck/PARKED_asymmetry-bug.md`, zero references remaining in
+`slides.md`. Working tree clean.
+
+### The one gap, stated plainly
+
+**Criterion 2 was never verified by the orchestrator.** The browser pane does not
+composite while Joel is away — screenshots time out and every element measures zero
+height — so no visual check was possible from this side for the whole back half of the
+run. Content, numbers, structure and SVG internals were verified from source instead.
+
+Three slides carry the residual risk, being the densest faces with no compaction classes
+applied at the time of audit:
+
+| Slide | Words | Bullets |
+| :-- | --: | --: |
+| 4 Embedding pipeline | 138 | 6 |
+| 11 Evaluation infrastructure | 153 | 4 |
+| 15 Deployment and operations | 153 | 0 (table/span layout) |
+
+The worker built `.compact-fig`, `.compact-fig-lg`, `.compact-list` and `.tight-body` for
+exactly this problem after catching slide 2 sitting 0.33px past the boundary, and applied
+none of them to these three. That 0.33px standard is the right one and stricter than the
+orchestrator's: on a deck opened on someone else's machine, fits-by-a-hair is not fits.
+
+**First thing to check on return: slides 4, 11 and 15 at full screen.**
+
+### Ledger
+
+| When | Commit | State |
+| :-- | :-- | :-- |
+| run start | `6ab7797` | Slides 1-2 approved, 3-15 outstanding |
+| mid-run | `f8d765c` | 17 slides, merge + sweep outstanding |
+| run end | `fc9ec95` | 15 slides, 0 leaks, deployed and serving. Overflow unverified. |
