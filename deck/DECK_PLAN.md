@@ -650,3 +650,37 @@ If evaluation will not fit, cut the weakest of its four folded threads. Do not s
 | :-- | :-- | :-- |
 | run start | `6ab7797` | Slides 1-2 approved, 3-15 outstanding |
 | mid-run | `f8d765c` | 17 slides. 1-14 built in the new frame. Merge, sweep and two overflow checks outstanding |
+
+## 18. Codename sweep — exact mapping, 9 files not 18
+
+Half the leaking diagrams belong to slides that no longer exist. **Only these nine are
+still referenced by `slides.md` and need work.** The other nine
+(`asymmetry-flow-current`, `asymmetry-flow-fix`, `cost-decisions-matrix`,
+`flat-score-range`, `latency-claim`, `latency-measured`, `measurement-fishbone`,
+`regeneration-process`, `wrongyear-sankey`) are orphaned by the folds and the parked
+slide — leave them alone.
+
+**The rule is strip the source identifier, keep the substance.** Several captions carry
+real measurement detail that should survive; only the file or code reference goes.
+
+| File | Replace this visible text | With |
+| :-- | :-- | :-- |
+| `question-to-answer.svg` | `P3V3-Q003 · MLFlow_POC/data/p3_gold_test_suite_31q.json` | `a real curated question` |
+| `cross-company-questions.svg` | `P3V3-Q004`, `P3V3-Q005`, `P3V3-Q006` | drop the labels entirely |
+| `cross-company-questions.svg` | `p3_gold_test_suite_31q.json` | `curated question set` |
+| `boilerplate-classification.svg` | `DataPipeline/analytics/duplicate_sentence_analysis.md` | `every duplicate group across all 614,910 rows` |
+| `corpus-selection-score.svg` | `DuckDB_Sampling_Strategy.md` | `weighted multi-objective selection` |
+| `embedding-bins-vertical.svg` | `-- IMPLEMENTATION_GUIDE.md:43` | drop; the figures before it stand alone |
+| `hybrid-pipeline-thesis.svg` | `README.md -- the approach` | `the approach` |
+| `kpi-fact-table.svg` | `src_metrics/xbrl_facts.py:149-152` | `extracted from filing XBRL facts` |
+| `retrieval-architecture-full.svg` | `IMPLEMENTATION_GUIDE.md, Parts 6-9 -- entity adapter, variant generation, triple retrieval, context assembly, verified this session` | `entity adapter · variant generation · triple retrieval · context assembly` |
+| `sse-sequence.svg` | `TIER1_PROGRESS_LOG.md Change 4b -- verified via real Docker rebuild + browser test` | `verified via real Docker rebuild and browser test` |
+
+Two notes. `cross-company-questions.svg` was **created during this run already carrying
+the violation** — the three newest diagrams before it (`cost-scenario-table`,
+`engineering-choices-table`, `incremental-pipeline`) are clean, so the rule is being
+applied to new work inconsistently rather than not at all.
+
+And re-validate as XML after editing. Two of these replacements remove a `--`, which is
+the sequence that is illegal inside an XML comment and has already broken exports twice
+(see `img/EXPORT_NOTES.md`).
