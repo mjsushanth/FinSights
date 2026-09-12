@@ -249,52 +249,34 @@ html.light body {
   line-height: 1.4;
 }
 
-/* v-mark (rough-notation, @slidev/rough-notation@0.1.0 -- the only version
-   published) never actually renders in this deck: traced via a
-   MutationObserver that every v-mark target across the whole deck,
-   including slide 1 (which is unambiguously visible at page load), gets
-   its annotation SVG inserted with a 0x0 target bounding rect at ~3.4s
-   after load -- all marks fire together, at one shared moment, regardless
-   of which slide they live on. rects() then returns an empty array (the
-   annotation's internal `_svg` guard fails), so no <path> ever gets
-   appended, and nothing later re-triggers a redraw (confirmed: a
-   dispatched resize event does not fix it either). Reproduced on the dev
-   server, a clean static build served outside Slidev entirely, and the
-   already-deployed production site -- not a dev-only or HMR artifact.
-   Manually re-running `annotate(target, {...}).show()` against the same,
-   already-broken target elements from the console always works, which
-   rules out a positioning or CSS problem and points at the package's own
-   mount-time bug. Replaced with plain CSS (below) rather than depending on
-   a broken library call for a decorative feature. */
-/* Draw-in via clip-path rather than SVG stroke-dasharray: a dasharray/
-   dashoffset trace needs the path length measured against each specific
-   phrase's rendered box (JS-computed, at a specific mount moment) -- the
-   exact fragility class that just broke v-mark. clip-path's 0%/100%
-   insets are relative to the element's own box automatically, so the
-   same two keyframes work at any text width with no measurement step. */
-.mark-circle {
-  display: inline-block;
-  vertical-align: baseline;
-  line-height: 1.2;
-  border: 2.5px solid #eb6c36;
-  border-radius: 999px;
-  padding: 0px 7px;
-  animation: mark-draw-in 0.7s ease-out;
-}
-.mark-underline {
-  display: inline-block;
-  vertical-align: baseline;
-  line-height: 1.2;
-  text-decoration: underline;
-  text-decoration-color: #eb6c36;
-  text-decoration-thickness: 2px;
-  text-underline-offset: 3px;
-  animation: mark-draw-in 0.7s ease-out;
-}
-@keyframes mark-draw-in {
-  from { clip-path: inset(0 100% 0 0); }
-  to   { clip-path: inset(0 0 0 0); }
-}
+/* v-mark reinstated 2026-09-12. Earlier diagnosis in this file said the
+   package (@slidev/rough-notation@0.1.0) never renders in this deck --
+   that conclusion is WITHDRAWN. Joel viewed Slidev's own real demo and
+   confirmed the authentic double-pass scribble underline/circle render
+   correctly there, on the same package version. A from-scratch minimal
+   repro (fresh Slidev project, default theme, single v-mark span, same
+   package version) reproduces the exact same symptom this session's
+   testing tool originally saw (0x0 target rect, empty annotation SVG,
+   never recovers) -- proving the failure is NOT caused by this deck's
+   CSS, theme, or structure, contrary to the first diagnosis's framing.
+   Best remaining explanation: this session's automated browser tooling
+   runs with `document.hidden === true` whenever no human is actively
+   watching the pane in real time (confirmed via computed
+   document.hidden/visibilityState, and via a real, non-headless
+   Chromium user-agent + navigator.webdriver === false, ruling out a
+   classic headless-detection explanation) -- and during autonomous work
+   that is effectively always. A hidden document plausibly getting
+   zero-size layout measurements for everything on the page, including
+   rough-notation's targets, would produce exactly the symptom observed,
+   consistently, regardless of what's on the page. That would NOT affect
+   a real viewer with a normally-focused tab, matching what Joel actually
+   saw. This session could not independently re-confirm a correct render
+   itself (Claude in Chrome was unavailable to test in a real, unhidden
+   browser) -- flagged plainly rather than asserted as verified. The CSS
+   fallback (.mark-circle/.mark-underline, clip-path draw-in) that
+   replaced v-mark for one deploy cycle has been removed; if v-mark
+   turns out not to render on the live page after all, reinstating that
+   fallback is a two-minute revert, not a redesign. */
 
 /* Slide 16's <Arrow> renders inline in the page DOM (unlike the deck's
    diagram SVGs, which are <img>-embedded and confirmed NOT to run any

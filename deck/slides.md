@@ -137,7 +137,7 @@ class: text-left compact-list
 <span class="stat">47s<span class="stat-label">to stratify-sample 71M sentences into the working corpus</span></span>
 
 - In-process DuckDB and Polars over a hosted warehouse, stratifying three merged sources — S&P 500 holdings, SEC CIK mappings, and a 71M-sentence corpus
-- Company selection is scored, not hand-picked — five hard admission gates determine <span class="mark-underline">WHO</span> is in the dataset, not <span class="mark-underline">WHAT</span> gets sampled
+- Company selection is scored, not hand-picked — five hard admission gates determine <span v-mark.underline.orange>WHO</span> is in the dataset, not <span v-mark.underline.orange>WHAT</span> gets sampled
 - Temporal and section imbalances are left uncorrected, deliberately — real disclosure variation is signal, not noise to normalize away
 
 ::right::
@@ -197,10 +197,10 @@ transition: slide-up
 
 <span class="stat">1,850<span class="stat-label">vectors/minute, sustained</span></span>
 
-- <span class="mark-circle">Token-aware batching</span> — 96 vectors / 15K tokens per call, exponential backoff, three-try recovery
-- <span class="mark-circle">Rate limiting</span> with retry classification — failed batches logged for deterministic replay, not blocked; the same pattern reused in the S3 retriever
-- <span class="mark-circle">Checkpoint and resume</span>, flushed before abort — a real quota-exhaustion run once lost 1,920 already-embedded sentences before this fix existed
-- <span class="mark-circle">Merge-crash guard</span> protects completed bins from a failed final merge
+- <span v-mark.circle.orange>Token-aware batching</span> — 96 vectors / 15K tokens per call, exponential backoff, three-try recovery
+- <span v-mark.circle.orange>Rate limiting</span> with retry classification — failed batches logged for deterministic replay, not blocked; the same pattern reused in the S3 retriever
+- <span v-mark.circle.orange>Checkpoint and resume</span>, flushed before abort — a real quota-exhaustion run once lost 1,920 already-embedded sentences before this fix existed
+- <span v-mark.circle.orange>Merge-crash guard</span> protects completed bins from a failed final merge
 - Provider abstraction — Bedrock and Cohere direct behind one interface; caught before shipping: a single global checkpoint path would have let two providers' vectors merge undetected
 - Cohere's 2,000 rpm ceiling was never binding — the run used ~34 rpm of it, headroom rather than a speed claim
 
@@ -267,7 +267,7 @@ class: compact-fig-lg
 
 One entity adapter feeds two supply lines; every hit keeps its source, variant, and distance.
 
-![Entity adaptation, two supply lines, and provenance-carrying synthesis](./img/retrieval-architecture-full.svg)
+<img v-motion :initial="{ opacity: 0, y: 20 }" :enter="{ opacity: 1, y: 0, transition: { duration: 0.5, ease: 'easeOut' } }" src="./img/retrieval-architecture-full.svg" alt="Entity adaptation, two supply lines, and provenance-carrying synthesis">
 
 <!--
 EXPANDED 2026-09-11 per the orchestrator's spec: the prior 5-box diagram
@@ -325,9 +325,9 @@ class: compact-fig-lg
 
 <span class="stat">3<span class="stat-label">evidence sentences behind one three-year answer</span></span>
 
-![One real question, traced to a cited answer](./img/question-to-answer.svg)
+<img v-motion :initial="{ opacity: 0, y: 20 }" :enter="{ opacity: 1, y: 0, transition: { duration: 0.5, ease: 'easeOut' } }" src="./img/question-to-answer.svg" alt="One real question, traced to a cited answer">
 
-<p>Every claim traces to <span class="mark-underline">real, cited filing sentences</span> — not paraphrased chrome.</p>
+<p>Every claim traces to <span v-mark.underline.orange>real, cited filing sentences</span> — not paraphrased chrome.</p>
 
 <!--
 NEW SLIDE 2026-09-11 per the orchestrator's spec: "Not a UI screenshot. A
@@ -442,7 +442,7 @@ class: text-left compact-list
 
 # Boilerplate duplication in filings — classification and selective removal
 
-<span class="stat"><span class="mark-circle">85%</span><span class="stat-label">of "duplicate" rows are not duplicates at all</span></span>
+<span class="stat"><span v-mark.circle.orange>85%</span><span class="stat-label">of "duplicate" rows are not duplicates at all</span></span>
 
 - Not a blanket dedup — a classification. Repeated headers (1,356 rows) are flagged and deferred to the embedding stage; adjacent exact repeats (123 rows) are the only ones actually removed, and now prevented at ingestion
 - The remaining 85% is the same compliance sentence genuinely reused across two distinct debt instruments or two distinct lawsuits — removing either "would delete real, distinctly-attributable information"
@@ -682,7 +682,7 @@ class: text-left compact-list
 <span class="stat">$3.80<span class="stat-label">a light month -- $12.40 a heavy one, four sessions and 200 questions</span></span>
 
 - A real scenario, not a unit-rate table: four 30-minute sessions and 200 questions in a month
-- Infrastructure — idle floor, Fargate compute — stays under <span class="mark-underline">$0.40</span> in either case; the entire light-to-heavy spread is Bedrock inference cost, not infrastructure
+- Infrastructure — idle floor, Fargate compute — stays under <span v-mark.underline.orange>$0.40</span> in either case; the entire light-to-heavy spread is Bedrock inference cost, not infrastructure
 - Not hypothetical: 1.0633 vCPU-hours have actually been consumed across two real sessions to date, with the service otherwise sitting at desiredCount=0
 
 ::right::
@@ -738,7 +738,7 @@ A new filing enters through the same six-stage path every time — fetch,
 extract, clean and split, derive, assemble, push — then the embedding
 pipeline's checkpointed resume adds only the new vectors.
 
-![Six stages take a new filing from fetch to production, without a rebuild](./img/incremental-pipeline.svg)
+<img v-motion :initial="{ opacity: 0, y: 20 }" :enter="{ opacity: 1, y: 0, transition: { duration: 0.5, ease: 'easeOut' } }" src="./img/incremental-pipeline.svg" alt="Six stages take a new filing from fetch to production, without a rebuild">
 
 <!--
 NEW SLIDE 2026-09-11 per the orchestrator's spec: "the capability that
@@ -936,7 +936,7 @@ Failures cascade upward — if Phase 1 fails, Phase 3 results are meaningless.
   <div class="metric-row"><span class="metric-label">BERTScore F1</span><div class="metric-bar" style="width: 82.6%"></div><span class="metric-value">0.826</span></div>
   <div class="metric-row"><span class="metric-label">Cosine</span><div class="metric-bar" style="width: 67.5%"></div><span class="metric-value">0.675</span></div>
   <div class="metric-row"><span class="metric-label">BLEURT</span><div class="metric-bar" style="width: 44.6%"></div><span class="metric-value">0.446</span></div>
-  <div class="metric-row rouge" id="rouge-row"><span class="metric-label">ROUGE-L</span><div class="metric-bar rouge-bar" style="width: 9.9%"></div><span class="metric-value"><span class="mark-circle">0.099</span></span></div>
+  <div class="metric-row rouge" id="rouge-row"><span class="metric-label">ROUGE-L</span><div class="metric-bar rouge-bar" style="width: 9.9%"></div><span class="metric-value"><span v-mark.circle.orange>0.099</span></span></div>
 </div>
 
 <div v-click="1">
@@ -976,11 +976,13 @@ number twice across two slides.
 No internal codenames on this face: said "the three gold phases", not
 P1/P2/P3 question-ID codes; no P3V3-Q0xx labels.
 
-The 0.099 mark uses the CSS-only .mark-circle class (see style.css),
-not v-mark -- v-mark (@slidev/rough-notation@0.1.0) was found to never
-actually render anywhere in this deck, on any slide, in any environment
-including production, and was replaced deck-wide. It has no click-index
--- it is visible from the first view of the slide ("mark it"), and the
+The 0.099 mark uses v-mark.circle.orange, restored 2026-09-12 after the
+first "never renders" diagnosis turned out to be wrong -- see
+slidev-operational.md-equivalent notes elsewhere; this session's own
+testing tool could not observe the render (see the reasoning recorded
+alongside this change), but the library itself is not broken and Joel
+confirmed the intended scribble effect works. It has no click-index --
+it is visible from the first view of the slide ("mark it"), and the
 Arrow + explanation are what wait for click 1 ("then let the next click
 reveal why low is correct"), per the request's own sequencing.
 
