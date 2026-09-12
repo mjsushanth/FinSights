@@ -82,3 +82,29 @@ viewport and confirmed nothing crosses the canvas edge -- and that check has
 to be redone after any prose edit, not just after a diagram edit. Hit
 building this deck (2026-09-11) and caught only by loading the page Joel had
 just enabled Pages for, not by any tool in the pipeline.
+
+## 5. A dollar amount can silently become LaTeX in a presenter note
+
+Not a diagram bug, but the same failure mode: invisible everywhere except
+the one view that actually renders it. This deck's `<!-- -->` presenter
+notes go through a markdown pipeline with math support enabled, and a `$`
+opens inline math the same way it does in LaTeX. Two unpaired-looking `$`
+signs anywhere in the same note -- even across paragraph breaks, even many
+sentences apart -- get treated as one matching pair, and everything between
+them renders as a garbled string of italic single-letter variables instead
+of the prose that was written.
+
+Concretely: a note contained `$17/month` early on and, in a verbatim Joel
+quote, `17$` (his own phrasing, dollar sign after the number) much later.
+Slidev paired those two `$` across roughly 40 lines and several paragraphs
+into one "equation," and the entire span rendered as nonsense in Slide
+Overview / Presenter Mode. `slidev build`, the plain slide view, and the
+GitHub Actions workflow never touch this rendering path, so none of them
+caught it.
+
+Fix: escape every literal `$` in a presenter note as `\$`. Cheap insurance
+-- do it for any dollar figure in a note, not just ones that happen to
+pair up, since a later edit elsewhere in the same note can create a pairing
+that does not exist yet. Hit in slide 2's presenter note during the
+2026-09-11 reframe, caught only by opening Slide Overview, not by any build
+or validation step.

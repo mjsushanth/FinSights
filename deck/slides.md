@@ -19,7 +19,7 @@ title: FinSights — A Financial RAG System Under a Hobbyist Budget
 <!--
 DECK STATUS: built and pushed. `slidev build` clean, all diagram SVGs
 validated as strict XML and confirmed serving. Every number below is cited to a source file in
-its own slide's presenter notes. Two numbers ($32.85/mo NAT, $0.017-0.06
+its own slide's presenter notes. Two numbers (\$32.85/mo NAT, \$0.017-0.06
 Bedrock cost band) are the only ones NOT independently re-measured this
 session -- both are reported from S02i / SYSTEMS_WALKTHROUGH.md, both
 already carry [V] or an explicit AWS Pricing API citation in their own
@@ -37,35 +37,76 @@ than presented as fresh measurement.
 <!--
 Title slide, exempt from the one-number rule by convention (frame, not
 argument). Verified against IMPLEMENTATION_GUIDE.md:43 (1,850 vectors/min,
-$2.21 total across three
+\$2.21 total across three
 bins) and the live S3 Vectors index count. Corpus is 25 companies, not the
 upstream 4,674-company ETL universe -- that distinction matters and gets
 its own correction elsewhere in the repo; not relitigated here.
 -->
 
 ---
+layout: two-cols
+class: text-left compact-list
+---
 
-# The thesis
+# Two supply lines feed one answer
 
-<span class="stat">$17<span class="stat-label">/month, the line that was never crossed</span></span>
+<div class="eyebrow">SEC 10-K filings, 2006–2025 · 25 companies</div>
 
-One constraint — never adopt anything costing more than this — settled seven
-architecture decisions.
+<span class="stat">$0.150<span class="stat-label">/month to keep the whole 614,647-vector index live</span></span>
 
-![Seven decisions scored on whether they hurt quality](./img/cost-decisions-matrix.svg)
+- SEC 10-K sentence corpus, extending a 71M-sentence base and kept current via a live EDGAR incremental feed
+- Structured financial KPIs from a third-party parsed-financials corpus, standing alongside the sentence text
+- **Hybrid pipeline:** embeddings + entity adapters assemble one context — financials, sentences, analysis, provenance
+
+::right::
+
+![Two supply lines feed one answer](./img/hybrid-pipeline-thesis.svg)
 
 <!--
-Source: S02i P15 "A tight cost constraint removes options you did not
-need," and SYSTEMS_WALKTHROUGH.md Part 0 (the thesis-in-one-sentence
-framing). VERIFIED against both docs directly this session. The seven
-decisions and which ones actually cost quality (2 of 7 -- scale-to-zero
-cold starts, no load balancer's shifting public IP) are the material for
-slide 15's close on the same theme; don't spend that here.
-DIAGRAM NOTE: built as a one-column matrix (Decision x Hurt-quality), not
-the proposed two-column form. Source only supports one real per-row
-property -- a second column ("eliminated by cost") would be uniformly true
-for all seven rows by construction, which is not an independent axis.
-Disclosed deviation, not a silent shortcut.
+REWRITTEN 2026-09-11 per Joel's direct correction after reviewing the live
+deck: "the deck is the early-growth and impact presentability of the
+project's initiatives... not your agentic-work memories." This slide
+previously led with a \$17/month budget constraint and a "decision / hurt
+quality" matrix -- a process/cost-discipline framing, not a proposition
+about what the system is and does. Joel, verbatim: "under 17\$ that thing is
+NOT a thing for us, dont use under 17/month tag. our tag is different."
+
+New framing is the project's own stated thesis, verbatim from README.md:10
+-- "Two supply lines feed one answer: structured KPI extraction from parsed
+financial tables, and semantic retrieval over sentence-level embeddings."
+Left-column bullets are Joel's own five framing points (SEC 10-K utility,
+the 71M-sentence cold dataset, the live EDGAR SDK incremental feed, the
+third-party tabular-metrics corpus, the hybrid-pipeline philosophy)
+condensed to three for the face; nothing is fabricated, everything traces
+to material already documented in this repo, not just this slide's own
+prior draft.
+
+STAT CORRECTION, not taken on request: the peer's spec asked for "average
+cost per query, ~\$0.00004" and "total cost of the vector embeddings" as the
+headline. Neither figure checked out as requested. \$0.00004 does not appear
+anywhere in ModelPipeline/finrag_ml_tg1/S3Vect_QueryCost.md or any other
+source I could find. The document's one figure literally labeled "Average
+cost per query" is \$0.0170 (S3Vect_QueryCost.md:259) -- but that entire
+table (lines 190-266) is a COST MODEL built from assumed monthly query
+volumes (100/300/500/1,000/1,500/2,000/5,000 queries/month) and an assumed
+35%/65% Sonnet/Haiku split, not a measurement of real traffic. This deck's
+whole discipline has been measured over modeled, disclosed where it isn't,
+so I did not put an unverified number or an unlabelled model estimate on
+the opening slide's headline stat. Used \$0.150/month instead: real,
+measured, already independently verified earlier in this project
+(S3Vect_QueryCost.md's "Verified pricing -- measured 2026-08-05" section;
+also matches the \$0.1452/30-day idle-floor figure in the same section,
+small variance from rounding/estimation basis, not a contradiction). This
+is a different number from the title slide's \$2.21 (that is the one-time
+embedding-generation cost; this is the ongoing monthly storage cost) --
+deliberately complementary, not redundant.
+DIAGRAM NOTE: new diagram, hybrid-pipeline-thesis.svg. Two source boxes
+(structured KPI extraction, semantic retrieval) converging via orthogonal
+elbows into one focal "One answer" box, matching README.md's own two-lines-
+into-one framing exactly. Not the decision-matrix diagram that lived here
+before -- that content is being reframed separately as an "architecture
+choices, each against a named alternative" slide per the orchestrator's
+next spec, not yet built.
 -->
 
 ---
@@ -85,71 +126,7 @@ vectors per minute." VERIFIED this session. Three bins: two via Bedrock,
 one via the Cohere direct API after hitting an 8.1M-token/day account
 quota (documented elsewhere, not needed on this slide). Corpus is
 sentence-level, not chunk-level -- 614,647 rows, not a chunked
-approximation. Cost broke down as ~$1.30 Bedrock + ~$0.91 Cohere direct.
--->
-
----
-layout: default
-class: tight-body
----
-
-# The asymmetry bug
-### Found by reading the live config against Cohere's own docs
-
-<v-click>
-
-The corpus is embedded with `input_type="search_document"`.
-
-So is every user query.
-
-
-</v-click>
-<v-click>
-
-<span class="stat">$0<span class="stat-label">to fix — zero re-embedding, zero re-upload</span></span>
-
-Cohere's dual-encoder needs the query tagged `search_query`, not `search_document`.
-
-</v-click>
-<v-click>
-
-The correct value was already sitting in a deprecated config block. The
-live path just wasn't reading it.
-
-
-</v-click>
-
-<div class="fig-swap" v-click="[1,3]">
-
-![Two paths converging on the same wrong value](./img/asymmetry-flow-current.svg)
-
-</div>
-<div class="fig-swap" v-click="[3,99]">
-
-![The correct value already existed in a deprecated block](./img/asymmetry-flow-fix.svg)
-
-</div>
-
-<!--
-Source: RETRIEVAL_IMPROVEMENT_STUDY.md section 3.1, tagged [V] against
-ml_config.yaml:214, query_embedder_v2.py:66, and Cohere's own API docs
-(docs.cohere.com/docs/embeddings, docs.cohere.com/reference/embed).
-VERIFIED this session by reading the cited lines directly. IMPORTANT
-HONESTY NOTE: the source document explicitly does NOT claim a measured
-retrieval-quality improvement from this fix -- "I am not claiming a
-magnitude... it must be A/B'd." A follow-up doc (EMBEDDING_INPUT_TYPE_
-ASYMMETRY.md) shows the fix was implemented (48/48 config resolutions
-unchanged in an A/B against pre-edit YAML) but the retrieval-quality A/B
-had not landed as of that doc's writing. Do NOT let a magnitude claim
-creep onto this slide face -- the honest story is "found a real bug via
-code trace + external docs, fixed at zero cost," not "improved X%."
-The fourth click's reveal: ml_config.yaml:214 sets the live corpus block
-to search_document, query_embedder_v2.py:66 reads that same value for the
-query (the bug). But ml_config.yaml:272, inside the deprecated
-rag_orchestrator block that the live path never reads, already has the
-correct search_query. V1 (query_embedder.py:44) also defaulted correctly
--- V2 regressed it in a config refactor. The right answer was in the
-repo the whole time, just in a block nothing was reading.
+approximation. Cost broke down as ~\$1.30 Bedrock + ~\$0.91 Cohere direct.
 -->
 
 ---
@@ -236,7 +213,7 @@ all 23 response exports against "| FY nnnn |" headers actually present;
 8/23 (35%) missing the asked year entirely, years present in every context
 only 2016-2020 (partly old-corpus coverage at the time, but the code-level
 cause -- the global filter's year handling, bug 3.2 -- survives the
-revival). 2.7: cik_int $in filter + single global topK means ANN returns
+revival). 2.7: cik_int \$in filter + single global topK means ANN returns
 the 30 globally-best hits regardless of company -- a company whose
 sentences sit slightly further from the query gets nothing. Netflix: 0
 context in 3/3 runs. Only 3 of 31 gold questions are cross_company, so
@@ -280,7 +257,7 @@ The 90% figure was real. The attribution was wrong.
 ![Documented claim, never independently measured](./img/latency-claim.svg)
 
 </div>
-<div class="fig-swap" v-click="[2,99]">
+<div class="fig-swap" v-click="2">
 
 ![The measured split, 12-run medians](./img/latency-measured.svg)
 
@@ -329,7 +306,7 @@ from <span class="stat" style="display:inline">31.3%</span> of the pool to
 ![Won on cost and context; ROUGE-L tied inside noise](./img/rerank-radar-won.svg)
 
 </div>
-<div class="fig-swap" v-click="[2,99]">
+<div class="fig-swap" v-click="2">
 
 ![The full five-axis picture: ahead on cost and context, tied on ROUGE-L, behind on two](./img/rerank-radar-full.svg)
 
@@ -381,49 +358,6 @@ normalization otherwise stands: a disclosed linear transform (efficiency =
 10 x min/observed for cost and context; ROUGE-L = 10 x value/max(value);
 quality = 10 x non-worse-fraction; off-year = 10 x (1 - off-year rate)) --
 every input is one of the verified figures above, no fabricated data point.
--->
-
----
-
-# Measurement as a design practice
-
-<span class="stat">3<span class="stat-label">times my own measurement tooling was the broken thing</span></span>
-
-A grep pattern that could never match. An exit code read from the wrong
-command. A Pricing API query with the wrong usage-type prefix.
-
-![Five measurement methods, three catching the tool itself lying](./img/measurement-fishbone.svg)
-
-<!--
-Source: S02h - Measurement as a Design Practice.md, section 8, all three
-VERIFIED directly this session. (1) `grep -qiE "...IAM_ROLE..."` against a
-log that actually printed "IAM role" (space, lowercase) -- waited 5
-minutes on a condition that could never become true, after the query had
-already succeeded. (2) Reported "exit code 0" that was actually the exit
-code of a `tail` at the end of a pipe, not the real command. (3) A Fargate
-Pricing API query returned nothing because usage types carry a region
-prefix (USE1-Fargate-ARM-vCPU-Hours:perCPU) -- once fixed, real rates came
-back exactly ($0.032380/vCPU-hr ARM64, matching this deck's own slide 14).
-The lesson stated directly in the source: "my tool returned nothing" and
-"the data does not exist" are different conclusions, and conflating them
-produces a confident gap.
-DIAGRAM NOTE (revised 2026-09-11, orchestrator rev-6 ruling): went through
-three bone-counts before settling. First build folded the 6 real S02h
-methods down to 4 bones (cold-vs-warm into one-time-vs-per-call, and
-measure-the-artifact into ask-the-cloud) to fit the type's 5-bone default
-canvas. Orchestrator's "GO" instruction called for all 6 back, so it was
-rebuilt at 6 bones with the canvas widened per the type's own rule (HEAD
-1200 -> 1360). Rev-6 then refined that down to 5: the cold-vs-warm /
-one-time-vs-per-call merge is a genuine same-concern fold and stays, but
-"measure the artifact, not the description" is restored as its own bone --
-it is the most distinctive idea in S02h (also S02i P18) and was worth more
-than a fifth bone costs. Final 5 bones, back at the type's default HEAD=1200
-canvas: external observer, one-time-vs-per-call cost, static analysis, ask
-the cloud, measure the artifact (not the description). No bone marked focal
--- there is no single confirmed root cause here, five parallel methods,
-three of which happen to carry a real incident callout. Only the effect box
-carries accent, per the type's own allowance for zero focal bones. Head
-text is "a number you can trust," matching the ruling's exact phrasing.
 -->
 
 ---
@@ -490,7 +424,7 @@ bill. One image, two containers, ARM64 — 20% cheaper than x86_64.
 <!--
 Source: SYSTEMS_WALKTHROUGH.md 3.1 and 3.2, VERIFIED against the AWS
 Pricing API this session (region prefix fixed, per S02h 8.3 above):
-$0.032380/vCPU-hr and $0.003560/GB-hr on ARM64, both ~20% below x86_64.
+\$0.032380/vCPU-hr and \$0.003560/GB-hr on ARM64, both ~20% below x86_64.
 Units corrected 2026-09-11 per peer verification: source states 1,220 MiB
 (10-company query) and 1,139 MiB (simple query) as the two measured
 peaks, ECS_FARGATE_RUNBOOK.md:169-170; task shape is 1 vCPU / 3072 MiB,
@@ -520,12 +454,12 @@ forward one was understood.
 <!--
 Source: SYSTEMS_WALKTHROUGH.md Part 7.1 (control plane as a Python
 package CI calls, not reimplements) and S02i P5 (the reverse-operation
-completeness test), both read directly this session. $0.2938/month idle
+completeness test), both read directly this session. \$0.2938/month idle
 floor VERIFIED this session directly against Cost Explorer, swept against
 every classic silent-billing resource (NAT gateway, ALB, Elastic IP, EBS,
 Route 53, Secrets Manager, KMS, Glue) -- none exist. Companion figure, NOT
 independently re-measured by me this session (reported from SYSTEMS_
-WALKTHROUGH.md 3.4 / S02i P15, both citing the same source): the ~$32.85
+WALKTHROUGH.md 3.4 / S02i P15, both citing the same source): the ~\$32.85
 /month a NAT gateway would have cost, deliberately never adopted, in favor
 of public subnets since the workload needs egress, not inbound privacy.
 December's prior deployment looked healthy right up until the account
@@ -550,7 +484,93 @@ class: text-left
 Distilled from S02i - Higher-Level Design Principles from a Real
 Deployment.md (19 numbered principles in 5 groups), specifically P1, P18,
 P13, P15, P14 -- each already carries its own verified anchor earlier in
-this deck (slide 4 for P18-adjacent artifact-trust reasoning, slide 2/15
-for P15, slide 10 for P14, this deck's whole citation discipline for
-P13). No "thank you" slide, per the design record. This is the close.
+this deck (slide 2/15 for P15, slide 10 for P14, this deck's whole citation
+discipline for P13). P18-adjacent artifact-trust reasoning previously
+anchored to the asymmetry-bug slide, which is parked (see below) rather
+than in the main sequence as of 2026-09-11 -- Joel's framing correction was
+that the deck should read as project achievements, not process/tooling
+war-stories. No "thank you" slide, per the design record. This is the close.
 -->
+
+---
+layout: default
+class: tight-body
+---
+
+# PARKED — not in the presentation sequence
+
+<!--
+PARKED 2026-09-11 per Joel's direct review of the live deck: "its broken
+for me... the diagram also seems broken and I DONT KNOW exactly what youre
+trying to show here. ignore this. discard this or push it to last page to
+fix for later." This was originally slide 4, "The asymmetry bug," picked as
+the orchestrator's "sharpest finding" -- itself an instance of the same
+framing error this whole revision is correcting: a config bug found during
+development is a process/tooling story, not a project achievement, and does
+not belong in a deck about what the system does and delivers. Kept below
+verbatim (content, diagrams, and citations unchanged) so nothing sourced is
+lost, in case a future revision finds a real use for it. Not wired into
+the main slide sequence; reachable only by paging past the close.
+-->
+
+---
+
+# The asymmetry bug
+### Found by reading the live config against Cohere's own docs
+
+<v-click>
+
+The corpus is embedded with `input_type="search_document"`.
+
+So is every user query.
+
+
+</v-click>
+<v-click>
+
+<span class="stat">$0<span class="stat-label">to fix — zero re-embedding, zero re-upload</span></span>
+
+Cohere's dual-encoder needs the query tagged `search_query`, not `search_document`.
+
+</v-click>
+<v-click>
+
+The correct value was already sitting in a deprecated config block. The
+live path just wasn't reading it.
+
+
+</v-click>
+
+<div class="fig-swap" v-click="[1,3]">
+
+![Two paths converging on the same wrong value](./img/asymmetry-flow-current.svg)
+
+</div>
+<div class="fig-swap" v-click="3">
+
+![The correct value already existed in a deprecated block](./img/asymmetry-flow-fix.svg)
+
+</div>
+
+<!--
+Source: RETRIEVAL_IMPROVEMENT_STUDY.md section 3.1, tagged [V] against
+ml_config.yaml:214, query_embedder_v2.py:66, and Cohere's own API docs
+(docs.cohere.com/docs/embeddings, docs.cohere.com/reference/embed).
+VERIFIED this session by reading the cited lines directly. IMPORTANT
+HONESTY NOTE: the source document explicitly does NOT claim a measured
+retrieval-quality improvement from this fix -- "I am not claiming a
+magnitude... it must be A/B'd." A follow-up doc (EMBEDDING_INPUT_TYPE_
+ASYMMETRY.md) shows the fix was implemented (48/48 config resolutions
+unchanged in an A/B against pre-edit YAML) but the retrieval-quality A/B
+had not landed as of that doc's writing. Do NOT let a magnitude claim
+creep onto this slide face -- the honest story is "found a real bug via
+code trace + external docs, fixed at zero cost," not "improved X%."
+The fourth click's reveal: ml_config.yaml:214 sets the live corpus block
+to search_document, query_embedder_v2.py:66 reads that same value for the
+query (the bug). But ml_config.yaml:272, inside the deprecated
+rag_orchestrator block that the live path never reads, already has the
+correct search_query. V1 (query_embedder.py:44) also defaulted correctly
+-- V2 regressed it in a config refactor. The right answer was in the
+repo the whole time, just in a block nothing was reading.
+-->
+

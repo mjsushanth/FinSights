@@ -105,3 +105,10 @@ html.light body {
 .compact-fig img {
   max-height: 270px;
 }
+
+/* Slide 2 (rewritten as the two-column thesis slide): three bullets landed
+   0.33px past the boundary at line-height 1.8 -- razor-thin, not yet a
+   real overflow, but too close to trust across font-rendering variance. */
+.compact-list ul li {
+  line-height: 1.5;
+}
