@@ -114,6 +114,14 @@ html.light body {
   max-height: 270px;
 }
 
+/* Retrieval architecture slide: the wide (2.4:1) centrepiece diagram hits
+   the default 330px cap and, combined with the title/stat/caption above
+   it, lands 6.6px past the slide's true bottom edge. A light trim (300px)
+   rather than reverting the diagram's prominence. */
+.compact-fig-lg img {
+  max-height: 300px;
+}
+
 /* Slide 2 (rewritten as the two-column thesis slide): three bullets landed
    0.33px past the boundary at line-height 1.8 -- razor-thin, not yet a
    real overflow, but too close to trust across font-rendering variance. */

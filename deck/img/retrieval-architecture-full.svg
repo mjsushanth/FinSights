@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 1200 500" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="arch-title arch-desc">
+<title id="arch-title">Entity adaptation, two supply lines, and provenance-carrying synthesis</title>
+<desc id="arch-desc">A query is resolved by an entity adapter, then splits into structured KPI lookup and semantic retrieval with variant generation, triple retrieval, and context assembly, converging on a cited synthesis.</desc>
+<defs>
+<style>@import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&amp;family=Geist:wght@400;500;600&amp;family=Geist+Mono:wght@400;500;600&amp;display=swap');</style><marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#5a6571"/></marker>
+<marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#eb6c36"/></marker></defs>
+<rect width="100%" height="100%" fill="#f8f8f6"/>
+
+<text x="400" y="42" fill="#828891" font-size="9" font-family="'Geist Mono', monospace" letter-spacing="0.1em">STRUCTURED KPI LOOKUP</text>
+<text x="400" y="342" fill="#828891" font-size="9" font-family="'Geist Mono', monospace" letter-spacing="0.1em">SEMANTIC RETRIEVAL</text>
+
+<rect x="20" y="215" width="110" height="50" rx="6" fill="#5a6571" fill-opacity="0.06" stroke="#5a6571" stroke-width="1"/>
+<text x="75" y="236" fill="#2d323a" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">Query</text>
+<text x="75" y="250" fill="#828891" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">natural language</text>
+
+<path d="M 130,240 H 170" fill="none" stroke="#5a6571" stroke-width="1" marker-end="url(#arrow)"/>
+
+<rect x="170" y="195" width="170" height="90" rx="6" fill="#ffffff" stroke="#2d323a" stroke-width="1.4"/>
+<text x="255" y="222" fill="#2d323a" font-size="13" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">Entity adapter</text>
+<text x="255" y="240" fill="#5a6571" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">company / ticker / CIK</text>
+<text x="255" y="253" fill="#5a6571" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">year, metric, section, risk-topic</text>
+<text x="255" y="266" fill="#828891" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">fuzzy fallback, strict threshold</text>
+
+<path d="M 340,240 V 90 H 400" fill="none" stroke="#5a6571" stroke-width="1" marker-end="url(#arrow)"/>
+<path d="M 340,240 V 390 H 400" fill="none" stroke="#5a6571" stroke-width="1" marker-end="url(#arrow)"/>
+
+<rect x="400" y="55" width="190" height="70" rx="6" fill="#ffffff" stroke="#2d323a" stroke-width="1.4"/>
+<text x="495" y="82" fill="#2d323a" font-size="13" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">Metric pipeline</text>
+<text x="495" y="99" fill="#5a6571" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">structured KPI lookup</text>
+<text x="495" y="112" fill="#828891" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">format_analytical_compact()</text>
+
+<rect x="400" y="360" width="190" height="70" rx="6" fill="#ffffff" stroke="#2d323a" stroke-width="1.4"/>
+<text x="495" y="387" fill="#2d323a" font-size="13" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">Variant generation</text>
+<text x="495" y="404" fill="#5a6571" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">2-4 rephrasings, ~$0.0001/query</text>
+<text x="495" y="417" fill="#828891" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">each gets a unique variant_id</text>
+
+<path d="M 590,395 H 630" fill="none" stroke="#5a6571" stroke-width="1" marker-end="url(#arrow)"/>
+
+<rect x="630" y="360" width="200" height="70" rx="6" fill="#ffffff" stroke="#2d323a" stroke-width="1.4"/>
+<text x="730" y="387" fill="#2d323a" font-size="13" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">Triple retrieval</text>
+<text x="730" y="404" fill="#5a6571" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">filtered &#183; global &#183; union</text>
+<text x="730" y="417" fill="#828891" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">metadata pushdown, 50% cost saving</text>
+
+<path d="M 830,395 H 860" fill="none" stroke="#5a6571" stroke-width="1" marker-end="url(#arrow)"/>
+
+<rect x="860" y="345" width="190" height="90" rx="6" fill="#ffffff" stroke="#2d323a" stroke-width="1.4"/>
+<text x="955" y="368" fill="#2d323a" font-size="13" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">Context assembly</text>
+<text x="955" y="385" fill="#5a6571" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">dedup by sentenceID, &#177;3-sentence window</text>
+<text x="955" y="398" fill="#828891" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">provenance: source, variant_id,</text>
+<text x="955" y="411" fill="#828891" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">parent_hit_distance</text>
+
+<path d="M 590,90 H 1000 V 220 H 1040" fill="none" stroke="#5a6571" stroke-width="1" marker-end="url(#arrow)"/>
+<path d="M 1050,390 V 260 H 1040" fill="none" stroke="#5a6571" stroke-width="1" marker-end="url(#arrow)"/>
+
+<rect x="1040" y="190" width="140" height="100" rx="8" fill="#eb6c36" fill-opacity="0.07" stroke="#eb6c36" stroke-width="1.6"/>
+<text x="1110" y="230" fill="#2d323a" font-size="14" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">Synthesis</text>
+<text x="1110" y="250" fill="#5a6571" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">cited answer</text>
+<text x="1110" y="264" fill="#828891" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">two lines, one context</text>
+
+<line x1="20" y1="460" x2="1180" y2="460" stroke="#2d323a" stroke-opacity="0.1" stroke-width="0.8"/>
+<text x="20" y="476" fill="#828891" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.06em">IMPLEMENTATION_GUIDE.md, Parts 6-9 -- entity adapter, variant generation, triple retrieval, context assembly, verified this session</text>
+</svg>

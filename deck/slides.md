@@ -256,26 +256,63 @@ narrow right column instead of left-to-right for a full-width slide.
 -->
 
 ---
+class: compact-fig-lg
+---
 
-# What retrieval actually does
+# Retrieval architecture — adaptation, variants, assembly, provenance
 
-![FinSights retrieval architecture](./img/architecture.svg)
+<span class="stat">$0.0001<span class="stat-label">per query to generate 2-4 semantic rephrasings</span></span>
 
-Five S3 Vectors calls per question. One filtered path, one global fallback,
-three semantic variants. Metadata prefilters do the heavy lifting.
+One entity adapter feeds two supply lines; every hit keeps its source, variant, and distance.
+
+![Entity adaptation, two supply lines, and provenance-carrying synthesis](./img/retrieval-architecture-full.svg)
 
 <!--
-The system-architecture diagram. The design record's original 3-diagram cap
-was lifted; 14 of 16 slides now carry one. Diagram built via the diagram-design skill, profile
-"finsights" (blended palette, see ~/.diagram-design/profiles/finsights.md
-for the derivation). Five calls verified: RETRIEVAL_IMPROVEMENT_STUDY.md
-1.2 -- base filtered (topK=30), base global (topK=15), then 3 variant-
-filtered calls (topK=15 each), all serial. The diagram compresses this to
-5 conceptual stages (Query Understanding / Retrieval Control / Context
-Assembly / LLM Synthesis / Serving) -- cross-checked against Joel's own
-full architecture reference diagram mid-session and confirmed as a
-faithful compression of that diagram's "LLM Serving" row specifically,
-not an invented abstraction.
+EXPANDED 2026-09-11 per the orchestrator's spec: the prior 5-box diagram
+(architecture.svg, still on disk, no longer referenced) compressed the
+whole system to conceptual stages. Joel's own instruction: "make that
+diagram obviously expanded... queries, retrieval controls as: entity
+adapters, assembly, communication, provenance, all of that. dont miss
+those." This is the deck's architecture centrepiece -- the one diagram
+given more space and bolder treatment than the others, per that
+instruction.
+
+Every stage verified directly against IMPLEMENTATION_GUIDE.md this
+session, not carried over from the old diagram's abstraction:
+- Entity adapter (Part 6): alias generation, punctuation normalization,
+  case variants, suffix stripping, ticker-to-CIK mapping, fuzzy fallback
+  with a strict similarity threshold. Recognizes a company by CIK, name
+  variant, or ticker.
+- The two supply lines, verbatim (Part 7.1): "Query -> EntityAdapter.
+  extract() -> MetricPipeline.process() -> format_analytical_compact()"
+  and "Query -> EntityAdapter.extract() -> QueryEmbedderV2.embed_query()
+  -> 1024-d Cohere v4 embedding."
+- Variant generation (Part 8): Claude Haiku generates 2-4 semantic
+  rephrasings at ~$0.0001/query (the slide's stat), each independently
+  embedded with a unique variant_id.
+- Triple retrieval regime (Part 8): filtered_hits via metadata pushdown
+  (50% cost saving vs. unfiltered), global_hits as no-filter fallback,
+  union_hits merging both after dedup by sentenceID, keeping the
+  lowest-distance version.
+- Context assembly (Part 9): edge-safe window expansion (+/-3 sentences),
+  provenance via parent_hit_distance / source / variant_id on every hit,
+  typed contracts (FilterConfig / VariantResult / S3RetrievalBundle)
+  replacing dict-passing.
+- README.md:8's own framing anchors the title: "Hybrid retrieval system
+  fusing structured KPI extraction... narrative semantic search with
+  meaningful variant-diversity queries, window-expansion on hop context...
+  that grab complex multi-year, multi-company, multi-KPI, multi-section
+  financial patterns."
+
+DIAGRAM NOTE: new diagram, retrieval-architecture-full.svg, full slide
+width (viewBox 1200x500) since this is the one diagram in the deck
+deliberately given more room than the others. Seven nodes: Query, Entity
+Adapter (shared), Metric Pipeline (top/structured track), Variant
+Generation -> Triple Retrieval -> Context Assembly (bottom/semantic
+track), converging into one accent-focal Synthesis box. Shorter, bolder
+boxes than the deck's other diagrams per Joel's explicit request; only
+Synthesis carries accent, matching the type's focal-element budget --
+it is the slide's one true "answer," everything upstream is process.
 -->
 
 ---
