@@ -13,7 +13,7 @@ lineNumbers: false
 drawings:
   persist: false
 transition: fade
-title: FinSights — A Financial RAG System Under a Hobbyist Budget
+title: FinSights — SEC 10-K Document Intelligence with Hybrid Retrieval
 ---
 
 <!--
@@ -28,7 +28,7 @@ than presented as fresh measurement.
 -->
 
 # FinSights
-## A financial RAG system, priced like a hobby project
+## SEC 10-K document intelligence with hybrid retrieval
 
 <div class="eyebrow">Sep 2025 – Dec 2025</div>
 
@@ -194,7 +194,7 @@ near-duplicate rate 22.7% of context, median 100 sentences per context.
 
 ---
 
-# The score distribution is flat — this is the reranking argument
+# Similarity score distribution — the case for reranking evaluation
 
 <span class="stat">0.063<span class="stat-label">-wide similarity band across the top 45 candidates</span></span>
 
@@ -215,7 +215,7 @@ does not carry. Sets up slide 10's reranking story directly.
 
 ---
 
-# Wrong-year context, and it is deterministic
+# Cross-company queries — coverage and deterministic gaps
 
 <span class="stat">35%<span class="stat-label">of exported queries entirely missing the asked year</span></span>
 
@@ -248,7 +248,7 @@ instruction -- one number per diagram face.
 layout: default
 ---
 
-# The latency reversal
+# Latency breakdown — variant generation versus S3 Vectors retrieval
 
 <v-click>
 
@@ -295,7 +295,7 @@ original `retrieve` key.
 layout: default
 ---
 
-# The reranking rejection
+# Cross-encoder reranking — cost gains against a quality regression
 
 <v-click>
 
@@ -379,7 +379,7 @@ every input is one of the verified figures above, no fabricated data point.
 
 ---
 
-# Perceived latency, fixed without touching real latency
+# Streaming response delivery — stage events and token-level output
 
 <span class="stat">4.3ms<span class="stat-label">time to first byte, against 8.96s total processing</span></span>
 
@@ -400,7 +400,7 @@ live deployed Fargate service specifically.
 
 ---
 
-# The concurrency model is a consequence, not a choice
+# Concurrency model — thread-pool selection and shared-state audit
 
 <span class="stat">1<span class="stat-label">genuinely shared mutable thing, found by audit</span></span>
 
@@ -428,7 +428,7 @@ consequences" -- not a taste decision.
 class: tight-body compact-fig
 ---
 
-# Fargate bills per task, and that fact drives everything
+# Fargate cost model — per-task billing and container sizing
 
 <span class="stat">1,220 MiB<span class="stat-label">measured peak -> sized at 1 vCPU / 3072 MiB</span></span>
 
@@ -458,7 +458,7 @@ being split into two services.
 
 ---
 
-# The control plane is software, and the reverse operation proves it
+# Infrastructure control plane — reproducible provisioning and teardown
 
 <span class="stat">$0.2938<span class="stat-label">/month, everything scaled to zero</span></span>
 
@@ -532,7 +532,7 @@ the main slide sequence; reachable only by paging past the close.
 
 ---
 
-# The asymmetry bug
+# Embedding input-type asymmetry — found and fixed at zero cost
 ### Found by reading the live config against Cohere's own docs
 
 <v-click>
