@@ -185,3 +185,32 @@ html.light body {
   margin-top: 1.1em;
   line-height: 1.4;
 }
+
+/* v-mark (rough-notation, @slidev/rough-notation@0.1.0 -- the only version
+   published) never actually renders in this deck: traced via a
+   MutationObserver that every v-mark target across the whole deck,
+   including slide 1 (which is unambiguously visible at page load), gets
+   its annotation SVG inserted with a 0x0 target bounding rect at ~3.4s
+   after load -- all marks fire together, at one shared moment, regardless
+   of which slide they live on. rects() then returns an empty array (the
+   annotation's internal `_svg` guard fails), so no <path> ever gets
+   appended, and nothing later re-triggers a redraw (confirmed: a
+   dispatched resize event does not fix it either). Reproduced on the dev
+   server, a clean static build served outside Slidev entirely, and the
+   already-deployed production site -- not a dev-only or HMR artifact.
+   Manually re-running `annotate(target, {...}).show()` against the same,
+   already-broken target elements from the console always works, which
+   rules out a positioning or CSS problem and points at the package's own
+   mount-time bug. Replaced with plain CSS (below) rather than depending on
+   a broken library call for a decorative feature. */
+.mark-circle {
+  border: 2.5px solid #eb6c36;
+  border-radius: 999px;
+  padding: 0px 7px;
+}
+.mark-underline {
+  text-decoration: underline;
+  text-decoration-color: #eb6c36;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 3px;
+}

@@ -137,7 +137,7 @@ class: text-left compact-list
 <span class="stat">47s<span class="stat-label">to stratify-sample 71M sentences into the working corpus</span></span>
 
 - In-process DuckDB and Polars over a hosted warehouse, stratifying three merged sources — S&P 500 holdings, SEC CIK mappings, and a 71M-sentence corpus
-- Company selection is scored, not hand-picked — five hard admission gates determine <span v-mark.underline.orange>WHO</span> is in the dataset, not <span v-mark.underline.orange>WHAT</span> gets sampled
+- Company selection is scored, not hand-picked — five hard admission gates determine <span class="mark-underline">WHO</span> is in the dataset, not <span class="mark-underline">WHAT</span> gets sampled
 - Temporal and section imbalances are left uncorrected, deliberately — real disclosure variation is signal, not noise to normalize away
 
 ::right::
@@ -196,10 +196,10 @@ class: text-left compact-list tight-body
 
 <span class="stat">1,850<span class="stat-label">vectors/minute, sustained</span></span>
 
-- Token-aware batching — 96 vectors / 15K tokens per call, exponential backoff, three-try recovery
-- Rate limiting with retry classification — failed batches logged for deterministic replay, not blocked; the same pattern reused in the S3 retriever
-- Checkpoint and resume, flushed before abort — a real quota-exhaustion run once lost 1,920 already-embedded sentences before this fix existed
-- Merge-crash guard protects completed bins from a failed final merge
+- <span class="mark-circle">Token-aware batching</span> — 96 vectors / 15K tokens per call, exponential backoff, three-try recovery
+- <span class="mark-circle">Rate limiting</span> with retry classification — failed batches logged for deterministic replay, not blocked; the same pattern reused in the S3 retriever
+- <span class="mark-circle">Checkpoint and resume</span>, flushed before abort — a real quota-exhaustion run once lost 1,920 already-embedded sentences before this fix existed
+- <span class="mark-circle">Merge-crash guard</span> protects completed bins from a failed final merge
 - Provider abstraction — Bedrock and Cohere direct behind one interface; caught before shipping: a single global checkpoint path would have let two providers' vectors merge undetected
 - Cohere's 2,000 rpm ceiling was never binding — the run used ~34 rpm of it, headroom rather than a speed claim
 
@@ -326,7 +326,7 @@ class: compact-fig-lg
 
 ![One real question, traced to a cited answer](./img/question-to-answer.svg)
 
-<p>Every claim traces to <span v-mark.underline.orange>real, cited filing sentences</span> — not paraphrased chrome.</p>
+<p>Every claim traces to <span class="mark-underline">real, cited filing sentences</span> — not paraphrased chrome.</p>
 
 <!--
 NEW SLIDE 2026-09-11 per the orchestrator's spec: "Not a UI screenshot. A
@@ -441,7 +441,7 @@ class: text-left compact-list
 
 # Boilerplate duplication in filings — classification and selective removal
 
-<span class="stat"><span v-mark.circle.orange>85%</span><span class="stat-label">of "duplicate" rows are not duplicates at all</span></span>
+<span class="stat"><span class="mark-circle">85%</span><span class="stat-label">of "duplicate" rows are not duplicates at all</span></span>
 
 - Not a blanket dedup — a classification. Repeated headers (1,356 rows) are flagged and deferred to the embedding stage; adjacent exact repeats (123 rows) are the only ones actually removed, and now prevented at ingestion
 - The remaining 85% is the same compliance sentence genuinely reused across two distinct debt instruments or two distinct lawsuits — removing either "would delete real, distinctly-attributable information"
@@ -656,7 +656,7 @@ transition: slide-up
 <span class="stat">$3.80<span class="stat-label">a light month -- $12.40 a heavy one, four sessions and 200 questions</span></span>
 
 - A real scenario, not a unit-rate table: four 30-minute sessions and 200 questions in a month
-- Infrastructure — idle floor, Fargate compute — stays under <span v-mark.underline.orange>$0.40</span> in either case; the entire light-to-heavy spread is Bedrock inference cost, not infrastructure
+- Infrastructure — idle floor, Fargate compute — stays under <span class="mark-underline">$0.40</span> in either case; the entire light-to-heavy spread is Bedrock inference cost, not infrastructure
 - Not hypothetical: 1.0633 vCPU-hours have actually been consumed across two real sessions to date, with the service otherwise sitting at desiredCount=0
 
 ::right::
@@ -909,7 +909,7 @@ Failures cascade upward — if Phase 1 fails, Phase 3 results are meaningless.
   <div class="metric-row"><span class="metric-label">BERTScore F1</span><div class="metric-bar" style="width: 82.6%"></div><span class="metric-value">0.826</span></div>
   <div class="metric-row"><span class="metric-label">Cosine</span><div class="metric-bar" style="width: 67.5%"></div><span class="metric-value">0.675</span></div>
   <div class="metric-row"><span class="metric-label">BLEURT</span><div class="metric-bar" style="width: 44.6%"></div><span class="metric-value">0.446</span></div>
-  <div class="metric-row rouge" id="rouge-row"><span class="metric-label">ROUGE-L</span><div class="metric-bar rouge-bar" style="width: 9.9%"></div><span class="metric-value"><span v-mark.circle.orange>0.099</span></span></div>
+  <div class="metric-row rouge" id="rouge-row"><span class="metric-label">ROUGE-L</span><div class="metric-bar rouge-bar" style="width: 9.9%"></div><span class="metric-value"><span class="mark-circle">0.099</span></span></div>
 </div>
 
 <div v-click="1">
