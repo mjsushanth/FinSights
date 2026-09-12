@@ -141,3 +141,47 @@ html.light body {
 .compact-list ul li {
   line-height: 1.5;
 }
+
+/* Slide 16 (Evaluation layers): the four semantic-metric bars are built as
+   plain HTML/CSS, not a baked SVG image, specifically so Slidev's built-in
+   <Arrow> component can point at a real DOM position rather than guessing
+   coordinates inside a static picture. */
+.metric-bars {
+  margin-top: 0.6em;
+}
+.metric-row {
+  display: flex;
+  align-items: center;
+  gap: 0.6em;
+  margin: 11px 0;
+}
+.metric-label {
+  width: 92px;
+  flex-shrink: 0;
+  font-family: 'Geist Mono', ui-monospace, monospace;
+  font-size: 11px;
+  color: #5a6571;
+}
+.metric-bar {
+  height: 14px;
+  background: #5a6571;
+  border-radius: 3px;
+}
+.metric-row.rouge .metric-bar {
+  background: #eb6c36;
+}
+.metric-value {
+  font-family: 'Geist Mono', ui-monospace, monospace;
+  font-size: 12px;
+  font-weight: 600;
+  color: #2d323a;
+  margin-left: 8px;
+}
+.metric-note {
+  font-family: 'Instrument Serif', serif;
+  font-style: italic;
+  font-size: 0.85em;
+  color: #2d323a;
+  margin-top: 1.1em;
+  line-height: 1.4;
+}

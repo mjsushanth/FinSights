@@ -12,7 +12,7 @@ highlighter: shiki
 lineNumbers: false
 drawings:
   persist: false
-transition: fade
+transition: slide-left
 title: FinSights — SEC 10-K Document Intelligence with Hybrid Retrieval
 ---
 
@@ -46,6 +46,7 @@ its own correction elsewhere in the repo; not relitigated here.
 ---
 layout: two-cols
 class: text-left compact-list
+transition: fade-out
 ---
 
 # Two supply lines feed one answer
@@ -136,7 +137,7 @@ class: text-left compact-list
 <span class="stat">47s<span class="stat-label">to stratify-sample 71M sentences into the working corpus</span></span>
 
 - In-process DuckDB and Polars over a hosted warehouse, stratifying three merged sources — S&P 500 holdings, SEC CIK mappings, and a 71M-sentence corpus
-- Company selection is scored, not hand-picked — a weighted quality formula with five hard admission gates decides who enters the dataset
+- Company selection is scored, not hand-picked — five hard admission gates determine <span v-mark.underline.orange>WHO</span> is in the dataset, not <span v-mark.underline.orange>WHAT</span> gets sampled
 - Temporal and section imbalances are left uncorrected, deliberately — real disclosure variation is signal, not noise to normalize away
 
 ::right::
@@ -325,6 +326,8 @@ class: compact-fig-lg
 
 ![One real question, traced to a cited answer](./img/question-to-answer.svg)
 
+<p>Every claim traces to <span v-mark.underline.orange>real, cited filing sentences</span> — not paraphrased chrome.</p>
+
 <!--
 NEW SLIDE 2026-09-11 per the orchestrator's spec: "Not a UI screenshot. A
 Streamlit screenshot shows chrome, not the system, and it dates badly.
@@ -438,7 +441,7 @@ class: text-left compact-list
 
 # Boilerplate duplication in filings — classification and selective removal
 
-<span class="stat">85%<span class="stat-label">of "duplicate" rows are not duplicates at all</span></span>
+<span class="stat"><span v-mark.circle.orange>85%</span><span class="stat-label">of "duplicate" rows are not duplicates at all</span></span>
 
 - Not a blanket dedup — a classification. Repeated headers (1,356 rows) are flagged and deferred to the embedding stage; adjacent exact repeats (123 rows) are the only ones actually removed, and now prevented at ingestion
 - The remaining 85% is the same compliance sentence genuinely reused across two distinct debt instruments or two distinct lawsuits — removing either "would delete real, distinctly-attributable information"
@@ -577,6 +580,8 @@ live deployed Fargate service specifically.
 -->
 
 ---
+transition: slide-up
+---
 
 # Evaluation infrastructure — measurement that produced decisions
 
@@ -643,6 +648,7 @@ standing practice for superseded diagrams.
 ---
 layout: two-cols
 class: text-left compact-list
+transition: slide-up
 ---
 
 # Operating cost analysis — storage, compute and inference under realistic usage
@@ -650,7 +656,7 @@ class: text-left compact-list
 <span class="stat">$3.80<span class="stat-label">a light month -- $12.40 a heavy one, four sessions and 200 questions</span></span>
 
 - A real scenario, not a unit-rate table: four 30-minute sessions and 200 questions in a month
-- Infrastructure — idle floor, Fargate compute — stays under $0.40 in either case; the entire light-to-heavy spread is Bedrock inference cost, not infrastructure
+- Infrastructure — idle floor, Fargate compute — stays under <span v-mark.underline.orange>$0.40</span> in either case; the entire light-to-heavy spread is Bedrock inference cost, not infrastructure
 - Not hypothetical: 1.0633 vCPU-hours have actually been consumed across two real sessions to date, with the service otherwise sitting at desiredCount=0
 
 ::right::
@@ -877,4 +883,85 @@ as a staged fig-swap (same v-click="[1,2]"/v-click="2" pattern already
 used elsewhere in this deck, not the buggy v-click="[N,99]" range this
 deck's early build had to fix). concurrency-layers.svg is no longer
 referenced as of this fold -- left on disk, not deleted.
+-->
+
+---
+transition: slide-up
+layout: two-cols
+layoutClass: wide-left
+class: text-left compact-list tight-body
+---
+
+# Evaluation layers — algorithmic, semantic, and model-judged
+
+<span class="stat">31<span class="stat-label">business-realism questions, scored on four axes plus a model judge</span></span>
+
+- **Infrastructure (Phase 1)** — is the index even working? Self@1, Hit@k, MRR against known-good slices
+- **Edge cases (Phase 2)** — adaptive windowing exposes real embedding weakness without false failures
+- **Semantic scoring (Phase 3)** — four metrics read together, not one at a time (right)
+- **Judge, on top** — a model reads the answer itself, catching what the numbers miss
+
+Failures cascade upward — if Phase 1 fails, Phase 3 results are meaningless.
+
+::right::
+
+<div class="metric-bars">
+  <div class="metric-row"><span class="metric-label">BERTScore F1</span><div class="metric-bar" style="width: 82.6%"></div><span class="metric-value">0.826</span></div>
+  <div class="metric-row"><span class="metric-label">Cosine</span><div class="metric-bar" style="width: 67.5%"></div><span class="metric-value">0.675</span></div>
+  <div class="metric-row"><span class="metric-label">BLEURT</span><div class="metric-bar" style="width: 44.6%"></div><span class="metric-value">0.446</span></div>
+  <div class="metric-row rouge" id="rouge-row"><span class="metric-label">ROUGE-L</span><div class="metric-bar rouge-bar" style="width: 9.9%"></div><span class="metric-value"><span v-mark.circle.orange>0.099</span></span></div>
+</div>
+
+<div v-click="1">
+
+<Arrow x1="825" y1="60" x2="775" y2="147" color="#eb6c36" width="2" />
+
+<p class="metric-note">Read alone, low ROUGE-L says the system is failing. High BERTScore says it is excellent. Only together do they mean genuine synthesis — high semantic fidelity with low lexical overlap is paraphrase, not copying.</p>
+
+</div>
+
+<!--
+NEW SLIDE 2026-09-11, added per Joel's direct request (relayed): a sixteenth
+slide on layered evaluation, emphasizing the COMBINATION of suites rather
+than any single metric. Source: ModelPipeline/finrag_ml_tg1/validation_notebooks/
+06_Gold_Test_Framework.md, VERIFIED directly this session by reading the
+full document, not taken from the relayed spec alone.
+
+Three gold phases (verbatim framing from the source): "Phase 1 (Infrastructure):
+Is the vector index working at all? ... Phase 2 (Edge Cases): What breaks in
+unusual sections? ... Phase 3 (Business Realism): Can the system answer
+analyst questions?" The "failures cascade upward" line is verbatim from the
+doc's own Part 1.2: "The phased approach follows the testing pyramid...
+Failures cascade upward -- if P1 fails, P3 results are meaningless."
+
+Semantic metrics VERIFIED exactly against Part 5.6 "Aggregate Metrics
+(31-question suite)": BERTScore 0.826 average, BLEURT 0.446 average,
+ROUGE-L 0.099 average, Cosine 0.675 average. Not the doc's earlier
+"typical range" figures (0.75-0.85 etc.) -- these are the actual point
+averages from the 31-question run.
+
+Judge-layer figure (mentioned in notes, not shown on face): the top-8
+reranking judgment from RERANKING_FINAL_SYNTHESIS.md section 4's exact
+tally, "C (top-8) vs A: 3 better, 2 same, 5 worse" -- already the source
+for slide 11's "5/10" stat, not repeated here to avoid restating the same
+number twice across two slides.
+
+No internal codenames on this face: said "the three gold phases", not
+P1/P2/P3 question-ID codes; no P3V3-Q0xx labels.
+
+v-mark: only .underline and .circle plus color modifiers used, confirmed
+against the installed Slidev CLI's own bundled reference
+(node_modules/@slidev/cli/skills/slidev/references/animation-rough-marker.md)
+rather than asserted from memory. The 0.099 mark has no click-index --
+it is visible from the first view of the slide ("mark it"), and the
+Arrow + explanation are what wait for click 1 ("then let the next click
+reveal why low is correct"), per the request's own sequencing.
+
+DIAGRAM NOTE: no new SVG file. The four-bar chart is plain HTML/CSS
+(.metric-bars in style.css), not a baked image, specifically so the
+built-in <Arrow> component can point at a real on-slide position rather
+than at coordinates guessed inside a static picture -- Joel asked
+specifically for pointing arrows using the verified component, not a
+diagram-embedded one. Arrow coordinates set from a live bounding-box
+measurement of the ROUGE-L row at the real 980x551 canvas, not guessed.
 -->
