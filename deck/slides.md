@@ -497,6 +497,63 @@ the classification.
 -->
 
 ---
+class: compact-fig-lg
+---
+
+# Cross-company, multi-year, multi-section queries — coverage and capability
+
+<span class="stat">4<span class="stat-label">companies resolved and answered as one list, in the hardest question in the set</span></span>
+
+Answers return per-company lists, not one blended paragraph — the entity adapter
+resolves each company, and variant generation keeps one from absorbing the budget.
+
+![Three real cross-company questions, answered as per-company lists](./img/cross-company-questions.svg)
+
+<!--
+NEW SLIDE 2026-09-11 per the orchestrator's spec, with numbers corrected
+after independent verification of the schema claim. All three questions
+VERIFIED directly against MLFlow_POC/data/p3_gold_test_suite_31q.json,
+not taken from the spec message: P3V3-Q004 (2009, Radian Group / Netflix
+/ Mastercard, data protection and customer-data exposure, difficulty
+medium, confidence 0.85), P3V3-Q005 (2010, Walmart / Apple / Microsoft /
+Icahn Enterprises, liquidity and credit-related risk, difficulty HARD,
+confidence 0.81 -- confirmed hard only in this canonical file, a
+near-duplicate file records it as medium), P3V3-Q006 (2023, Exxon Mobil /
+Eli Lilly, technology licensing revenue and U.S. drug-program
+constraints, difficulty medium, confidence 0.83; Exxon's figure is
+"around $155 million" in the source, hedge reproduced rather than
+stated as exact).
+
+CORRECTED, not used as specified: the spec described the system as
+supporting "four answer types -- narrative span, per-company list,
+boolean with explanation, numeric with tolerance." That is true of the
+schema (IMPLEMENTATION_GUIDE.md:193, validation_notebooks/
+06_Gold_Test_Framework.md:642) but not of the data -- across all 31
+canonical questions, answer_type is span: 26, list: 3, boolean: 2,
+numeric: 0. Zero questions exercise the numeric type, and the backing
+answer_numeric/tolerance fields are null in all 31. Framed here as three
+companies resolving to per-company lists (the type this slide's examples
+actually use), not as a claim that all four types are exercised.
+
+SCOPE LINE, per the orchestrator's own correction to its disposition
+table: "cross-company questions are a small share of the curated set, and
+multi-company retrieval is the area with known starvation behaviour...
+state it as scope, not as a confession." VERIFIED: 3 of 31 questions
+(9.7%) are cross_company (retrieval_telemetry_and_reranking_design.md:71:
+local 24, cross_year 4, cross_company 3) -- these three ARE that entire
+slice, not a sample of a larger cross-company set. The starvation finding
+itself (Netflix 0/3, already on the cross-company-queries-turned-slide-11
+material) rests on this same 3-question sample; a repo doc makes exactly
+this point about calibration on so few questions
+(ANALYSIS_reranker_judgment_calls_2026-07-29.md:88).
+
+DIAGRAM NOTE: new diagram, cross-company-questions.svg, three real
+question cards plus a stated-scope callout, not a flowchart -- these are
+example payloads, matching the same treatment as the question-to-answer
+slide's single example, scaled to three.
+-->
+
+---
 
 # Similarity score distribution — the case for reranking evaluation
 
