@@ -503,3 +503,36 @@ announced by message. Recorded here instead, the canonical channel per section 8
 the orchestrator re-took `slides.md`, made these two changes, rebuilt (724 ms, clean),
 verified no slide figure changed, and committed. Worker should re-read before any
 further edit.
+
+## 16. Autonomous run — finish through slide 15 and deploy
+
+Joel away, explicit authorisation to finish and publish without review. **Deck ends at
+slide 15; there is no slide 16.** The parked asymmetry slide comes out of the live
+sequence entirely — content retained, but the deployed deck must be exactly 15 slides.
+
+Worker owns `slides.md`, diagrams, build, commit, push. Orchestrator owns independent
+verification of the deployed page and this record. Orchestrator does not edit
+`slides.md` during this run (section 8c).
+
+### Acceptance criteria — self-review replaces Joel's review
+
+1. Exactly 15 slides live.
+2. Every slide fits its canvas **at every click state**, confirmed by looking at it.
+3. Click counts equal real steps; no phantom trailing clicks.
+4. Zero internal codenames on any slide face.
+5. No slogan titles; plain tech/business phrasing.
+6. Every figure on a face traced to a source, or the claim rewritten to not need it.
+7. Live page renders, confirmed by loading it — not by a green workflow.
+
+Criterion 2 exists because the previous "complete" call passed build, XML validation and
+CI while three slides were unusable. Automated signals do not cover slide overflow.
+
+Ranked for a short run: **numbers real, slides legible.** Tone, staging and diagram
+choice are recoverable in a later pass; those two are not, because Joel reads the live
+page cold.
+
+### Progress ledger
+
+| When | Commit | State |
+| :-- | :-- | :-- |
+| run start | `6ab7797` | Slides 1-2 in new frame and approved. 3-15 outstanding. Specs for all sent. |
