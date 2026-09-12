@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8">
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>*{box-sizing:border-box;margin:0;padding:0}body{background:#f8f8f6;padding:2rem;display:flex;justify-content:center}svg{width:100%;max-width:1150px}</style>
+</head><body>
+<svg viewBox="0 0 1150 280" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="incr-title incr-desc">
+<title id="incr-title">Six stages take a new filing from fetch to production, without a rebuild</title>
+<desc id="incr-desc">A six-stage incremental pipeline fetches new filings, extracts sections, cleans and splits sentences while collapsing adjacent duplicates, derives features, assembles and validates, and pushes to the standard ETL path, feeding an embedding pipeline that adds only the new vectors via checkpointed resume.</desc>
+<defs><marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#5a6571"/></marker></defs>
+<rect width="100%" height="100%" fill="#f8f8f6"/>
+
+<text x="16" y="14" fill="#828891" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.08em">INCREMENTAL INGESTION, STAGES 1-6</text>
+
+<rect x="16" y="20" width="150" height="56" rx="6" fill="#ffffff" stroke="#2d323a" stroke-width="1"/>
+<text x="91" y="42" fill="#2d323a" font-size="10" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">1. Fetch filings</text>
+<text x="91" y="58" fill="#828891" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">new accession numbers</text>
+<path d="M 166,48 H 184" fill="none" stroke="#5a6571" stroke-width="1" marker-end="url(#arrow)"/>
+
+<rect x="186" y="20" width="150" height="56" rx="6" fill="#ffffff" stroke="#2d323a" stroke-width="1"/>
+<text x="261" y="42" fill="#2d323a" font-size="10" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">2. Extract sections</text>
+<text x="261" y="58" fill="#828891" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">re-fetch by accession no.</text>
+<path d="M 336,48 H 354" fill="none" stroke="#5a6571" stroke-width="1" marker-end="url(#arrow)"/>
+
+<rect x="356" y="20" width="180" height="56" rx="6" fill="rgba(235,108,54,0.06)" stroke="#eb6c36" stroke-width="1.4"/>
+<text x="446" y="42" fill="#2d323a" font-size="10" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">3. Clean and split</text>
+<text x="446" y="58" fill="#eb6c36" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">collapses adjacent duplicates</text>
+<path d="M 536,48 H 554" fill="none" stroke="#5a6571" stroke-width="1" marker-end="url(#arrow)"/>
+
+<rect x="556" y="20" width="150" height="56" rx="6" fill="#ffffff" stroke="#2d323a" stroke-width="1"/>
+<text x="631" y="42" fill="#2d323a" font-size="10" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">4. Derive features</text>
+<text x="631" y="58" fill="#828891" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">per-sentence flags</text>
+<path d="M 706,48 H 724" fill="none" stroke="#5a6571" stroke-width="1" marker-end="url(#arrow)"/>
+
+<rect x="726" y="20" width="170" height="56" rx="6" fill="#ffffff" stroke="#2d323a" stroke-width="1"/>
+<text x="811" y="42" fill="#2d323a" font-size="10" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">5. Assemble, validate</text>
+<text x="811" y="58" fill="#828891" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">sanity checks before write</text>
+<path d="M 896,48 H 914" fill="none" stroke="#5a6571" stroke-width="1" marker-end="url(#arrow)"/>
+
+<rect x="916" y="20" width="200" height="56" rx="6" fill="#ffffff" stroke="#2d323a" stroke-width="1"/>
+<text x="1016" y="42" fill="#2d323a" font-size="10" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">6. Push to ETL path</text>
+<text x="1016" y="58" fill="#828891" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">standard S3 incremental key</text>
+
+<path d="M 1016,76 V 100 H 446 V 116" fill="none" stroke="#5a6571" stroke-width="1" marker-end="url(#arrow)"/>
+
+<rect x="316" y="116" width="260" height="56" rx="6" fill="rgba(90,101,113,0.06)" stroke="#5a6571" stroke-width="1.2"/>
+<text x="446" y="138" fill="#2d323a" font-size="10" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">Embedding pipeline: checkpointed resume</text>
+<text x="446" y="154" fill="#828891" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">adds only the new vectors, not a rebuild</text>
+
+<line x1="16" y1="200" x2="1134" y2="200" stroke="rgba(45,50,58,0.10)" stroke-width="0.8"/>
+<text x="16" y="216" fill="#828891" font-size="8" font-family="'Geist Mono', monospace">The same duplicate-prevention step runs on every new filing --</text>
+<text x="16" y="230" fill="#828891" font-size="8" font-family="'Geist Mono', monospace">the corpus cannot regress into the boilerplate problem this deck already fixed once.</text>
+</svg>
+</body></html>

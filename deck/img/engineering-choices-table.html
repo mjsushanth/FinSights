@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8">
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>*{box-sizing:border-box;margin:0;padding:0}body{background:#f8f8f6;padding:2rem;display:flex;justify-content:center}svg{width:100%;max-width:1150px}</style>
+</head><body>
+<svg viewBox="0 0 1150 400" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="eng-title eng-desc">
+<title id="eng-title">Seven engineering choices, each against a named alternative</title>
+<desc id="eng-desc">Seven cost-or-complexity engineering decisions, each stated alongside the heavier alternative it replaced.</desc>
+<defs></defs>
+<rect width="100%" height="100%" fill="#f8f8f6"/>
+
+<text x="20" y="16" fill="#828891" font-size="8" font-weight="600" font-family="'Geist Mono', monospace" letter-spacing="0.08em">DECISION</text>
+<text x="640" y="16" fill="#828891" font-size="8" font-weight="600" font-family="'Geist Mono', monospace" letter-spacing="0.08em">INSTEAD OF</text>
+<line x1="20" y1="24" x2="1130" y2="24" stroke="#2d323a" stroke-width="1"/>
+
+<text x="20" y="42" fill="#2d323a" font-size="10" font-weight="600" font-family="'Geist', sans-serif">Python ETL over S3 cold storage</text>
+<text x="640" y="42" fill="#5a6571" font-size="10" font-family="'Geist', sans-serif">A hosted database billing every month</text>
+<line x1="20" y1="52" x2="1130" y2="52" stroke="rgba(45,50,58,0.08)" stroke-width="0.8"/>
+
+<text x="20" y="70" fill="#2d323a" font-size="10" font-weight="600" font-family="'Geist', sans-serif">Ground-level Python orchestration, S3 for logs and records</text>
+<text x="640" y="70" fill="#5a6571" font-size="10" font-family="'Geist', sans-serif">A paid experiment-tracking service</text>
+<line x1="20" y1="80" x2="1130" y2="80" stroke="rgba(45,50,58,0.08)" stroke-width="0.8"/>
+
+<text x="20" y="98" fill="#2d323a" font-size="10" font-weight="600" font-family="'Geist', sans-serif">Plain Python on a kernel machine for ML work and audits</text>
+<text x="640" y="98" fill="#5a6571" font-size="10" font-family="'Geist', sans-serif">Managed notebooks/pipelines -- available, not used</text>
+<line x1="20" y1="108" x2="1130" y2="108" stroke="rgba(45,50,58,0.08)" stroke-width="0.8"/>
+
+<text x="20" y="126" fill="#2d323a" font-size="10" font-weight="600" font-family="'Geist', sans-serif">3-5 custom gold test suites, hit-rate and MRR measured</text>
+<text x="640" y="126" fill="#5a6571" font-size="10" font-family="'Geist', sans-serif">Trusting vendor benchmarks without local verification</text>
+<line x1="20" y1="136" x2="1130" y2="136" stroke="rgba(45,50,58,0.08)" stroke-width="0.8"/>
+
+<text x="20" y="154" fill="#2d323a" font-size="10" font-weight="600" font-family="'Geist', sans-serif">Index size and inference economics actually calculated</text>
+<text x="640" y="154" fill="#5a6571" font-size="10" font-family="'Geist', sans-serif">An assumed or estimated cost model</text>
+<line x1="20" y1="164" x2="1130" y2="164" stroke="rgba(45,50,58,0.08)" stroke-width="0.8"/>
+
+<text x="20" y="182" fill="#2d323a" font-size="10" font-weight="600" font-family="'Geist', sans-serif">Simple two-tier client/server over HTTP</text>
+<text x="640" y="182" fill="#5a6571" font-size="10" font-family="'Geist', sans-serif">A heavier multi-service split</text>
+<line x1="20" y1="192" x2="1130" y2="192" stroke="rgba(45,50,58,0.08)" stroke-width="0.8"/>
+
+<text x="20" y="210" fill="#2d323a" font-size="10" font-weight="600" font-family="'Geist', sans-serif">Two containers sharing one ECS task and namespace</text>
+<text x="640" y="210" fill="#5a6571" font-size="10" font-family="'Geist', sans-serif">Separate namespaces, plus a load balancer</text>
+
+<rect x="20" y="230" width="1110" height="56" rx="6" fill="rgba(235,108,54,0.06)" stroke="#eb6c36" stroke-width="1.2"/>
+<text x="575" y="252" fill="#2d323a" font-size="10" font-style="italic" font-family="'Instrument Serif', serif" text-anchor="middle">Structural trade-offs land after the product is understood, not before --</text>
+<text x="575" y="268" fill="#2d323a" font-size="10" font-style="italic" font-family="'Instrument Serif', serif" text-anchor="middle">every row here is a cost-or-complexity choice, each against a real alternative.</text>
+</svg>
+</body></html>

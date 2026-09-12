@@ -696,6 +696,99 @@ total. Does NOT resurrect the "under $17/month" tag in any form.
 
 ---
 
+# Live incremental ingestion — corpus growth without a rebuild
+
+<span class="stat">6<span class="stat-label">pipeline stages take a new filing from fetch to production</span></span>
+
+A new filing enters through the same six-stage path every time — fetch,
+extract, clean and split, derive, assemble, push — then the embedding
+pipeline's checkpointed resume adds only the new vectors.
+
+![Six stages take a new filing from fetch to production, without a rebuild](./img/incremental-pipeline.svg)
+
+<!--
+NEW SLIDE 2026-09-11 per the orchestrator's spec: "the capability that
+makes this a system rather than a snapshot." Ties the deck together --
+new filings enter through the EDGAR incremental path, and the same
+adjacent-duplicate collapse from the boilerplate-duplication slide runs
+automatically on every new filing, so the corpus cannot regress into that
+problem.
+
+Source: DataPipeline/src_edgar_incremental/, VERIFIED directly this
+session by reading each stage file's own docstring, not the spec message:
+Stage 1 fetch_filings.py, Stage 2 extract_sections.py (re-fetches each
+filing by accession number), Stage 3 clean_and_split.py (turns raw
+section text into one row per sentence, calling
+collapse_adjacent_duplicates() -- the same function added to prevent the
+boilerplate-duplication slide's Category B problem from recurring), Stage
+4 derive_features.py, Stage 5 assemble_and_validate.py (sanity checks run
+before writing), Stage 6 push_to_etl_incremental.py (uploads to the exact
+S3 key the standard ETL path expects, run by default at the end of every
+pipeline invocation). Orchestration in run_pipeline.py, which chains all
+six stages.
+
+The embedding pipeline's checkpoint-and-resume behavior (added only new
+vectors, not a rebuild) is the same mechanism detailed on the embedding-
+pipeline slide, referenced here rather than re-explained.
+
+DIAGRAM NOTE: new diagram, incremental-pipeline.svg. Six real named
+stages in a row, Stage 3 given accent treatment since it's the one
+carrying the duplicate-prevention detail, feeding a seventh box
+(embedding pipeline checkpoint/resume) below. No filenames or file paths
+in the diagram's visible text, per the codename/filename sweep -- stage
+purposes stated in plain language, sourcing kept to the presenter note.
+-->
+
+---
+
+# Engineering choices and cost trade-offs
+
+<span class="stat">7<span class="stat-label">structural decisions, each against a named alternative</span></span>
+
+Structural trade-offs land after the product is understood, not before — every
+row below is a cost-or-complexity choice, made against a real alternative that was available.
+
+![Seven engineering choices, each against a named alternative](./img/engineering-choices-table.svg)
+
+<!--
+MOVED 2026-09-11 per Joel's own principle, per the orchestrator: this was
+originally slide 2's content (the decision/hurt-quality matrix). It moves
+here because structural trade-offs land after the product is understood,
+not before -- the deck now opens with what the system is and does, and
+this slide carries the engineering-decision material that used to open
+it.
+
+Rows unchanged from the original spec, verified against the project's own
+architecture documentation earlier this session (data engineering
+philosophy, deploy_aws module structure, gold test suite existence,
+NKCP/cost-model calculations, serving/ layout, ECS task definition):
+Python ETL + S3 cold storage over a hosted database; ground-level Python
+orchestration with S3 for logs/records over a paid tracking service;
+plain Python on a kernel machine for ML work over managed notebooks
+despite having them available; 3-5 custom gold test suites (hit-rate,
+MRR) over trusting vendor benchmarks; index size and inference economics
+actually calculated over an assumed cost model; a simple two-tier
+client/server over a heavier multi-service split; two containers sharing
+one ECS task and namespace over separate namespaces plus a load balancer
+-- this last one is detailed with its own numbers on the deployment-and-
+operations slide that follows.
+
+Two of the seven rows ("Instead of: trusting vendor benchmarks..." and
+"Instead of: a heavier multi-service split") don't have as sharply named
+an alternative in the original spec as the other five -- stated honestly
+as the general category of complexity avoided rather than inventing a
+specific named competing system that wasn't actually evaluated.
+
+DIAGRAM NOTE: new diagram, engineering-choices-table.svg, replacing
+cost-decisions-matrix.svg (still on disk, unreferenced) which carried the
+old "Decision x Hurt quality" framing (a uniform "No" column, per this
+deck's own earlier disclosed deviation) -- this version pairs each
+decision with the alternative it replaced instead, per the orchestrator's
+reframing of the slide's whole argument.
+-->
+
+---
+
 # Concurrency model — thread-pool selection and shared-state audit
 
 <span class="stat">1<span class="stat-label">genuinely shared mutable thing, found by audit</span></span>
