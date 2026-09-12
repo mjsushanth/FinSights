@@ -316,6 +316,121 @@ it is the slide's one true "answer," everything upstream is process.
 -->
 
 ---
+class: compact-fig-lg
+---
+
+# Question to cited answer — the end-to-end retrieval and synthesis path
+
+<span class="stat">3<span class="stat-label">evidence sentences behind one three-year answer</span></span>
+
+![One real question, traced to a cited answer](./img/question-to-answer.svg)
+
+<!--
+NEW SLIDE 2026-09-11 per the orchestrator's spec: "Not a UI screenshot. A
+Streamlit screenshot shows chrome, not the system, and it dates badly.
+Show one real question traced end to end, with the real answer and real
+citations." This is the deck's product slide -- the one thing it never
+had before, everything else describes the system, this shows it working
+on one real payload.
+
+Source: MLFlow_POC/data/p3_gold_test_suite_31q.json, question P3V3-Q003,
+VERIFIED directly this session by reading the actual JSON record, not
+taken from the spec message alone -- every field on the diagram matches:
+question text verbatim, answer opening verbatim, 3 evidence_sentence_ids
+(0000200406_10-K_2022_section_7_54, ..._2023_section_7_54,
+..._2024_section_7_61), retrieval_scope cross_year, difficulty medium,
+curation_confidence 0.84. Full recorded answer, not shown on the slide
+face (kept to the opening sentence there, matching this deck's face/notes
+split): "Johnson & Johnson initially portrays COVID-19 as a tailwind and
+then a headwind for different parts of the portfolio. In 2022 it notes
+that certain consumer franchises benefited from innovation, e-commerce
+strength and COVID-19 recovery. By 2023 it reports operational declines
+in some personal care categories, citing negative COVID-19 impacts in
+China and broader pressure on consumption. In its 2024 MD&A the company
+explains that infectious disease product sales fell versus the prior year
+primarily because COVID-19 vaccine revenue declined, making
+pandemic-related demand a key driver of the trend."
+
+CITATION TRAP CAUGHT AND AVOIDED: a second, near-duplicate 31-question
+file exists (data_cache/qa_manual_exports/goldp3_analysis/
+p3_gold_qtest_31q_ffhall.json) that a design doc incorrectly claims is
+"identical" to the canonical file -- it is not; 29 of 31 records differ,
+including this exact question's own confidence value (0.83 there vs 0.84
+canonical). Cited only the canonical MLFlow_POC path.
+
+The stages shown (entity resolution, two supply lines, context assembly)
+are the same ones detailed abstractly on the retrieval-architecture slide
+-- this slide shows them carrying one real payload rather than described
+in the abstract. "A tailwind-then-headwind reading across three years is
+not something keyword search produces, and not something an LLM can
+invent safely" is the orchestrator's own framing for why this specific
+question is the argument for the whole system, not just an example.
+
+DIAGRAM NOTE: new diagram, question-to-answer.svg. Four stages (question
+-> entity resolution -> two supply lines -> context assembled) converging
+into one accent-focal cited-answer panel with three citation pills, one
+per evidence sentence. Given the compact-fig-lg cap (300px) since it sits
+alone on the slide with no other body text competing for space.
+-->
+
+---
+layout: two-cols
+class: text-left compact-list
+---
+
+# Structured KPI extraction — financial metrics as looked-up facts, not model reading
+
+<span class="stat">9,260<span class="stat-label">GAAP and derived facts, 25 companies, 97 standardized metric labels</span></span>
+
+- Asking a model to read a balance sheet is a reading-comprehension task with no ground truth; looking a metric up is a join — the model explains the number instead of extracting it
+- Every fact row carries its form, filing date, and accession number, alongside company, ticker, year, and metric identity
+- That provenance makes it restatement-aware: the same fiscal year reported in two different filings stays distinguishable — a number becomes a sourced number
+
+::right::
+
+![Financial facts, looked up with provenance](./img/kpi-fact-table.svg)
+
+<!--
+NEW SLIDE 2026-09-11 per the orchestrator's spec, with the counts
+corrected after independent verification -- the spec's "25 companies, 18
+years, 98 distinct GAAP metrics" only partly checked out.
+
+VERIFIED: table defined in DataPipeline/src_metrics/xbrl_facts.py:149-152
+(GAAP facts) and derived_kpis.py (derived ratios), assembled by
+pipeline.py:50-77, artifact KPI_FACT_DATA_EDGAR.parquet. Columns,
+verbatim: cik, ticker, year, metric_gaap, metric_code, metric_key,
+metric_label, metric_type, value, unit, form, filed_date, accession_no --
+13 columns, four of them metric-identity fields, not the two the spec
+implied. There is no company-name column; company names live in a
+separate dimension table (finrag_dim_companies_25.parquet) keyed by cik.
+25 companies VERIFIED (metrics_config.yaml:16-17, data_cache/README.md:
+66-68). Row count 9,260 VERIFIED (EMPIRICAL_METHODS_AND_FINDINGS.md:134,
+also cited in analytics/REVIEW_1.1_senior_findings_2026-07-27.md:112-113
+as a full recompute across "all 25 companies, 10-year depth").
+
+CORRECTED, not used as specified: "18 years" does not appear in any repo
+document for this table -- metrics_config.yaml:41-42 configures a
+2006-2025 window (20 years) for GAAP facts, but derived ratios use only
+2 years' depth (pipeline.py:51), and the one *measured* year-count on
+record (17 distinct years, 2009-2025) is from a superseded, pre-rebuild
+21-CIK table (LEGACY_MODULE_FINDINGS.md:95-96) that predates the current
+25-company universe. No single verified number exists for "years covered"
+on the current table, so it is left off the slide entirely rather than
+asserted. "98 distinct GAAP metrics" is also not supported -- the one
+documented total is 97 standardized metric labels
+(metric_mapping_v2.py:26-31, independently confirmed by parsing
+METRIC_MAPPINGS), and that count mixes GAAP tags with derived ratios
+(6 of 10 derived ratios are among the 97) rather than being pure GAAP,
+matching the metric_type column's own gaap/derived split. Slide stat uses
+"97 standardized metric labels," not "98 distinct GAAP metrics."
+
+DIAGRAM NOTE: new diagram, kpi-fact-table.svg, a compact schema panel
+(column list + a restatement-aware provenance callout) matching the same
+"dense fact panel, not a flowchart" treatment as the corpus-selection-
+score diagram -- this is a lookup structure, not a process.
+-->
+
+---
 
 # Boilerplate crowding is the dominant measured problem
 
