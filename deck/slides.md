@@ -431,26 +431,69 @@ score diagram -- this is a lookup structure, not a process.
 -->
 
 ---
+layout: two-cols
+layoutClass: wide-left
+class: text-left compact-list
+---
 
-# Boilerplate crowding is the dominant measured problem
+# Boilerplate duplication in filings — classification and selective removal
 
-<span class="stat">44.9%<span class="stat-label">exact-duplicate text rate across the corpus</span></span>
+<span class="stat">85%<span class="stat-label">of "duplicate" rows are not duplicates at all</span></span>
 
-The same sentence, repeated verbatim across filing years by the same company.
-One sentence alone recurred 424 times.
+- Not a blanket dedup — a classification. Repeated headers (1,356 rows) are flagged and deferred to the embedding stage; adjacent exact repeats (123 rows) are the only ones actually removed, and now prevented at ingestion
+- The remaining 85% is the same compliance sentence genuinely reused across two distinct debt instruments or two distinct lawsuits — removing either "would delete real, distinctly-attributable information"
+- On the retrieval side: variant-diversity queries and union-dedup-by-lowest-distance keep one crowded region from consuming the whole context budget — the mean near-duplicate rate in a retrieved context measured at 22.7%
 
-![44.9% of the corpus is a duplicate copy](./img/boilerplate-treemap.svg)
+::right::
+
+![Three kinds of repetition, one of them actually removed](./img/boilerplate-classification.svg)
 
 <!--
-Source: RETRIEVAL_IMPROVEMENT_STUDY.md 2.1, tagged [V], measured directly
-against finrag_fact_sentences.parquet (614,787 rows): 338,869 unique
-texts, only 827 distinct texts appearing cross-company (2.1% of
-duplicates). Root cause traced to code: sentence_expander.py:517's dedup
-key is (sentence_id, cik_int, report_year, section_name) -- purely
-identity-based, never compares sentence text, so the same verbatim
-sentence in FY2016 and FY2017 survives twice and consumes two of 30
-retrieval slots. Companion stat in the 25 real exported contexts: mean
-near-duplicate rate 22.7% of context, median 100 sentences per context.
+REFRAMED 2026-09-11 per the orchestrator's spec, moved and rebuilt per
+Joel's own review: "not a huge diagram that takes 90% space. make a small
+diagram on the right and TALK ABOUT IT... what did we notice as the
+impact, the aspect of 'semantic crowding'... searches getting drawn -
+poured towards hits on that boilerplate crowding at large companies
+instead of niche query we are asking. and we did fix this as well."
+
+Source: DataPipeline/analytics/duplicate_sentence_analysis.md, VERIFIED
+directly this session by reading the doc, not the spec message. Three
+categories, classified across the full 614,910-row table: Category A
+(short/extreme-repeat fragments, <=4 words repeated >=10x within one
+company-year) is 1,356 rows (0.22%), flagged and deferred to the
+embedding stage, not removed. Category B (immediately-adjacent exact
+repeats, same sentence at consecutive sentenceID positions) is 123 rows
+-- the only ones actually removed: cleanup_adjacent_duplicates.py read
+the production table from S3, dropped the 123 rows (614,910 -> 614,787),
+wrote it back, synced both local mirrors; collapse_adjacent_duplicates()
+was added to Stage 3 of clean_and_split.py so future EDGAR-incremental
+fetches can't reintroduce it. Category C is 85% of all "duplicate" rows
+by count, deliberately preserved: the doc's own real examples are a
+Johnson & Johnson legal-disclosure sentence reused across two genuinely
+separate litigation discussions ~330 sentences apart, and a Visa
+compliance sentence applied to two different real debt instruments
+(Senior Notes, Credit Facility). No schema change -- no boilerplate-flag
+column was added, per the doc's own explicit instruction to avoid
+complicating the schema.
+
+The "semantic crowding" mechanism Joel asked about (large-company
+boilerplate pulling hits away from a niche query) and its retrieval-side
+mitigation are both from RETRIEVAL_IMPROVEMENT_STUDY.md 2.1, already
+verified earlier this session: mean near-duplicate rate 22.7% of a
+retrieved context (25 real exported contexts measured), root-caused to
+sentence_expander.py:517's identity-based dedup key never comparing
+sentence text. Retrieval-side mitigation (variant-diversity queries,
+union dedup keeping the lowest-distance version) is the same mechanism
+detailed on the retrieval-architecture slide, referenced here rather than
+re-explained.
+
+DIAGRAM NOTE: new diagram, boilerplate-classification.svg, small and
+right per Joel's explicit sizing instruction -- a three-row classification
+panel (A flagged / B removed, accent / C preserved) plus the source's own
+"distinctly-attributable information" line as a callout, replacing the
+old full-width boilerplate-treemap.svg (still on disk, unreferenced),
+which visualized the now-superseded "44.9% = problem" framing rather than
+the classification.
 -->
 
 ---
