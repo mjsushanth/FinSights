@@ -554,6 +554,8 @@ slide's single example, scaled to three.
 -->
 
 ---
+class: compact-fig-md
+---
 
 # Streaming response delivery — stage events and token-level output
 

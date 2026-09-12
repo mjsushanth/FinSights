@@ -125,6 +125,16 @@ html.light body {
   max-height: 300px;
 }
 
+/* Streaming response delivery slide: the sequence diagram's bottom 32px
+   (the final queue.get()/return-arrow row) was silently clipped by
+   .slidev-slide-content's overflow-y:hidden -- invisible in a screenshot,
+   only caught by comparing getBoundingClientRect() against the true
+   551px canvas. Default 330px cap was too tall given the title/stat/
+   paragraph stack above the image on this slide. */
+.compact-fig-md img {
+  max-height: 280px;
+}
+
 /* Slide 2 (rewritten as the two-column thesis slide): three bullets landed
    0.33px past the boundary at line-height 1.8 -- razor-thin, not yet a
    real overflow, but too close to trust across font-rendering variance. */
