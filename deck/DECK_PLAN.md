@@ -834,3 +834,53 @@ after this one, same run) measured all 15 slides programmatically via
 Results: slide 4 -20px, slide 11 -78px, slide 15 click1 -63px / click2 -36px — all three
 clean, no compaction class needed. The only real bug found was slide 10, already fixed
 at commit `fb761ed`. Nothing is unmeasured as of commit `3ae4272`.
+
+## 22. Final pass: 16 slides, per Joel's direct request (relayed)
+
+Deck went 15 → 16. New slide 16, transitions, and `v-mark` added at commit `5b7c101`.
+Structure table, superseding section 5's 16-slide plan (that one predates the fold to 15
+and no longer matches reality):
+
+| # | Title | Layout notes |
+| :-- | :-- | :-- |
+| 1 | FinSights (title) | — |
+| 2 | Two supply lines feed one answer | two-cols, `transition: fade-out` |
+| 3 | Corpus construction | two-cols |
+| 4 | Embedding pipeline | two-cols, `wide-left` |
+| 5 | Retrieval architecture | `compact-fig-lg` |
+| 6 | Question to cited answer | `compact-fig-lg` |
+| 7 | Structured KPI extraction | two-cols |
+| 8 | Boilerplate duplication | two-cols, `wide-left` |
+| 9 | Cross-company queries | `compact-fig-lg` |
+| 10 | Streaming response delivery | `compact-fig-md` |
+| 11 | Evaluation infrastructure | `transition: slide-up` |
+| 12 | Operating cost analysis | two-cols, `transition: slide-up` |
+| 13 | Live incremental ingestion | — |
+| 14 | Engineering choices | — |
+| 15 | Deployment and operations | `tight-body compact-fig`, 2 click states |
+| **16** | **Evaluation layers** | **NEW — two-cols `wide-left tight-body`, 1 click state** |
+
+**Slide 16** folds the three gold phases (infrastructure/edge-cases/business-realism,
+`06_Gold_Test_Framework.md` Part 1.2 verbatim) with a semantic-scoring/judge split. Right
+column is plain HTML/CSS bars, not a baked SVG — the only slide in the deck built this
+way — specifically so the built-in `<Arrow>` component can point at a real DOM position.
+All four metric averages (BERTScore 0.826, BLEURT 0.446, Cosine 0.675, ROUGE-L 0.099) and
+the reranking tally (top-8: 3 better, 2 same, 5 worse) verified directly against source,
+not taken from the relayed spec. Initially overflowed 111px (four-line title, 50/50
+split); fixed with a shorter title and `wide-left` (70/30), now -39.9px at both click
+states, verified via `getBoundingClientRect()`, not screenshot alone.
+
+**Transitions**: global `fade` → `slide-left`, with `fade-out` into slide 2 and
+`slide-up` into slides 11 and 12 — two or three transition types total, per the request's
+own "don't let sixteen slides get sixteen different transitions" instruction.
+
+**`v-mark`** (5 places, all verified against the installed Slidev CLI's bundled reference
+at `node_modules/@slidev/cli/skills/slidev/references/animation-rough-marker.md`, not
+asserted from memory): WHO/WHAT on slide 3, the citation claim on slide 6, 85% on slide 8,
+$0.40 on slide 12, and 0.099 on slide 16. None carry a click-index — attaching one would
+have silently added a real click-step to what were previously static slides, which would
+have broken Criterion 3. The slide 3 mark was folded into the existing bullet rather than
+added as a new paragraph, after the new paragraph caused a real +44.5px overflow.
+
+**Live-verified** at commit `5b7c101`: deploy green, `https://mjsushanth.github.io/FinSights/`
+reports `16 / 16`, slide 16 renders with working Arrow + click-gated reveal.
