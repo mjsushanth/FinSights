@@ -514,6 +514,52 @@ Worker owns `slides.md`, diagrams, build, commit, push. Orchestrator owns indepe
 verification of the deployed page and this record. Orchestrator does not edit
 `slides.md` during this run (section 8c).
 
+### Final structure — 15 slides, resolving an ambiguity I introduced
+
+My disposition table ended at 16 with a Close slide. Joel then said *"finish all until
+slide 15 and forget slide 16."* At that moment slide 16 **was** the Close, so the
+instruction drops the Close — it does not ask for two other slides to be merged to make
+room for it. The deck ends on Deployment and operations, carrying slight closing weight.
+
+| # | Slide |
+| --: | :-- |
+| 1 | FinSights — proposition |
+| 2 | Two supply lines |
+| 3 | Corpus construction |
+| 4 | Embedding pipeline |
+| 5 | Retrieval architecture |
+| 6 | Question to cited answer |
+| 7 | Structured KPI extraction |
+| 8 | Boilerplate duplication |
+| 9 | Cross-company queries |
+| 10 | Streaming response delivery |
+| 11 | Evaluation infrastructure (fold of score distribution, wrong-year, latency, reranking) |
+| 12 | Operating cost analysis — worked use case |
+| 13 | Live incremental ingestion |
+| 14 | Engineering choices and cost trade-offs |
+| 15 | Deployment and operations — final slide |
+
+No Close slide. No slide 16. Parked asymmetry content leaves `slides.md` entirely.
+
+### Corrections to orchestrator specs, found by worker verification
+
+Numbers I passed second-hand that did not survive checking. Recorded because the pattern
+matters more than the individual errors:
+
+- KPI table: **25 companies is right.** "18 years" is unsupported anywhere. "98 distinct
+  GAAP metrics" is wrong — it is **97 standardized metric labels mixing GAAP and derived**.
+  There is also no `company` column; rows key on `cik`, with names in a separate
+  dimension table.
+- Answer types: four are defined in the schema but **only three are exercised** across the
+  curated questions; the numeric type appears in none of them. Say "four defined, three
+  exercised."
+- **A near-duplicate curated-question file exists** with conflicting difficulty and
+  confidence values for the same questions. Cite the canonical file only.
+
+All three came from the orchestrator relaying figures from memory of an earlier
+inspection instead of re-reading source. Same failure class as the ROUGE-L noise-floor
+error in section 13.
+
 ### Acceptance criteria — self-review replaces Joel's review
 
 1. Exactly 15 slides live.
