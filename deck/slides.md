@@ -90,6 +90,7 @@ approximation. Cost broke down as ~$1.30 Bedrock + ~$0.91 Cohere direct.
 
 ---
 layout: default
+class: tight-body
 ---
 
 # The asymmetry bug
@@ -107,8 +108,7 @@ So is every user query.
 
 <span class="stat">$0<span class="stat-label">to fix — zero re-embedding, zero re-upload</span></span>
 
-Cohere's dual-encoder needs the *query* tagged `search_query`. One config
-line carried the wrong value since a refactor.
+Cohere's dual-encoder needs the query tagged `search_query`, not `search_document`.
 
 </v-click>
 <v-click>
@@ -473,6 +473,8 @@ work chooses [the concurrency model], and then you accept the
 consequences" -- not a taste decision.
 -->
 
+---
+class: tight-body compact-fig
 ---
 
 # Fargate bills per task, and that fact drives everything

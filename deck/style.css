@@ -78,10 +78,30 @@ html.light body {
   max-width: 100%;
 }
 
-/* Slidev's v-click hides by opacity, so a hidden element still occupies its
-   space. For the three slides that swap one figure for another (4, 9, 10) that
-   left the hidden figure holding ~340px of layout and pushing the visible one
-   off the canvas. These wrappers leave the flow entirely when hidden. */
-.fig-swap.slidev-vclick-hidden {
+/* Slidev's v-click hides by opacity, not display, so a hidden element still
+   occupies its space. Fixed for .fig-swap wrappers first (the two staged
+   images on slides 4, 9, 10 pushing each other off-canvas), but the same
+   problem applies to any v-click'd paragraph: on slide 4, the not-yet-shown
+   click-2/3 text still reserved ~230px of layout at click 1, pushing the
+   diagram down until it overflowed even before any staging was involved.
+   Generalized: nothing still-hidden reserves space. */
+.slidev-layout .slidev-vclick-hidden {
   display: none;
+}
+
+/* Slide 4 stacks four click-reveals of text above a wide (2.9:1) flow
+   diagram; even after the fix above, the fully-accumulated text at the
+   last click left too little vertical room and the diagram clipped.
+   Tighten paragraph spacing on this slide only rather than globally. */
+.tight-body p {
+  margin: 6px 0;
+}
+
+/* Slide 14: the voice pass grew its body text from 2 lines to 3, and at the
+   global 330px image cap that pushed the diagram 55px past the slide's
+   bottom edge -- a smaller, less obvious repeat of slide 4's bug. Tightening
+   paragraph margins (via .tight-body, above) wasn't enough alone; this
+   diagram also needs a slightly lower cap than the deck default. */
+.compact-fig img {
+  max-height: 270px;
 }

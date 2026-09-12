@@ -47,3 +47,38 @@ Lesson: always screenshot-verify an SVG that carries a long `text-anchor="end"`
 or `text-anchor="start"` label near a canvas edge -- don't trust "the validator
 passed" as proof the diagram renders correctly. Hit in `measurement-fishbone.html`
 during the rev-6 5-bone rebuild (2026-09-11).
+
+## 4. A diagram that is valid alone can still overflow its slide
+
+The biggest gap of the four, because it is invisible to every check that
+matters for the other three: `slidev build` succeeds, every SVG parses as
+strict XML, the dev server serves without error, and the GitHub Actions
+workflow goes green. None of that proves a single slide renders inside its
+own canvas. This deck shipped with every diagram slide overflowing its
+980x551 canvas (no height rule existed in `style.css` at all) and, on the
+three staged slides, the second `v-click` figure landing entirely off-screen
+below a first figure that was hidden by opacity but still occupying ~340px
+of layout -- neither fault surfaced until someone loaded the deployed page.
+
+Two contributing traps worth naming on their own:
+
+- **`v-click` hides by opacity, not `display`.** A hidden element still
+  reserves its layout space. This is true of any v-click'd element, not just
+  images -- plain paragraphs do it too. On slide 4, three click-stages of
+  not-yet-shown text reserved space even at the first click, pushing that
+  slide's diagram down before staging was even a factor. Fix:
+  `.slidev-vclick-hidden { display: none; }`, scoped as narrowly as the
+  layout allows.
+- **A height cap that fits most diagrams can still overflow one.** A global
+  `max-height` on diagram images has to satisfy the slide with the most
+  accumulated text above its image, not the average slide. Voice-pass edits
+  that grow a slide's prose by even one line, made after the cap was tuned,
+  can silently push a previously-fine diagram past the edge again.
+
+Lesson: build, XML validity, and a green workflow verify the diagram and the
+markup. None of them verify the *slide*. A deck is not checked until someone
+has walked every diagram slide at every click state in an actual browser
+viewport and confirmed nothing crosses the canvas edge -- and that check has
+to be redone after any prose edit, not just after a diagram edit. Hit
+building this deck (2026-09-11) and caught only by loading the page Joel had
+just enabled Pages for, not by any tool in the pipeline.
