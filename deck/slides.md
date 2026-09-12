@@ -127,6 +127,65 @@ next spec, not yet built.
 -->
 
 ---
+layout: two-cols
+class: text-left compact-list
+---
+
+# Corpus construction — selection, stratification and scoring
+
+<span class="stat">47s<span class="stat-label">to stratify-sample 71M sentences into the working corpus</span></span>
+
+- In-process DuckDB and Polars over a hosted warehouse, stratifying three merged sources — S&P 500 holdings, SEC CIK mappings, and a 71M-sentence corpus
+- Company selection is scored, not hand-picked — a weighted quality formula with five hard admission gates decides who enters the dataset
+- Temporal and section imbalances are left uncorrected, deliberately — real disclosure variation is signal, not noise to normalize away
+
+::right::
+
+![A weighted multi-objective selection score, not a manual pick](./img/corpus-selection-score.svg)
+
+<!--
+NEW SLIDE 2026-09-11, split out of the old "Corpus and checkpointed
+regeneration" slide per the orchestrator's disposition table -- that slide
+was doing two jobs (corpus selection AND embedding regeneration) and this
+one takes the selection half, expanded with real material that was never
+on a slide before.
+
+Source: DataPipeline/data_engineering_research/duckdb_data_engineering/
+DuckDB_Sampling_Strategy.md for the quality_score formula and the five
+admission gates, verbatim, and its own line "These filters determine WHO
+is in the dataset, not WHAT gets sampled" (quoted on the diagram exactly).
+Inputs verified in the same doc: S&P 500 holdings via State Street SPDR
+SPY daily holdings (503 holdings, 99.94% weight coverage), SEC EDGAR
+company tickers (10,142 CIK-to-ticker mappings), plus a custom shortlist
+for sector diversity and underrepresented industries.
+
+The "47s" stat and "three merged sources" bullet are both from
+Data_Engineering_README.md's "Production-Ready Proof" table (three
+heterogeneous sources -- Excel SPY holdings, SEC JSON mappings, 71.8M-row
+Parquet corpus -- merged via fuzzy matching; total pipeline wall-clock
+~47s for corpus load through export, dominated by a 36.83s schema-
+retrieval join, which the table itself calls "Expected (big join)" rather
+than a problem). Rounded 71.8M to 71M to match the wording already
+shipped on slide 1's bullet, not a new number.
+
+The "imbalances left uncorrected" bullet is DuckDB_EDA.md's own two
+named arguments ("Recency Bias is Actually Good" and "Temporal, Sentence,
+Section Imbalances shouldn't be corrected in the dataset"), not my
+framing -- the doc's own reasoning: "Product is a RAG system, not a
+time-series model," and section/sentence-density variation reflects how
+companies actually choose to disclose, which the retrieval layer should
+be robust to rather than the corpus trying to flatten.
+
+DIAGRAM NOTE: new diagram, corpus-selection-score.svg. A formula panel
+plus a five-row admission-gate checklist, closing with the source's own
+"WHO not WHAT" line as a bordered callout -- not a flowchart, because the
+selection logic here is a scoring/filtering computation, not a sequence
+of stages, and a flowchart would invent connective structure that doesn't
+exist. Deliberately dense/textual to match how a real quality-gate query
+reads.
+-->
+
+---
 
 # Corpus and checkpointed regeneration
 
