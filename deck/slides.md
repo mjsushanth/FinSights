@@ -555,6 +555,27 @@ slide's single example, scaled to three.
 
 ---
 
+# Streaming response delivery — stage events and token-level output
+
+<span class="stat">4.3ms<span class="stat-label">time to first byte, against 8.96s total processing</span></span>
+
+A `queue.Queue` plus a background thread streams pipeline-stage events and
+token output to the browser. Total time is unchanged. What changed is the wait.
+
+![Browser, endpoint, worker thread, and queue](./img/sse-sequence.svg)
+
+<!--
+Source: TIER1_PROGRESS_LOG.md Change 4b (2026-08-01), VERIFIED via a real
+Docker rebuild + browser test this session (see vault C10 for the full
+mechanism writeup: answer_query_stream(), a worker thread pushing events
+into a queue, drained by a generator, re-emitted as SSE). Honest limit
+carried in slide 15's notes, not repeated here per the no-open-gaps-slide
+instruction: this was verified locally and in Docker, not against the
+live deployed Fargate service specifically.
+-->
+
+---
+
 # Evaluation infrastructure — measurement that produced decisions
 
 <span class="stat">5/10<span class="stat-label">held-out answers got worse -- the number that reversed a ship decision</span></span>
@@ -618,24 +639,59 @@ standing practice for superseded diagrams.
 -->
 
 ---
+layout: two-cols
+class: text-left compact-list
+---
 
-# Streaming response delivery — stage events and token-level output
+# Operating cost analysis — storage, compute and inference under realistic usage
 
-<span class="stat">4.3ms<span class="stat-label">time to first byte, against 8.96s total processing</span></span>
+<span class="stat">$3.80<span class="stat-label">a light month -- $12.40 a heavy one, four sessions and 200 questions</span></span>
 
-A `queue.Queue` plus a background thread streams pipeline-stage events and
-token output to the browser. Total time is unchanged. What changed is the wait.
+- A real scenario, not a unit-rate table: four 30-minute sessions and 200 questions in a month
+- Infrastructure — idle floor, Fargate compute — stays under $0.40 in either case; the entire light-to-heavy spread is Bedrock inference cost, not infrastructure
+- Not hypothetical: 1.0633 vCPU-hours have actually been consumed across two real sessions to date, with the service otherwise sitting at desiredCount=0
 
-![Browser, endpoint, worker thread, and queue](./img/sse-sequence.svg)
+::right::
+
+![A worked month, not an abstract unit-cost table](./img/cost-scenario-table.svg)
 
 <!--
-Source: TIER1_PROGRESS_LOG.md Change 4b (2026-08-01), VERIFIED via a real
-Docker rebuild + browser test this session (see vault C10 for the full
-mechanism writeup: answer_query_stream(), a worker thread pushing events
-into a queue, drained by a generator, re-emitted as SSE). Honest limit
-carried in slide 15's notes, not repeated here per the no-open-gaps-slide
-instruction: this was verified locally and in Docker, not against the
-live deployed Fargate service specifically.
+NEW SLIDE 2026-09-11 per the orchestrator's spec and follow-up
+correction: state a realistic month, then price it, rather than an
+abstract per-unit rate table. Numbers verified against
+ModelPipeline/deploy_aws/DEPLOY_LEDGER.md directly this session, not
+taken from the orchestrator's message alone (per this deck's standing
+practice, even when a number arrives "pre-verified"):
+- Idle floor $0.2938/month VERIFIED (DEPLOY_LEDGER.md:179), decomposing to
+  S3 Vectors storage $0.1452 + S3 Standard $0.0992 + ECR $0.0494. The
+  index-storage line is $0.1452 here, not the $0.150 quoted elsewhere in
+  the repo -- that's a 30-day-window versus calendar-month framing
+  difference. Not shown as a separate line item on this slide (it is
+  already inside the idle floor), avoiding the double-count the
+  orchestrator itself caught in an earlier draft of this number.
+- Fargate $0.04806/hr VERIFIED, decomposes to 1 vCPU x $0.03238 +
+  3 GB x $0.00356 + $0.005 IPv4 (IPv4 only accrues while a task runs, so
+  correctly excluded from the idle floor). Four 30-minute sessions = 2
+  hours = $0.0961.
+- Bedrock inference $0.017-$0.06+ per query (previously verified this
+  session, S3Vect_QueryCost.md) -- 200 queries: $3.40 at the floor, $12.00
+  at the top. This is the dominant, decision-relevant line: infrastructure
+  is under 40 cents in either scenario, so the entire spread between a
+  light and heavy month is inference cost, not infrastructure -- the
+  actual finding worth putting on the slide face, per the orchestrator's
+  own framing.
+- Vector retrieval ~$0.00004/query VERIFIED (S3Vect_QueryCost.md,
+  $2.50/million QueryVectors requests) -- 200 queries, ~$0.008/month,
+  genuinely negligible.
+- 1.0633 vCPU-hours actual-to-date VERIFIED (DEPLOY_LEDGER.md:165) -- the
+  scenario is not hypothetical, it is roughly what this project has
+  actually done across two real sessions.
+
+DIAGRAM NOTE: new diagram, cost-scenario-table.svg, a small worked table
+(not a chart) per the orchestrator's own instruction -- rows a reader can
+check against their own expected usage, light/heavy columns, the
+inference-dominance callout as the stated finding rather than the raw
+total. Does NOT resurrect the "under $17/month" tag in any form.
 -->
 
 ---
@@ -725,114 +781,5 @@ of public subnets since the workload needs egress, not inbound privacy.
 December's prior deployment looked healthy right up until the account
 closed -- the destroy/rebuild test is what would have caught that
 class of failure, not a stronger monitoring dashboard.
--->
-
----
-layout: default
-class: text-left
----
-
-# What generalises
-
-<v-click>Prefer unrepresentable to unlikely.</v-click>
-<v-click>Trust the artifact over the description.</v-click>
-<v-click>Label provenance on every number — an unlabelled one is a liability.</v-click>
-<v-click>A tight cost constraint removes options you did not need.</v-click>
-<v-click>Negative results, reached honestly, are still results.</v-click>
-
-<!--
-Distilled from the design-principles note (19 numbered principles in 5
-groups), specifically the unrepresentable-over-unlikely, artifact-over-
-description, provenance-labelling, cost-constraint, and negative-results
-principles -- each already carries its own verified anchor earlier in
-this deck (slide 2/15 for the cost-constraint principle, slide 10 for the
-negative-results principle, this deck's whole citation discipline for the
-provenance-labelling principle). The artifact-over-description reasoning previously
-anchored to the asymmetry-bug slide, which is parked (see below) rather
-than in the main sequence as of 2026-09-11 -- Joel's framing correction was
-that the deck should read as project achievements, not process/tooling
-war-stories. No "thank you" slide, per the design record. This is the close.
--->
-
----
-layout: default
-class: tight-body
----
-
-# PARKED — not in the presentation sequence
-
-<!--
-PARKED 2026-09-11 per Joel's direct review of the live deck: "its broken
-for me... the diagram also seems broken and I DONT KNOW exactly what youre
-trying to show here. ignore this. discard this or push it to last page to
-fix for later." This was originally slide 4, "The asymmetry bug," picked as
-the orchestrator's "sharpest finding" -- itself an instance of the same
-framing error this whole revision is correcting: a config bug found during
-development is a process/tooling story, not a project achievement, and does
-not belong in a deck about what the system does and delivers. Kept below
-verbatim (content, diagrams, and citations unchanged) so nothing sourced is
-lost, in case a future revision finds a real use for it. Not wired into
-the main slide sequence; reachable only by paging past the close.
--->
-
----
-
-# Embedding input-type asymmetry — found and fixed at zero cost
-### Found by reading the live config against Cohere's own docs
-
-<v-click>
-
-The corpus is embedded with `input_type="search_document"`.
-
-So is every user query.
-
-
-</v-click>
-<v-click>
-
-<span class="stat">$0<span class="stat-label">to fix — zero re-embedding, zero re-upload</span></span>
-
-Cohere's dual-encoder needs the query tagged `search_query`, not `search_document`.
-
-</v-click>
-<v-click>
-
-The correct value was already sitting in a deprecated config block. The
-live path just wasn't reading it.
-
-
-</v-click>
-
-<div class="fig-swap" v-click="[1,3]">
-
-![Two paths converging on the same wrong value](./img/asymmetry-flow-current.svg)
-
-</div>
-<div class="fig-swap" v-click="3">
-
-![The correct value already existed in a deprecated block](./img/asymmetry-flow-fix.svg)
-
-</div>
-
-<!--
-Source: RETRIEVAL_IMPROVEMENT_STUDY.md section 3.1, tagged [V] against
-ml_config.yaml:214, query_embedder_v2.py:66, and Cohere's own API docs
-(docs.cohere.com/docs/embeddings, docs.cohere.com/reference/embed).
-VERIFIED this session by reading the cited lines directly. IMPORTANT
-HONESTY NOTE: the source document explicitly does NOT claim a measured
-retrieval-quality improvement from this fix -- "I am not claiming a
-magnitude... it must be A/B'd." A follow-up doc (EMBEDDING_INPUT_TYPE_
-ASYMMETRY.md) shows the fix was implemented (48/48 config resolutions
-unchanged in an A/B against pre-edit YAML) but the retrieval-quality A/B
-had not landed as of that doc's writing. Do NOT let a magnitude claim
-creep onto this slide face -- the honest story is "found a real bug via
-code trace + external docs, fixed at zero cost," not "improved X%."
-The fourth click's reveal: ml_config.yaml:214 sets the live corpus block
-to search_document, query_embedder_v2.py:66 reads that same value for the
-query (the bug). But ml_config.yaml:272, inside the deprecated
-rag_orchestrator block that the live path never reads, already has the
-correct search_query. V1 (query_embedder.py:44) also defaulted correctly
--- V2 regressed it in a config refactor. The right answer was in the
-repo the whole time, just in a block nothing was reading.
 -->
 

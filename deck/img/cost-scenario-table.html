@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8">
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>*{box-sizing:border-box;margin:0;padding:0}body{background:#f8f8f6;padding:2rem;display:flex;justify-content:center}svg{width:100%;max-width:420px}</style>
+</head><body>
+<svg viewBox="0 0 420 300" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="cost-title cost-desc">
+<title id="cost-title">A worked month, not an abstract unit-cost table</title>
+<desc id="cost-desc">Four 30-minute sessions and 200 questions in a month, priced line by line, showing infrastructure under 40 cents and the light-to-heavy spread driven entirely by inference cost.</desc>
+<defs></defs>
+<rect width="100%" height="100%" fill="#f8f8f6"/>
+
+<text x="16" y="14" fill="#828891" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.08em">4 SESSIONS (30 MIN EACH) &#183; 200 QUESTIONS / MONTH</text>
+
+<rect x="16" y="20" width="388" height="130" rx="6" fill="#ffffff" stroke="#2d323a" stroke-width="1"/>
+<text x="230" y="38" fill="#828891" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">LIGHT</text>
+<text x="330" y="38" fill="#828891" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">HEAVY</text>
+
+<line x1="16" y1="46" x2="404" y2="46" stroke="rgba(45,50,58,0.10)" stroke-width="0.8"/>
+
+<text x="26" y="62" fill="#2d323a" font-size="9" font-family="'Geist', sans-serif">Idle floor (index + S3 + ECR)</text>
+<text x="230" y="62" fill="#5a6571" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">$0.2938</text>
+<text x="330" y="62" fill="#5a6571" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">$0.2938</text>
+
+<text x="26" y="80" fill="#2d323a" font-size="9" font-family="'Geist', sans-serif">Fargate, 2h @ $0.04806/hr</text>
+<text x="230" y="80" fill="#5a6571" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">$0.0961</text>
+<text x="330" y="80" fill="#5a6571" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">$0.0961</text>
+
+<text x="26" y="98" fill="#2d323a" font-size="9" font-family="'Geist', sans-serif">Bedrock inference, 200 queries</text>
+<text x="230" y="98" fill="#eb6c36" font-size="9" font-weight="600" font-family="'Geist Mono', monospace" text-anchor="middle">$3.40</text>
+<text x="330" y="98" fill="#eb6c36" font-size="9" font-weight="600" font-family="'Geist Mono', monospace" text-anchor="middle">$12.00</text>
+
+<text x="26" y="116" fill="#2d323a" font-size="9" font-family="'Geist', sans-serif">Vector retrieval, 200 queries</text>
+<text x="230" y="116" fill="#5a6571" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">$0.008</text>
+<text x="330" y="116" fill="#5a6571" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">$0.008</text>
+
+<line x1="16" y1="124" x2="404" y2="124" stroke="#2d323a" stroke-width="0.8"/>
+<text x="26" y="140" fill="#2d323a" font-size="10" font-weight="600" font-family="'Geist', sans-serif">Month</text>
+<text x="230" y="140" fill="#2d323a" font-size="11" font-weight="600" font-family="'Geist Mono', monospace" text-anchor="middle">~$3.80</text>
+<text x="330" y="140" fill="#2d323a" font-size="11" font-weight="600" font-family="'Geist Mono', monospace" text-anchor="middle">~$12.40</text>
+
+<rect x="16" y="160" width="388" height="60" rx="6" fill="rgba(235,108,54,0.06)" stroke="#eb6c36" stroke-width="1.2"/>
+<text x="210" y="182" fill="#2d323a" font-size="10" font-style="italic" font-family="'Instrument Serif', serif" text-anchor="middle">Infrastructure stays under $0.40 either way --</text>
+<text x="210" y="198" fill="#2d323a" font-size="10" font-style="italic" font-family="'Instrument Serif', serif" text-anchor="middle">the spread is entirely inference.</text>
+
+<line x1="16" y1="238" x2="404" y2="238" stroke="rgba(45,50,58,0.10)" stroke-width="0.8"/>
+<text x="16" y="254" fill="#828891" font-size="8" font-family="'Geist Mono', monospace">Not hypothetical: 1.0633 vCPU-hours actually consumed</text>
+<text x="16" y="268" fill="#828891" font-size="8" font-family="'Geist Mono', monospace">across two real sessions to date</text>
+</svg>
+</body></html>
