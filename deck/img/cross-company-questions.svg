@@ -12,21 +12,18 @@
 <text x="32" y="40" fill="#2d323a" font-size="11" font-weight="600" font-family="'Geist', sans-serif">2009 &#183; Radian Group &#183; Netflix &#183; Mastercard</text>
 <text x="32" y="56" fill="#5a6571" font-size="9" font-family="'Geist Mono', monospace">data protection, information security, customer-data exposure</text>
 <text x="32" y="70" fill="#828891" font-size="8" font-family="'Geist Mono', monospace">insurance, streaming and payments answering the same risk question</text>
-<text x="1032" y="46" fill="#828891" font-size="8" font-family="'Geist Mono', monospace" text-anchor="end">P3V3-Q004</text>
 <text x="1032" y="60" fill="#828891" font-size="8" font-family="'Geist Mono', monospace" text-anchor="end">medium &#183; 0.85</text>
 
 <rect x="16" y="94" width="1048" height="66" rx="6" fill="#eb6c36" fill-opacity="0.06" stroke="#eb6c36" stroke-width="1.2"/>
 <text x="32" y="114" fill="#2d323a" font-size="11" font-weight="600" font-family="'Geist', sans-serif">2010 &#183; Walmart &#183; Apple &#183; Microsoft &#183; Icahn Enterprises</text>
 <text x="32" y="130" fill="#5a6571" font-size="9" font-family="'Geist Mono', monospace">liquidity and credit-related risk, Item 1A risk factors</text>
 <text x="32" y="144" fill="#828891" font-size="8" font-family="'Geist Mono', monospace">four companies in one answer -- the hardest question in the curated set</text>
-<text x="1032" y="120" fill="#eb6c36" font-size="8" font-weight="600" font-family="'Geist Mono', monospace" text-anchor="end">P3V3-Q005</text>
 <text x="1032" y="134" fill="#828891" font-size="8" font-family="'Geist Mono', monospace" text-anchor="end">hard &#183; 0.81</text>
 
 <rect x="16" y="168" width="1048" height="66" rx="6" fill="#ffffff" stroke="#2d323a" stroke-width="1"/>
 <text x="32" y="188" fill="#2d323a" font-size="11" font-weight="600" font-family="'Geist', sans-serif">2023 &#183; Exxon Mobil &#183; Eli Lilly</text>
 <text x="32" y="204" fill="#5a6571" font-size="9" font-family="'Geist Mono', monospace">technology licensing revenue (~$155M) &#183; U.S. drug-program constraints</text>
 <text x="32" y="218" fill="#828891" font-size="8" font-family="'Geist Mono', monospace">two industries, two distinct revenue-shaping themes, one answer</text>
-<text x="1032" y="194" fill="#828891" font-size="8" font-family="'Geist Mono', monospace" text-anchor="end">P3V3-Q006</text>
 <text x="1032" y="208" fill="#828891" font-size="8" font-family="'Geist Mono', monospace" text-anchor="end">medium &#183; 0.83</text>
 
 <line x1="16" y1="252" x2="1064" y2="252" stroke="#2d323a" stroke-opacity="0.1" stroke-width="0.8"/>
@@ -34,5 +31,5 @@
 <rect x="16" y="262" width="1048" height="56" rx="6" fill="#5a6571" fill-opacity="0.05" stroke="#5a6571" stroke-width="1"/>
 <text x="32" y="282" fill="#2d323a" font-size="9" font-style="italic" font-family="'Instrument Serif', serif">Scope, stated plainly: cross-company questions are 3 of 31 in the curated set (9.7%) --</text>
 <text x="32" y="298" fill="#2d323a" font-size="9" font-style="italic" font-family="'Instrument Serif', serif">the same small slice where multi-company retrieval shows known, deterministic starvation.</text>
-<text x="1032" y="290" fill="#828891" font-size="8" font-family="'Geist Mono', monospace" text-anchor="end">p3_gold_test_suite_31q.json</text>
+<text x="1032" y="290" fill="#828891" font-size="8" font-family="'Geist Mono', monospace" text-anchor="end">curated question set</text>
 </svg>
